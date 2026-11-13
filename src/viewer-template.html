@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#050a11">
+  <title>龙鱼水族箱 · 背景与灯光</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: "Inter", system-ui, sans-serif;
+      background: #050a11;
+      color: #f1f7ff;
+    }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+    [hidden] { display: none !important; }
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+    }
+    .aquarium-view {
+      position: relative;
+      display: grid;
+      place-items: center;
+      min-width: 0;
+      min-height: 0;
+      container-type: size;
+    }
+    :root[data-background="black"] .aquarium-view { background: #000; }
+    :root[data-background="transparent"] { background: transparent; color-scheme: light; }
+    :root[data-background="transparent"] .tank { background: transparent; }
+    .tank {
+      position: relative;
+      isolation: isolate;
+      overflow: hidden;
+      touch-action: manipulation;
+      width: min(100vw, 177.7778vh);
+      width: min(100vw, 177.7778dvh);
+      width: min(100cqw, 177.7778cqh);
+      aspect-ratio: 16 / 9;
+      background: #091526;
+    }
+    .tank canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    .status {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-content: center;
+      padding: 20px;
+      text-align: center;
+      letter-spacing: .03em;
+      color: #e1eaf5;
+      font-size: 14px;
+      background: rgba(6, 13, 24, .72);
+      pointer-events: none;
+    }
+    .controls {
+      position: absolute;
+      bottom: clamp(14px, 4.1%, 37px);
+      left: 50%;
+      display: flex;
+      gap: 5px;
+      padding: 5px;
+      border-radius: 999px;
+      border: 1px solid rgba(224, 241, 255, .18);
+      background: rgba(6, 15, 28, .68);
+      box-shadow: 0 7px 25px rgba(0, 0, 0, .24), inset 0 1px rgba(241, 247, 255, .05);
+      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(14px);
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, 5px);
+      transition: opacity .24s ease, transform .24s ease;
+    }
+    .controls[data-visible="true"], .controls:has(:focus-visible) {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translate(-50%, 0);
+    }
+    body[data-presentation="true"] .controls,
+    body[data-presentation="true"] .settings-toggle { visibility: hidden; }
+    .controls button {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+    }
+    .controls button:hover { background: rgba(201, 226, 252, .14); }
+    .controls button:focus-visible { outline: 1px solid #bce0ff; outline-offset: -3px; }
+    .icon { display: block; position: relative; width: 18px; height: 18px; }
+    .pause::before, .pause::after {
+      content: ""; position: absolute; width: 3px; height: 13px; top: 2.5px;
+      background: currentColor; border-radius: 1.5px;
+    }
+    .pause::before { left: 5px; }
+    .pause::after { right: 5px; }
+    button[data-paused="true"] .pause::before {
+      left: 6px; top: 2px; height: 0; width: 0; border-radius: 0; background: none;
+      border-top: 7px solid transparent;
+      border-bottom: 7px solid transparent;
+      border-left: 10px solid currentColor;
+    }
+    button[data-paused="true"] .pause::after { display: none; }
+    .fullscreen { inset: 0; width: 15px; height: 15px; }
+    .fullscreen i { position: absolute; width: 5px; height: 5px; border: solid currentColor; }
+    .fullscreen i:nth-child(1) { top: 0; left: 0; border-width: 2px 0 0 2px; }
+    .fullscreen i:nth-child(2) { top: 0; right: 0; border-width: 2px 2px 0 0; }
+    .fullscreen i:nth-child(3) { bottom: 0; right: 0; border-width: 0 2px 2px 0; }
+    .fullscreen i:nth-child(4) { bottom: 0; left: 0; border-width: 0 0 2px 2px; }
+    button[data-fullscreen="true"] .fullscreen { transform: rotate(180deg); }
+    button[data-fullscreen="true"] .fullscreen i:nth-child(1) { border-width: 0 2px 2px 0; }
+    button[data-fullscreen="true"] .fullscreen i:nth-child(2) { border-width: 0 0 2px 2px; }
+    button[data-fullscreen="true"] .fullscreen i:nth-child(3) { border-width: 2px 0 0 2px; }
+    button[data-fullscreen="true"] .fullscreen i:nth-child(4) { border-width: 2px 2px 0 0; }
+    .settings-toggle {
+      position: absolute;
+      z-index: 1;
+      top: clamp(12px, 3vw, 26px);
+      right: clamp(12px, 3vw, 26px);
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-height: 42px;
+      padding: 0 13px;
+      border: 1px solid #a5ccdf49;
+      border-radius: 8px;
+      background: #091421dd;
+      box-shadow: 0 2px 14px #03060b52;
+      color: #e7f3fb;
+      font: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(14px);
+    }
+    .settings-toggle:hover { background: #172c3d; }
+    .workspace[data-settings-open="true"] .settings-toggle { visibility: hidden; }
+    .settings-glyph { position: relative; width: 15px; height: 13px; color: #96dce9; }
+    .settings-glyph i { position: absolute; inset: 0 0 auto; height: 1px; background: currentColor; }
+    .settings-glyph i:nth-child(2) { top: 6px; }
+    .settings-glyph i:nth-child(3) { top: 12px; }
+    .settings-glyph i::after {
+      content: "";
+      position: absolute;
+      top: -2px;
+      left: 9px;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .settings-glyph i:nth-child(2)::after { left: 3px; }
+    .settings-glyph i:nth-child(3)::after { left: 6px; }
+    .settings-panel {
+      --accent: #8fdae8;
+      --track: #263646;
+      display: flex;
+      flex-direction: column;
+      align-self: stretch;
+      min-height: 0;
+      width: 320px;
+      border-left: 1px solid #293846;
+      background: #0b141e;
+      box-shadow: -8px 0 30px #03070b40;
+    }
+    .settings-header, .lighting-footer { flex: none; padding: 16px 21px; }
+    .settings-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #23313e;
+    }
+    .settings-header h1 {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      margin: 0;
+      font-size: 16px;
+      font-weight: 650;
+    }
+    .settings-header button {
+      display: grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: #aec1d1;
+      font-size: 23px;
+      cursor: pointer;
+    }
+    .settings-header button:hover { background: #1c2b38; color: #f4fbff; }
+    .settings-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      flex: none;
+      gap: 4px;
+      margin: 14px 21px 0;
+      padding: 4px;
+      border: 1px solid #253746;
+      border-radius: 8px;
+      background: #080f17;
+    }
+    .settings-tabs button {
+      min-height: 34px;
+      border: 1px solid transparent;
+      border-radius: 5px;
+      background: transparent;
+      color: #a9bed0;
+      font: inherit;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .settings-tabs button:hover { color: #f1f7ff; }
+    .settings-tabs button[aria-selected="true"] {
+      border-color: #36505f;
+      background: #18303d;
+      color: #ddf7ff;
+      font-weight: 600;
+    }
+    .panel-section { display: flex; flex: 1; flex-direction: column; min-height: 0; }
+    .panel-scroll {
+      min-height: 0;
+      padding: 18px 21px 13px;
+      overflow: auto;
+      overscroll-behavior: contain;
+      scrollbar-color: #354958 transparent;
+    }
+    .background-fields { padding-bottom: 21px; }
+    .background-fields h2 {
+      margin: 0 0 10px;
+      color: #aac3d3;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .04em;
+    }
+    .background-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .background-choice {
+      display: block;
+      width: 100%;
+      min-width: 0;
+      padding: 0;
+      overflow: hidden;
+      border: 1px solid #2b3c4b;
+      border-radius: 7px;
+      background: #101d28;
+      color: #e5eff6;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+    .background-choice:hover { border-color: #7293a3; background: #172b39; }
+    .background-choice[aria-pressed="true"] { border-color: var(--accent); background: #17313e; }
+    .background-choice img, .transparent-swatch {
+      display: block;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      background: #090f16;
+    }
+    .transparent-swatch {
+      background: repeating-conic-gradient(#283441 0% 25%, #40505e 0% 50%) 0 0 / 16px 16px;
+    }
+    .overlay-link {
+      display: grid;
+      place-items: center;
+      margin-top: 10px;
+      text-decoration: none;
+    }
+    .background-choice-name {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 5px;
+      min-height: 33px;
+      padding: 5px 8px;
+      font-size: 12px;
+    }
+    .background-choice[aria-pressed="true"] .background-choice-name::after {
+      content: "";
+      flex: none;
+      width: 6px;
+      height: 6px;
+      margin-left: auto;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+    .custom-background { margin-top: 19px; padding-top: 16px; border-top: 1px solid #23313e; }
+    .custom-choice { display: grid; grid-template-columns: 67px minmax(0, 1fr); margin-bottom: 9px; }
+    .custom-choice img { align-self: center; }
+    .custom-choice .background-choice-name { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+    .background-filename { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .background-note, .background-status { margin: 8px 0 0; color: #a5bacb; font-size: 12px; line-height: 1.55; }
+    .background-status:empty { margin: 0; }
+    .background-status[data-error="true"] { color: #ffcb9c; }
+    .lighting-fields fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+    .lighting-fields fieldset + fieldset { margin-top: 15px; border-top: 1px solid #23313e; }
+    .lighting-fields h2 {
+      margin: 0 0 9px;
+      color: #aac3d3;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .04em;
+    }
+    .lighting-fields fieldset + fieldset h2 { margin-top: 15px; }
+    .light-field { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; min-width: 0; }
+    .light-field + .light-field { margin-top: 10px; }
+    .light-field label { color: #e5eff6; font-size: 13px; }
+    .light-field output { color: var(--accent); font-size: 12px; font-variant-numeric: tabular-nums; }
+    .light-field input {
+      grid-column: 1 / -1;
+      appearance: none;
+      -webkit-appearance: none;
+      width: 100%;
+      height: 22px;
+      margin: 0;
+      border-radius: 6px;
+      background: transparent;
+      cursor: pointer;
+    }
+    .light-field input::-webkit-slider-runnable-track {
+      height: 4px;
+      border-radius: 4px;
+      background: linear-gradient(to right, var(--accent) var(--filled, 50%), var(--track) var(--filled, 50%));
+    }
+    .light-field input::-moz-range-track {
+      height: 4px;
+      border-radius: 4px;
+      background: linear-gradient(to right, var(--accent) var(--filled, 50%), var(--track) var(--filled, 50%));
+    }
+    .light-field .warmth::-webkit-slider-runnable-track { background: linear-gradient(90deg, #74b7e4, #ddeaf1 50%, #f4b477); }
+    .light-field .warmth::-moz-range-track { background: linear-gradient(90deg, #74b7e4, #ddeaf1 50%, #f4b477); }
+    .light-field input::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 13px;
+      height: 13px;
+      margin-top: -4.5px;
+      border: 1px solid #e9fcff;
+      border-radius: 50%;
+      background: #c6edf4;
+      box-shadow: 0 0 0 2px #0b141e;
+    }
+    .light-field input::-moz-range-thumb {
+      width: 11px;
+      height: 11px;
+      border: 1px solid #e9fcff;
+      border-radius: 50%;
+      background: #c6edf4;
+      box-shadow: 0 0 0 2px #0b141e;
+    }
+    .settings-toggle:focus-visible, .settings-panel :focus-visible {
+      outline: 2px solid #9ee3ee;
+      outline-offset: 3px;
+    }
+    .lighting-footer { margin-top: auto; border-top: 1px solid #23313e; }
+    .panel-action {
+      width: 100%;
+      min-height: 39px;
+      border: 1px solid #304b5a;
+      border-radius: 6px;
+      background: #12232e;
+      color: #ccedf3;
+      font: inherit;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .panel-action:hover { background: #1d3845; }
+    @media (max-width: 740px) and (orientation: portrait) {
+      .workspace[data-settings-open="true"] {
+        grid-template-columns: 1fr;
+        grid-template-rows: min(56.25vw, 39dvh) minmax(0, 1fr);
+      }
+      .settings-panel { width: 100%; border-left: 0; border-top: 1px solid #293846; }
+      .settings-header, .lighting-footer { padding-top: 9px; padding-bottom: 9px; }
+    }
+    @media (max-height: 490px) and (orientation: landscape) {
+      .settings-panel { width: min(286px, 45vw); }
+      .settings-header, .lighting-footer { padding-top: 8px; padding-bottom: 8px; }
+      .settings-tabs { margin-top: 8px; }
+    }
+    @media (pointer: coarse) {
+      .light-field input { height: 30px; }
+    }
+    @media (prefers-reduced-motion: reduce) { .controls { transition: none; } }
+  </style>
+</head>
+<body>
+  <main class="workspace" id="workspace">
+    <section class="aquarium-view" aria-label="龙鱼水族箱">
+      <div class="tank" id="tank">
+        <div class="status" id="status" role="status">正在打开水族箱…</div>
+        <div class="controls" id="controls" hidden>
+          <button id="playback" type="button" aria-label="暂停" title="暂停（空格）">
+            <span class="icon pause" aria-hidden="true"></span>
+          </button>
+          <button id="fullscreen" type="button" aria-label="全屏" title="全屏（F）">
+            <span class="icon fullscreen" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          </button>
+        </div>
+      </div>
+      <button class="settings-toggle" id="settings-toggle" type="button" aria-controls="settings-panel"
+        aria-expanded="false" hidden>
+        <span class="settings-glyph" aria-hidden="true"><i></i><i></i><i></i></span>
+        设置
+      </button>
+    </section>
+    <aside class="settings-panel" id="settings-panel" aria-labelledby="settings-title" hidden>
+      <header class="settings-header">
+        <h1 id="settings-title"><span class="settings-glyph" aria-hidden="true"><i></i><i></i><i></i></span>控制面板</h1>
+        <button id="settings-close" type="button" aria-label="收起控制面板" title="收起（Esc）">×</button>
+      </header>
+      <div class="settings-tabs" role="tablist" aria-label="设置">
+        <button id="background-tab" type="button" role="tab" aria-selected="true" aria-controls="background-section"
+          aria-keyshortcuts="B" title="背景（B）">背景</button>
+        <button id="lighting-tab" type="button" role="tab" aria-selected="false" aria-controls="lighting-section"
+          aria-keyshortcuts="L" title="灯光（L）" tabindex="-1">灯光</button>
+      </div>
+      <div class="panel-section" id="background-section" role="tabpanel" aria-labelledby="background-tab">
+        <div class="panel-scroll background-fields">
+          <h2 id="background-presets-title">预设背景</h2>
+          <div class="background-grid" id="background-choices" role="group" aria-labelledby="background-presets-title"></div>
+          <a class="panel-action overlay-link" id="background-overlay" href="#overlay" target="_blank"
+            rel="noopener" hidden>打开透明播放页</a>
+          <div class="custom-background">
+            <h2>自定义背景</h2>
+            <button class="background-choice custom-choice" id="background-custom" type="button"
+              aria-label="使用自定义背景" aria-pressed="false" hidden>
+              <img alt="" decoding="async">
+              <span class="background-choice-name"><span class="background-filename"></span></span>
+            </button>
+            <input id="background-file" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" hidden>
+            <button class="panel-action" id="background-browse" type="button" aria-describedby="background-note">选择图片</button>
+            <p class="background-note" id="background-note">JPG、PNG 或 WebP。图片会居中裁切以填满画面。</p>
+            <p class="background-status" id="background-status" role="status"></p>
+          </div>
+        </div>
+      </div>
+      <div class="panel-section" id="lighting-section" role="tabpanel" aria-labelledby="lighting-tab" hidden>
+        <div class="panel-scroll lighting-fields">
+          <fieldset aria-labelledby="main-light-title">
+            <h2 id="main-light-title">主光</h2>
+            <div class="light-field">
+              <label for="main-light">亮度</label><output for="main-light">100%</output>
+              <input type="range" id="main-light" name="main" min="0" max="220" value="100">
+            </div>
+            <div class="light-field">
+              <label for="light-azimuth">左右方向</label><output for="light-azimuth">左 31°</output>
+              <input type="range" id="light-azimuth" name="azimuth" min="-150" max="150" value="-31">
+            </div>
+            <div class="light-field">
+              <label for="light-elevation">照射高度</label><output for="light-elevation">49°</output>
+              <input type="range" id="light-elevation" name="elevation" min="0" max="85" value="49">
+            </div>
+            <div class="light-field">
+              <label for="light-warmth">冷暖</label><output for="light-warmth">原色</output>
+              <input class="warmth" type="range" id="light-warmth" name="warmth" min="-100" max="100" value="0">
+            </div>
+          </fieldset>
+          <fieldset aria-labelledby="fill-light-title">
+            <h2 id="fill-light-title">补光与反射</h2>
+            <div class="light-field">
+              <label for="fill-light">补光</label><output for="fill-light">100%</output>
+              <input type="range" id="fill-light" name="fill" min="0" max="220" value="100">
+            </div>
+            <div class="light-field">
+              <label for="rim-light">轮廓光</label><output for="rim-light">100%</output>
+              <input type="range" id="rim-light" name="rim" min="0" max="220" value="100">
+            </div>
+            <div class="light-field">
+              <label for="environment-light">环境反射</label><output for="environment-light">100%</output>
+              <input type="range" id="environment-light" name="environment" min="0" max="200" value="100">
+            </div>
+          </fieldset>
+        </div>
+        <footer class="lighting-footer">
+          <button class="panel-action" id="lighting-reset" type="button">恢复 V3 灯光</button>
+        </footer>
+      </div>
+    </aside>
+  </main>
+  <script id="model-data" type="application/octet-stream">__MODEL_BASE64__</script>
+  <script id="background-presets" type="application/json">__BACKGROUND_PRESETS__</script>
+  <script>__BUNDLE_JS__</script>
+</body>
+</html>
