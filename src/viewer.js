@@ -266,9 +266,12 @@ function installControls() {
     showControls();
   };
   playbackButton.addEventListener('click', togglePlayback);
-  if (!overlay) installFullscreen(fullscreenButton, active => {
-    if (active) closeSettings?.();
-    showControls();
+  if (!overlay) installFullscreen(fullscreenButton, {
+    landscape: true,
+    onChange(active) {
+      if (active) closeSettings?.();
+      showControls();
+    },
   });
   stage.addEventListener('pointermove', showControls);
   stage.addEventListener('pointerdown', showControls);

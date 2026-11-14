@@ -109,7 +109,7 @@ export async function startFishPreview(species, route, { cameraDistance = 9.4, c
     resize();
     status.hidden = true;
     playButton.disabled = scrubber.disabled = false;
-    installFullscreen(document.querySelector('#preview-fullscreen'));
+    installFullscreen(document.querySelector('#preview-fullscreen'), { landscape: true });
     queueFrame();
   } catch (error) {
     status.textContent = '无法打开预览，请使用支持 WebGL 2 的浏览器。';
