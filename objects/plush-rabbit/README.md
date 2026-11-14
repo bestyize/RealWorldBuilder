@@ -1,4 +1,4 @@
-# 小幸运毛绒兔
+# 碎花垂耳兔
 
 以会话中用内置 ImageGen 生成并选定的[参考图](reference.jpg)为准，制作一只坐姿垂耳布偶。正面保留圆脸、小椭圆眼、棕色刺绣鼻口、浅米色短绒、碎花棉布耳衬和右耳上的蝴蝶结。参考只展示正面，侧面的耳朵厚度、坐姿体积及背面的小尾巴根据布偶结构补足。Blender 里的坐姿高度为 0.30 m，+Z 向上、-Y 为正面，GLB 为 +Y 向上、+Z 为正面。
 
@@ -14,8 +14,8 @@
 参考图由内置 ImageGen 生成。选定图保存为 `reference.jpg`，并嵌入 `.blend` 与预览页。
 
 <details>
-<summary>参考图生成提示词</summary>
+<summary>参考图提示词的外观描述</summary>
 
-Use case: product-mockup. Create one beautiful photorealistic image for a casual preview of the GABRiEL 伽百利 '小幸运' Lucky W1813A 30 cm floral-ear plush bunny. Match this specific toy's recognizable visual design: pale oatmeal cream with a tiny hint of pink-beige, low-pile silky plush; a rounded, subtly oval stuffed head, two tiny dark oval eyes set wide apart, warm terracotta-brown small triangular embroidered nose, short brown thread down to a tiny shallow curved closed mouth. Two long narrow floppy ears originate at the top sides of the head and drape past the wrists toward the hips; the fabric on the inner side of each ear is cream cotton printed with small dusty rose and coral wildflower sprigs and softly muted sage leaves. A small subtle matching floral cotton bow by the base of one ear. A round lightly stuffed belly, naturally drooping plush arms, two gently extended long stuffed legs with big rounded paws. No clothes. Pose just one identifiable plush toy seated, mostly front-facing with feet slightly forward, head relaxed, both ears and the floral linings plainly visible. Full body centered in a near-square frame. Place it on off-white linen against a softly blurred warm ivory studio backdrop, with gentle diffuse side daylight and natural contact shadows. Soft tactile microtexture and fine seams, subtly endearing and understated. No props, no logos, no lettering, no watermark.
+Pale oatmeal cream with a tiny hint of pink-beige, low-pile silky plush, a rounded, subtly oval stuffed head, two tiny dark oval eyes set wide apart, warm terracotta-brown small triangular embroidered nose, short brown thread down to a tiny shallow curved closed mouth. Two long narrow floppy ears originate at the top sides of the head and drape past the wrists toward the hips. The fabric on the inner side of each ear is cream cotton printed with small dusty rose and coral wildflower sprigs and softly muted sage leaves. A small subtle matching floral cotton bow by the base of one ear. A round lightly stuffed belly, naturally drooping plush arms, two gently extended long stuffed legs with big rounded paws. No clothes. Pose just one plush toy seated, mostly front-facing with feet slightly forward, head relaxed, both ears and the floral linings plainly visible. Full body centered in a near-square frame. Place it on off-white linen against a softly blurred warm ivory studio backdrop, with gentle diffuse side daylight and natural contact shadows. Soft tactile microtexture and fine seams, subtly endearing and understated. No props, no logos, no lettering, no watermark.
 
 </details>

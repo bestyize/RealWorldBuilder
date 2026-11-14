@@ -9,6 +9,8 @@ import bpy
 from mathutils import Vector
 
 
+RABBIT_ROOT_NAME = 'Floral Lop-Eared Rabbit'
+
 VIEWS = {
     'front': (0, (0, -.18, 1.44), (0, -.67, 1.36), 7.08, .81, 70, 16),
     'three-quarter': (38, (0, -.19, 1.45), (0, -.44, 1.55), 7.27, 1.05, 69, 16),
@@ -55,7 +57,9 @@ def main():
     args.output.mkdir(parents=True, exist_ok=True)
     scene = bpy.context.scene
     fit_photo_backdrop()
-    scale = bpy.data.objects['Lucky'].scale.x
+    # Older Blender files used the working name for the root object.
+    root = scene.objects.get(RABBIT_ROOT_NAME) or scene.objects['Lucky']
+    scale = root.scale.x
     for name in args.view or VIEWS:
         render_photo(scene, scale, name, args.output / f'{name}.jpg', args.resolution, args.samples)
 

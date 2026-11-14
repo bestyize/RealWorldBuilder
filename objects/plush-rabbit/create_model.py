@@ -15,7 +15,7 @@ from mathutils.bvhtree import BVHTree
 DIRECTORY = Path(__file__).resolve().parent
 sys.path.insert(0, str(DIRECTORY))
 from materials import linen_material, make_materials, material, photo_fiber_material, srgb
-from render_photos import fit_photo_backdrop
+from render_photos import RABBIT_ROOT_NAME, fit_photo_backdrop
 
 TAU = math.tau
 PI = math.pi
@@ -950,7 +950,7 @@ def add_studio(scale, photo=False):
 def main(pilot=False, output=DIRECTORY):
     bpy.ops.wm.read_factory_settings(use_empty=True)
     mats, palettes = make_materials(pilot)
-    subject = collection('Lucky · plush rabbit')
+    subject = collection(RABBIT_ROOT_NAME)
     pieces = [collection(name) for name in ('Pattern pieces', 'Embroidery and seams', 'Floral bow', 'Short pile groom')]
     for group in pieces:
         subject.children.link(group)
@@ -989,12 +989,12 @@ def main(pilot=False, output=DIRECTORY):
     low = min(vertex.co.z for obj in model_objects if obj != pile for vertex in obj.data.vertices)
     high = max(vertex.co.z for obj in model_objects if obj != pile for vertex in obj.data.vertices)
     scale = .30 / (high - low)
-    root = bpy.data.objects.new('Lucky', None)
+    root = bpy.data.objects.new(RABBIT_ROOT_NAME, None)
     subject.objects.link(root)
     root.empty_display_size = .036
     root.scale = (scale,) * 3
     root.location.z = -low * scale
-    root['Reference'] = 'ImageGen concept · seated Lucky plush rabbit'
+    root['Reference'] = 'ImageGen concept · seated floral lop-eared rabbit'
     root['Units'] = '0.30 m from the floor to the top of the seated mesh before the fiber layer'
     for obj in model_objects:
         obj.parent = root

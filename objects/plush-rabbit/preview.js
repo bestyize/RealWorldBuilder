@@ -23,9 +23,9 @@ const liveToolbar = document.querySelector('#live-toolbar');
 const photoButtons = [...photoToolbar.querySelectorAll('[data-photo]')];
 const photos = { front: studioPhoto.src };
 const descriptions = {
-  front: '奶油色小幸运毛绒兔坐在亚麻布上的正面渲染',
-  'three-quarter': '从斜侧面看小幸运毛绒兔的垂耳和脚掌',
-  detail: '小幸运毛绒兔的脸颊短绒、刺绣鼻口和碎花布的渲染特写',
+  front: '碎花垂耳兔坐在亚麻布上的正面渲染',
+  'three-quarter': '从斜侧面看碎花垂耳兔的垂耳和脚掌',
+  detail: '碎花垂耳兔的脸颊短绒、刺绣鼻口和碎花布的渲染特写',
 };
 for (const [name, base64] of Object.entries(JSON.parse(takeEmbeddedData('#photo-data')))) {
   photos[name] = `data:image/jpeg;base64,${base64}`;
@@ -80,7 +80,7 @@ async function openModel() {
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.autoUpdate = false;
   renderer.domElement.tabIndex = stage.dataset.mode === '3d' ? 0 : -1;
-  renderer.domElement.setAttribute('aria-label', '小幸运毛绒兔三维模型。方向键旋转，加减键缩放，Home 键复位。');
+  renderer.domElement.setAttribute('aria-label', '碎花垂耳兔三维模型。方向键旋转，加减键缩放，Home 键复位。');
   stage.prepend(renderer.domElement);
 
   const decoder = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
