@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
-import { takeEmbeddedData, takeEmbeddedModel } from '../../src/embedded-data.js';
+import { takeEmbeddedModel } from '../../src/embedded-data.js';
 import { createContactShadow, createLinenFloor, createStudioEnvironment, STUDIO_WINDOW_POSITION } from './studio.js';
 import { addPlushVolume } from './plush-volume.js';
 
@@ -11,65 +11,7 @@ const status = document.querySelector('#status');
 const angles = [...document.querySelectorAll('[data-angle]')];
 const rotate = document.querySelector('#rotate');
 const reset = document.querySelector('#reset');
-const reference = document.querySelector('#reference');
-const closeReference = document.querySelector('#close-reference');
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
-const photoMode = document.querySelector('#photo-mode');
-const liveMode = document.querySelector('#live-mode');
-const photoFrame = document.querySelector('#photo-frame');
-const studioPhoto = document.querySelector('#studio-photo');
-const photoToolbar = document.querySelector('#photo-toolbar');
-const liveToolbar = document.querySelector('#live-toolbar');
-const photoButtons = [...photoToolbar.querySelectorAll('[data-photo]')];
-const photos = { front: studioPhoto.src };
-const descriptions = {
-  front: '碎花垂耳兔坐在亚麻布上的正面渲染',
-  'three-quarter': '从斜侧面看碎花垂耳兔的垂耳和脚掌',
-  detail: '碎花垂耳兔的脸颊短绒、刺绣鼻口和碎花布的渲染特写',
-};
-for (const [name, base64] of Object.entries(JSON.parse(takeEmbeddedData('#photo-data')))) {
-  photos[name] = `data:image/jpeg;base64,${base64}`;
-}
-for (const button of photoButtons) {
-  button.addEventListener('click', () => {
-    for (const option of photoButtons) option.setAttribute('aria-pressed', String(button === option));
-    const name = button.dataset.photo;
-    studioPhoto.src = photos[name];
-    studioPhoto.alt = descriptions[name];
-  });
-}
-
-let liveStarted = false;
-let liveFailed = false;
-
-function setMode(mode) {
-  const live = mode === '3d';
-  stage.dataset.mode = mode;
-  photoMode.setAttribute('aria-pressed', String(!live));
-  liveMode.setAttribute('aria-pressed', String(live));
-  photoFrame.hidden = photoToolbar.hidden = live;
-  liveToolbar.hidden = !live;
-  const canvas = stage.querySelector('canvas');
-  if (canvas) canvas.tabIndex = live ? 0 : -1;
-  status.hidden = !live || (stage.dataset.ready === 'true' && !liveFailed);
-  if (live && !liveStarted) {
-    liveStarted = true;
-    openModel().catch(error => {
-      liveFailed = true;
-      status.textContent = '无法载入三维模型。照片渲染仍可查看。';
-      console.error(error);
-    });
-  }
-}
-
-photoMode.addEventListener('click', () => setMode('photo'));
-liveMode.addEventListener('click', () => setMode('3d'));
-
-document.querySelector('#open-reference').addEventListener('click', () => reference.showModal());
-closeReference.addEventListener('click', () => reference.close());
-reference.addEventListener('click', event => {
-  if (event.target === reference) reference.close();
-});
 
 async function openModel() {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
@@ -79,7 +21,7 @@ async function openModel() {
   renderer.toneMappingExposure = 1.12;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.autoUpdate = false;
-  renderer.domElement.tabIndex = stage.dataset.mode === '3d' ? 0 : -1;
+  renderer.domElement.tabIndex = 0;
   renderer.domElement.setAttribute('aria-label', '碎花垂耳兔三维模型。方向键旋转，加减键缩放，Home 键复位。');
   stage.prepend(renderer.domElement);
 
@@ -171,7 +113,7 @@ async function openModel() {
   }
 
   function queueFrame() {
-    if (!frame && !document.hidden && !reference.open && !contextLost && stage.dataset.mode === '3d') {
+    if (!frame && !document.hidden && !contextLost) {
       frame = requestAnimationFrame(draw);
     }
   }
@@ -292,25 +234,13 @@ async function openModel() {
 
   renderer.domElement.addEventListener('webglcontextlost', () => {
     contextLost = true;
-    liveFailed = true;
     cancelAnimationFrame(frame);
     frame = 0;
     controls.enabled = false;
     for (const button of [...angles, rotate, reset]) button.disabled = true;
-    status.hidden = stage.dataset.mode !== '3d';
+    status.hidden = false;
     status.textContent = '图形连接已中断，请刷新页面。';
   });
-  new MutationObserver(() => {
-    if (stage.dataset.mode === 'photo') {
-      setRotation(false);
-      cancelAnimationFrame(frame);
-      frame = 0;
-    } else {
-      needsRender = true;
-      queueFrame();
-    }
-  }).observe(stage, { attributes: true, attributeFilter: ['data-mode'] });
-  reference.addEventListener('close', queueFrame);
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
       cancelAnimationFrame(frame);
@@ -332,4 +262,8 @@ async function openModel() {
   status.hidden = true;
 }
 
-setMode('3d');
+status.hidden = false;
+openModel().catch(error => {
+  status.textContent = '无法载入三维模型，请用支持 WebGL 2 的浏览器打开。';
+  console.error(error);
+});

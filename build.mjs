@@ -58,23 +58,12 @@ async function writePreview(species, name, model, entry = 'preview') {
 
 async function writeRabbitPreview() {
   const directory = './objects/plush-rabbit';
-  const assets = {
-    __REFERENCE_BASE64__: 'reference.jpg',
-    __PHOTO_FRONT_BASE64__: 'photos/front.jpg',
-    __PHOTO_THREE_QUARTER_BASE64__: 'photos/three-quarter.jpg',
-    __PHOTO_DETAIL_BASE64__: 'photos/detail.jpg',
-    __MODEL_BASE64__: 'plush-rabbit.glb',
-  };
-  const [template, script, encodedAssets] = await Promise.all([
+  const [template, script, model] = await Promise.all([
     readFile(file(`${directory}/preview-template.html`), 'utf8'),
     bundleScript(`${directory}/preview.js`),
-    Promise.all(Object.entries(assets).map(async ([placeholder, name]) => {
-      const bytes = await readFile(file(`${directory}/${name}`));
-      return [placeholder, bytes.toString('base64')];
-    })),
+    readFile(file(`${directory}/plush-rabbit.glb`)),
   ]);
-  const html = encodedAssets.reduce((page, [placeholder, data]) => page.replace(placeholder, () => data), template);
-  await writeFile(file(`${directory}/preview.html`), html.replace('__BUNDLE_JS__', () => script));
+  await writeFile(file(`${directory}/preview.html`), embedPlayer(template, script, { 'model-data': model }));
 }
 
 await Promise.all([
