@@ -1,9 +1,11 @@
 import * as THREE from 'three';
 import { arowana } from '../fish/arowana/index.js';
+import { blueGuppy } from '../fish/blue-guppy/index.js';
+import { createGuppySchool } from '../fish/blue-guppy/school.js';
 import { loadFish } from '../fish/load-fish.js';
 import { installBackgrounds, loadBackground } from './backgrounds.js';
 import { cruiseRoute } from './cruise-route.js';
-import { takeEmbeddedData, takeEmbeddedModel } from './embedded-data.js';
+import { takeEmbeddedData, takeSpeciesModel } from './embedded-data.js';
 import { createTankEnvironment } from './environment.js';
 import { installLighting } from './lighting.js';
 import { installSettings } from './settings.js';
@@ -96,8 +98,9 @@ async function start() {
 
   const backgrounds = JSON.parse(takeEmbeddedData('#background-presets'));
   const initialBackground = overlay ? backgrounds.find(background => background.id === 'transparent') : backgrounds[0];
-  const [createArowana, backdrop] = await Promise.all([
-    loadFish(arowana, takeEmbeddedModel()),
+  const [createArowana, createGuppy, backdrop] = await Promise.all([
+    loadFish(arowana, takeSpeciesModel(arowana.id)),
+    overlay ? null : loadFish(blueGuppy, takeSpeciesModel(blueGuppy.id)),
     loadBackground(initialBackground),
   ]);
   const textureAnisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
@@ -105,14 +108,24 @@ async function start() {
   const scene = new THREE.Scene();
   const cameraFov = THREE.MathUtils.radToDeg(2 * Math.atan(viewHeight / (2 * cameraDistance)));
   const camera = new THREE.PerspectiveCamera(cameraFov, aspect, 0.12, 50);
-  camera.position.set(0, 0.05, cameraDistance);
-  camera.lookAt(0, 0.05, 0);
+  const cameraHeight = overlay ? 0.05 : -0.31;
+  camera.position.set(0, cameraHeight, cameraDistance);
+  camera.lookAt(0, cameraHeight, 0);
   const backdropMesh = createBackdrop();
   const bubbles = createBubbles();
   scene.add(backdropMesh, bubbles);
   scene.environment = createTankEnvironment(renderer);
 
   const residents = [createArowana(cruiseRoute)];
+  if (createGuppy) {
+    const shoalLayer = new THREE.Group();
+    const shoal = createGuppySchool(createGuppy, shoalLayer);
+    // Keep the whole shoal below the arowana's route, including the fan
+    // tails at full spread. Scale the fish and their paths together.
+    shoalLayer.scale.setScalar(0.49);
+    shoalLayer.position.set(0, -1.22, -0.34);
+    residents.push(shoal);
+  }
   for (const { object } of residents) {
     object.traverse(mesh => {
       if (!mesh.isMesh) return;
@@ -315,6 +328,7 @@ function addMovingWaterLight(material, anisotropy) {
     if (map) map.anisotropy = anisotropy;
   }
   const previous = material.onBeforeCompile;
+  const programKey = material.customProgramCacheKey();
   material.onBeforeCompile = function(shader, renderer) {
     previous.call(this, shader, renderer);
     shader.uniforms.waterTime = motionTime;
@@ -346,7 +360,7 @@ function addMovingWaterLight(material, anisotropy) {
       gl_FragColor.rgb = gl_FragColor.rgb * transmittance + vec3(0.036, 0.072, 0.120) * (1.0 - transmittance);
     `);
   };
-  material.customProgramCacheKey = () => 'arowana-water-light-3';
+  material.customProgramCacheKey = () => programKey + '|aquarium-water-light-3';
 }
 
 function createBubbles() {

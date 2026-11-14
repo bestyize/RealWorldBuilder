@@ -22,7 +22,7 @@
 - 每个鱼种用自己的 `fish/<species>/`。当前约定可看 `fish/arowana/index.js`，鱼种入口包含 `id`、相对仓库根目录的 `modelFile` 与 `createSwimmer(object, route)`。控制器的 `update(timeSeconds)` 按绝对播放时刻求姿态，并提供 `duration` 供循环和进度条使用。主场景用 `getMotion()?.center` 时由控制器返回它。
 - `fish/load-fish.js` 解码 GLB，再为每条鱼复制独立的蒙皮骨骼。几何、材质和纹理可共享，改个体材质前先复制该材质。两条同种鱼一起验收时，推进其中一条的时间并检查另一条的姿态。
 - 独立预览参考 `fish/arowana/preview.js` 和 `src/fish-preview.js`，可用更合适的相机距离和独立路线查看动作。主缸的示例路线在 `src/cruise-route.js`，可复用 `fish/swim-route.js`。多鱼在同一水域时，由场景安排路径、深度、间距和启动相位。需要响应用户输入时，在场景层接收输入，在鱼种层处理动作的进入、过渡和恢复。
-- 目前 `build.mjs` 明确列出龙鱼的两套构建入口，`src/embedded-data.js` 从每页读入一个模型。新增预览时在任务分支添加对应入口。首次同缸组合不同鱼种时，再扩展嵌入和加载逻辑，按鱼种 ID 读取各自的 GLB，由 `src/viewer.js` 创建入缸的个体。集成时先合并源码和资源引用，再重新生成 HTML。
+- 独立预览在 `build.mjs` 中登记入口，各自内嵌一个 GLB。主水族箱按鱼种 ID 内嵌所需的模型，由 `src/viewer.js` 实例化个体或鱼群。集成时先合并源码和资源引用，再重新生成 HTML。
 
 ## 预览验收
 

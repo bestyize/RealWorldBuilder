@@ -38,10 +38,13 @@ const [aquariumScript, aquariumTemplate, previewTemplate, arowanaModel, guppyMod
 ]);
 
 const embeddedBackgrounds = JSON.stringify(backgrounds).replace(/</g, '\\u003c');
-function embedPlayer(template, script, model) {
+function embedPlayer(template, script, models) {
+  const modelTags = Object.entries(models).map(([id, model]) =>
+    `<script id="${id}" type="application/octet-stream">${model.toString('base64')}</script>`
+  ).join('\n  ');
   return template
     .replace('__BACKGROUND_PRESETS__', () => embeddedBackgrounds)
-    .replace('__MODEL_BASE64__', () => model.toString('base64'))
+    .replace('__MODEL_DATA__', () => modelTags)
     .replace('__BUNDLE_JS__', () => script);
 }
 
@@ -49,11 +52,14 @@ async function writePreview(species, name, model, entry = 'preview') {
   const directory = `./fish/${species.id}`;
   const script = await bundleScript(`${directory}/${entry}.js`);
   const template = previewTemplate.replaceAll('__FISH_NAME__', name);
-  await writeFile(file(`${directory}/${entry}.html`), embedPlayer(template, script, model));
+  await writeFile(file(`${directory}/${entry}.html`), embedPlayer(template, script, { 'model-data': model }));
 }
 
 await Promise.all([
-  writeFile(file('./aquarium.html'), embedPlayer(aquariumTemplate, aquariumScript, arowanaModel)),
+  writeFile(file('./aquarium.html'), embedPlayer(aquariumTemplate, aquariumScript, {
+    [`model-data-${arowana.id}`]: arowanaModel,
+    [`model-data-${blueGuppy.id}`]: guppyModel,
+  })),
   writePreview(arowana, '龙鱼', arowanaModel),
   writePreview(blueGuppy, '蓝扇尾孔雀鱼', guppyModel),
   writePreview(blueGuppy, '孔雀鱼群', guppyModel, 'school-preview'),

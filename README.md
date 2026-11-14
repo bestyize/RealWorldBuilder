@@ -1,12 +1,12 @@
 # RealWorldBuilder
 
-实时 3D 龙鱼水族箱，支持切换背景、自定义图片、调节灯光和透明叠加。
+实时 3D 水族箱。一条龙鱼和六条不同花色的孔雀鱼同缸游动，支持切换背景、自定义图片、调节灯光和透明叠加。
 
 [打开在线水族箱](https://bestyize.github.io/RealWorldBuilder/)
 
-打开 `aquarium.html` 即可离线运行。点击右上角「设置」进入控制面板。「背景」页可以切换六套预设，或选择本机的 JPG、PNG、WebP 图片。「灯光」页可以调节龙鱼的灯光和反射。按 B 或 L 可以直接打开对应页面。
+打开 [aquarium.html](aquarium.html) 即可离线运行。点击右上角「设置」进入控制面板。「背景」页可以切换六套预设，或选择本机的 JPG、PNG、WebP 图片。「灯光」页可以调节水族箱的灯光和反射。按 B 或 L 可以直接打开对应页面。
 
-在「背景」里选「透明」，再点「打开透明播放页」，即可打开 `aquarium.html#overlay`。播放页只显示游动的龙鱼，保留鳍和轮廓的透明度。
+在「背景」里选「透明」可以观看透明背景下的同缸画面。点击「打开龙鱼透明播放页」可进入 `aquarium.html#overlay`，单独叠加龙鱼，保留鳍和轮廓的透明度。
 
 把播放页用作 OBS 浏览器源时，可在仓库目录运行 `python3 -m http.server 8000 --bind 127.0.0.1`，再填入 `http://127.0.0.1:8000/aquarium.html#overlay`。嵌入网页时，把 iframe 放到画面图层上方。
 
@@ -20,9 +20,9 @@
 
 预设以山水客厅为初始背景。自定义图按原比例居中裁切成 16∶9，画面最长边保留至 2560 像素。浏览器允许本地存储时，同一地址重新打开会恢复所选背景和最近一张自定义图。
 
-`fish/arowana/` 收录龙鱼的 Blender 工程、带贴图和动画的 GLB、骨骼游动代码，以及[独立预览](fish/arowana/preview.html)。独立预览和水族箱使用同一个 GLB，分别提供各自的游动路线。
+每个鱼种在各自目录维护 Blender 工程、GLB 和游动代码。可以分别打开[龙鱼](fish/arowana/preview.html)、[单条蓝扇尾孔雀鱼](fish/blue-guppy/preview.html)和[六条孔雀鱼群](fish/blue-guppy/school-preview.html)的独立预览。
 
-修改源码或素材后，在仓库根目录运行 `npm ci` 和 `npm run build`，生成可离线运行的 `aquarium.html` 和 `fish/arowana/preview.html`。
+修改源码或素材后，在仓库根目录运行 `npm ci` 和 `npm run build`，重新生成水族箱和三个可离线打开的独立预览。
 
 ## 背景素材
 
