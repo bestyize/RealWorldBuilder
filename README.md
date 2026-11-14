@@ -24,7 +24,7 @@
 
 每个鱼种在各自目录维护 Blender 工程、GLB 和游动代码。可以分别打开[龙鱼](fish/arowana/preview.html)、[单条蓝扇尾孔雀鱼](fish/blue-guppy/preview.html)和[六条孔雀鱼群](fish/blue-guppy/school-preview.html)的独立预览。[碎花垂耳兔](objects/plush-rabbit/preview.html)可以拖动旋转和缩放。
 
-展厅使用 `index.html`、`src/gallery.css` 和 `assets/gallery/` 中的素材。修改预览源码或模型后，在仓库根目录运行 `npm ci` 和 `npm run build`，重新生成水族箱、鱼类和碎花垂耳兔的独立预览。
+展厅使用 `index.html`、`src/gallery.css` 和 `assets/gallery/` 中的素材。修改预览源码或模型后，用 Node.js 20.9 或更新版本运行 `npm ci` 和 `npm run build`。构建会将模型贴图和预设背景转换为 WebP，并内嵌到可离线打开的 HTML 中。PNG 贴图使用无损编码并保留透明度，JPEG 背景和底色贴图使用高质量编码。Blender 工程及原始素材仍是编辑和导出的来源。
 
 ## 背景素材
 

@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { build } from 'esbuild';
 import { arowana } from './fish/arowana/index.js';
 import { blueGuppy } from './fish/blue-guppy/index.js';
+import { webpDataUrl, webpModel } from './scripts/webp-assets.mjs';
 
 const file = (path) => new URL(path, import.meta.url);
 const presets = [
@@ -28,13 +29,13 @@ const [aquariumScript, aquariumTemplate, previewTemplate, arowanaModel, guppyMod
   bundleScript('./src/viewer.js'),
   readFile(file('./src/viewer-template.html'), 'utf8'),
   readFile(file('./src/fish-preview-template.html'), 'utf8'),
-  readFile(file(arowana.modelFile)),
-  readFile(file(blueGuppy.modelFile)),
-  readFile(file('./assets/rocky-shallows.png')),
+  webpModel(file(arowana.modelFile)),
+  webpModel(file(blueGuppy.modelFile)),
+  webpDataUrl(file('./assets/rocky-shallows.png')),
   Promise.all(presets.map(async ({ filename, ...preset }) => {
     if (!filename) return preset;
-    const asset = await readFile(file(`./assets/${filename}`));
-    return { ...preset, imageUrl: 'data:image/jpeg;base64,' + asset.toString('base64') };
+    const imageUrl = await webpDataUrl(file(`./assets/${filename}`), { quality: 94 });
+    return { ...preset, imageUrl };
   })),
 ]);
 
@@ -61,14 +62,13 @@ async function writeRabbitPreview() {
   const [template, script, model] = await Promise.all([
     readFile(file(`${directory}/preview-template.html`), 'utf8'),
     bundleScript(`${directory}/preview.js`),
-    readFile(file(`${directory}/plush-rabbit.glb`)),
+    webpModel(file(`${directory}/plush-rabbit.glb`)),
   ]);
   await writeFile(file(`${directory}/preview.html`), embedPlayer(template, script, { 'model-data': model }));
 }
 
 await Promise.all([
-  writeFile(file('./aquarium.html'), embedPlayer(aquariumTemplate.replace('__AQUASCAPE_URL__', () =>
-    'data:image/png;base64,' + aquascape.toString('base64')), aquariumScript, {
+  writeFile(file('./aquarium.html'), embedPlayer(aquariumTemplate.replace('__AQUASCAPE_URL__', () => aquascape), aquariumScript, {
     [`model-data-${arowana.id}`]: arowanaModel,
     [`model-data-${blueGuppy.id}`]: guppyModel,
   })),
