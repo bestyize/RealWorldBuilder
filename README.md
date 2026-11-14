@@ -1,5 +1,7 @@
 # RealWorldBuilder
 
+![龙鱼在山水客厅水族箱中游动](./docs/aquarium.gif)
+
 实时 3D 展厅。可以观赏一条龙鱼和六条不同花色的孔雀鱼共游，也可以单独看鱼或打开碎花垂耳兔的 3D 预览。
 
 [打开 GitHub Pages](https://bestyize.github.io/RealWorldBuilder/)
