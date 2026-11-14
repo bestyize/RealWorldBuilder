@@ -2,7 +2,9 @@ import * as THREE from 'three';
 import { loadFish } from '../fish/load-fish.js';
 import { takeEmbeddedModel } from './embedded-data.js';
 import { createTankEnvironment } from './environment.js';
+import { installFullscreen } from './fullscreen.js';
 import { addSceneLights } from './lighting.js';
+import { fitSwimCamera, swimAspect } from './swim-camera.js';
 
 export async function startFishPreview(species, route, { cameraDistance = 9.4, createSubjects } = {}) {
   const stage = document.querySelector('#preview-stage');
@@ -29,7 +31,8 @@ export async function startFishPreview(species, route, { cameraDistance = 9.4, c
     });
     scene.add(fish.object);
 
-    const camera = new THREE.PerspectiveCamera(25, 16 / 9, .12, 50);
+    const cameraFov = 25;
+    const camera = new THREE.PerspectiveCamera(cameraFov, swimAspect, .12, 50);
     camera.position.set(0, .12, cameraDistance);
     camera.lookAt(0, .12, 0);
 
@@ -76,11 +79,11 @@ export async function startFishPreview(species, route, { cameraDistance = 9.4, c
     }
 
     const resize = () => {
-      if (!stage.clientWidth || !stage.clientHeight) return;
-      camera.aspect = stage.clientWidth / stage.clientHeight;
-      camera.updateProjectionMatrix();
-      renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2, 1600 / stage.clientWidth));
-      renderer.setSize(stage.clientWidth, stage.clientHeight, false);
+      const { clientWidth: width, clientHeight: height } = stage;
+      if (!width || !height) return;
+      fitSwimCamera(camera, width, height, cameraFov);
+      renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2, 1600 / Math.max(width, height)));
+      renderer.setSize(width, height, false);
       draw();
     };
 
@@ -106,6 +109,7 @@ export async function startFishPreview(species, route, { cameraDistance = 9.4, c
     resize();
     status.hidden = true;
     playButton.disabled = scrubber.disabled = false;
+    installFullscreen(document.querySelector('#preview-fullscreen'));
     queueFrame();
   } catch (error) {
     status.textContent = '无法打开预览，请使用支持 WebGL 2 的浏览器。';

@@ -3,6 +3,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { takeEmbeddedModel } from '../../src/embedded-data.js';
+import { installFullscreen } from '../../src/fullscreen.js';
 import { createContactShadow, createLinenFloor, createStudioEnvironment, STUDIO_WINDOW_POSITION } from './studio.js';
 import { addPlushVolume } from './plush-volume.js';
 
@@ -260,6 +261,7 @@ async function openModel() {
   stage.dataset.ready = 'true';
   for (const button of [...angles, rotate, reset]) button.disabled = false;
   status.hidden = true;
+  installFullscreen(document.querySelector('#preview-fullscreen'));
 }
 
 status.hidden = false;

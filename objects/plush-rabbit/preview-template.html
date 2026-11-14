@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f7f0e6">
   <title>碎花垂耳兔 · 3D 预览</title>
   <style>
@@ -47,6 +47,13 @@
     #stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
     #stage canvas:active { cursor: grabbing; }
     #stage canvas:focus-visible { outline-offset: -4px; }
+    .stage-fullscreen {
+      position: absolute;
+      z-index: 1;
+      top: max(12px, calc(env(safe-area-inset-top, 0px) + 8px));
+      right: max(12px, calc(env(safe-area-inset-right, 0px) + 8px));
+      min-height: 44px;
+    }
     #status {
       margin: 0; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
       max-width: min(86%, 420px); width: max-content; padding: 11px 15px; border: 1px solid var(--line);
@@ -82,6 +89,26 @@
       .views button { padding: 0 7px; font-size: 12px; }
       .action { padding: 0 7px; font-size: 12px; }
     }
+    @media (orientation: landscape) and (max-height: 490px) {
+      body {
+        padding-left: max(16px, env(safe-area-inset-left, 0px));
+        padding-right: max(16px, env(safe-area-inset-right, 0px));
+      }
+      #stage { min-height: 0; height: max(190px, calc(100dvh - 112px)); }
+    }
+    html[data-fullscreen], html[data-fullscreen] body { overflow: hidden; overscroll-behavior: none; }
+    html[data-fullscreen] .masthead, html[data-fullscreen] .toolbar { visibility: hidden; }
+    html[data-fullscreen] #stage {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      height: 100%;
+      height: 100dvh;
+      min-height: 0;
+      max-height: none;
+      border: 0;
+      border-radius: 0;
+    }
   </style>
 </head>
 <body>
@@ -92,6 +119,9 @@
     </header>
     <section id="stage" aria-label="模型预览">
       <p id="status" role="status" hidden>正在载入三维模型…</p>
+      <button class="action stage-fullscreen" id="preview-fullscreen" type="button" title="全屏（F）" hidden>
+        <span data-fullscreen-label>全屏</span>
+      </button>
       <noscript><p>请启用 JavaScript 查看模型。</p></noscript>
     </section>
     <div class="toolbar">

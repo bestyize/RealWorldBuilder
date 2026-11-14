@@ -47,7 +47,7 @@ export function installSettings() {
     if (event.defaultPrevented || event.repeat || event.altKey || event.ctrlKey || event.metaKey) return;
     if (event.key === 'Escape' && !panel.hidden) setOpen(false);
     const tab = shortcuts[event.code];
-    if (!tab || document.body.dataset.presentation === 'true') return;
+    if (!tab || document.body.dataset.presentation === 'true' || document.documentElement.hasAttribute('data-fullscreen')) return;
     event.preventDefault();
     if (panel.hidden) {
       activeTab = tab;

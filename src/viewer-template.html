@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#050a11">
   <title>RealWorldBuilder · 水族箱</title>
   <style>
@@ -45,7 +45,10 @@
       background: #091526;
     }
     .tank canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-    .aquascape-layer { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+    .aquascape-layer { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: center bottom; pointer-events: none; }
+    @container (min-aspect-ratio: 16 / 9) {
+      .aquascape-layer { object-fit: cover; }
+    }
     .status {
       position: absolute;
       inset: 0;
@@ -61,7 +64,7 @@
     }
     .controls {
       position: absolute;
-      bottom: clamp(14px, 4.1%, 37px);
+      bottom: max(clamp(14px, 4.1%, 37px), calc(env(safe-area-inset-bottom, 0px) + 8px));
       left: 50%;
       display: flex;
       gap: 5px;
@@ -82,6 +85,8 @@
       pointer-events: auto;
       transform: translate(-50%, 0);
     }
+    html[data-fullscreen] .tank { width: 100%; height: 100%; aspect-ratio: auto; }
+    html[data-fullscreen] .gallery-link, html[data-fullscreen] .settings-toggle { visibility: hidden; }
     body[data-presentation="true"] .controls,
     body[data-presentation="true"] .settings-toggle,
     body[data-presentation="true"] .gallery-link { visibility: hidden; }
@@ -96,9 +101,11 @@
       background: transparent;
       color: inherit;
       cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
     }
     .controls button:hover { background: rgba(201, 226, 252, .14); }
     .controls button:focus-visible { outline: 1px solid #bce0ff; outline-offset: -3px; }
+    .fullscreen-label { display: none; font-size: 13px; white-space: nowrap; }
     .icon { display: block; position: relative; width: 18px; height: 18px; }
     .pause::before, .pause::after {
       content: ""; position: absolute; width: 3px; height: 13px; top: 2.5px;
@@ -119,16 +126,16 @@
     .fullscreen i:nth-child(2) { top: 0; right: 0; border-width: 2px 2px 0 0; }
     .fullscreen i:nth-child(3) { bottom: 0; right: 0; border-width: 0 2px 2px 0; }
     .fullscreen i:nth-child(4) { bottom: 0; left: 0; border-width: 0 0 2px 2px; }
-    button[data-fullscreen="true"] .fullscreen { transform: rotate(180deg); }
-    button[data-fullscreen="true"] .fullscreen i:nth-child(1) { border-width: 0 2px 2px 0; }
-    button[data-fullscreen="true"] .fullscreen i:nth-child(2) { border-width: 0 0 2px 2px; }
-    button[data-fullscreen="true"] .fullscreen i:nth-child(3) { border-width: 2px 0 0 2px; }
-    button[data-fullscreen="true"] .fullscreen i:nth-child(4) { border-width: 2px 2px 0 0; }
+    html[data-fullscreen] .fullscreen { transform: rotate(180deg); }
+    html[data-fullscreen] .fullscreen i:nth-child(1) { border-width: 0 2px 2px 0; }
+    html[data-fullscreen] .fullscreen i:nth-child(2) { border-width: 0 0 2px 2px; }
+    html[data-fullscreen] .fullscreen i:nth-child(3) { border-width: 2px 0 0 2px; }
+    html[data-fullscreen] .fullscreen i:nth-child(4) { border-width: 2px 2px 0 0; }
     .settings-toggle, .gallery-link {
       position: absolute;
       z-index: 1;
-      top: clamp(12px, 3vw, 26px);
-      right: clamp(12px, 3vw, 26px);
+      top: max(clamp(12px, 3vw, 26px), calc(env(safe-area-inset-top, 0px) + 8px));
+      right: max(clamp(12px, 3vw, 26px), calc(env(safe-area-inset-right, 0px) + 8px));
       display: flex;
       align-items: center;
       gap: 9px;
@@ -146,7 +153,7 @@
       backdrop-filter: blur(14px);
     }
     .gallery-link {
-      left: clamp(12px, 3vw, 26px);
+      left: max(clamp(12px, 3vw, 26px), calc(env(safe-area-inset-left, 0px) + 8px));
       right: auto;
       text-decoration: none;
     }
@@ -412,12 +419,31 @@
       .settings-header, .lighting-footer { padding-top: 9px; padding-bottom: 9px; }
     }
     @media (max-height: 490px) and (orientation: landscape) {
-      .settings-panel { width: min(286px, 45vw); }
+      .settings-panel { width: min(286px, 45vw); padding-right: env(safe-area-inset-right, 0px); }
       .settings-header, .lighting-footer { padding-top: 8px; padding-bottom: 8px; }
       .settings-tabs { margin-top: 8px; }
     }
     @media (pointer: coarse) {
       .light-field input { height: 30px; }
+      .controls {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translate(-50%, 0);
+      }
+      #fullscreen { display: flex; align-items: center; gap: 8px; width: auto; padding-inline: 12px; }
+      .fullscreen-label { display: inline; }
+    }
+    @media (orientation: landscape) and (pointer: coarse) {
+      body:not([data-presentation="true"]) .workspace:not([data-settings-open="true"]) .tank {
+        width: 100%;
+        height: 100%;
+        aspect-ratio: auto;
+      }
+      .controls, .controls[data-visible="true"], .controls:has(:focus-visible) {
+        left: auto;
+        right: max(12px, calc(env(safe-area-inset-right, 0px) + 8px));
+        transform: none;
+      }
     }
     @media (prefers-reduced-motion: reduce) { .controls { transition: none; } }
   </style>
@@ -432,8 +458,9 @@
           <button id="playback" type="button" aria-label="暂停" title="暂停（空格）">
             <span class="icon pause" aria-hidden="true"></span>
           </button>
-          <button id="fullscreen" type="button" aria-label="全屏" title="全屏（F）">
+          <button id="fullscreen" type="button" aria-label="全屏" title="全屏（F）" hidden>
             <span class="icon fullscreen" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+            <span class="fullscreen-label" data-fullscreen-label>全屏</span>
           </button>
         </div>
       </div>

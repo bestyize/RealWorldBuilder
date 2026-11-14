@@ -9,8 +9,10 @@ import { cruiseRoute } from './cruise-route.js';
 import { installDisplay } from './display.js';
 import { takeEmbeddedData, takeSpeciesModel } from './embedded-data.js';
 import { createTankEnvironment } from './environment.js';
+import { installFullscreen } from './fullscreen.js';
 import { installLighting } from './lighting.js';
 import { installSettings } from './settings.js';
+import { fitSwimCamera, swimAspect } from './swim-camera.js';
 
 const stage = document.querySelector('#tank');
 const status = document.querySelector('#status');
@@ -24,9 +26,9 @@ const scenePresets = new Map([
   ['planted', { background: 'black', aquascape: true }],
 ]);
 const entryScene = scenePresets.get(new URLSearchParams(location.search).get('scene'));
-const aspect = 16 / 9;
 const cameraDistance = 11;
 const viewHeight = 4.5;
+const cameraFov = THREE.MathUtils.radToDeg(2 * Math.atan(viewHeight / (2 * cameraDistance)));
 const motionTime = { value: 0 };
 const floorLight = { value: new THREE.Vector2(0.5, 0.5) };
 
@@ -115,8 +117,7 @@ async function start() {
   const textureAnisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
 
   const scene = new THREE.Scene();
-  const cameraFov = THREE.MathUtils.radToDeg(2 * Math.atan(viewHeight / (2 * cameraDistance)));
-  const camera = new THREE.PerspectiveCamera(cameraFov, aspect, 0.12, 50);
+  const camera = new THREE.PerspectiveCamera(cameraFov, swimAspect, 0.12, 50);
   const backdropMesh = createBackdrop();
   const bubbles = createBubbles();
   scene.add(backdropMesh, bubbles);
@@ -140,7 +141,10 @@ async function start() {
     });
     scene.add(object);
   }
-  aquarium = { renderer, scene, camera, residents: [] };
+  aquarium = {
+    renderer, scene, camera, residents: [],
+    sceneImageScale: backdropMesh.material.uniforms.sceneImageScale.value,
+  };
   const redraw = () => {
     if (!playing) draw(playhead);
   };
@@ -198,7 +202,6 @@ async function start() {
   resize();
   status.hidden = true;
   controls.hidden = overlay;
-  fullscreenButton.hidden = !document.fullscreenEnabled;
   installControls();
   showControls();
   queueFrame();
@@ -220,11 +223,14 @@ function queueFrame() {
 
 function resize() {
   if (!aquarium || !stage.clientWidth || !stage.clientHeight) return;
-  const { renderer } = aquarium;
+  const { renderer, camera, sceneImageScale } = aquarium;
+  const { clientWidth: width, clientHeight: height } = stage;
+  fitSwimCamera(camera, width, height, cameraFov);
+  sceneImageScale.set(Math.min(1, camera.aspect / swimAspect), Math.min(1, swimAspect / camera.aspect));
   const pixelBudget = 3840 * 2160;
-  const scale = Math.min(window.devicePixelRatio || 1, 2, Math.sqrt(pixelBudget / (stage.clientWidth * stage.clientHeight)));
+  const scale = Math.min(window.devicePixelRatio || 1, 2, Math.sqrt(pixelBudget / (width * height)));
   renderer.setPixelRatio(scale);
-  renderer.setSize(stage.clientWidth, stage.clientHeight, false);
+  renderer.setSize(width, height, false);
   draw(secondsAt(performance.now()));
 }
 
@@ -259,30 +265,20 @@ function installControls() {
     window.aquarium[playing ? 'pause' : 'play']();
     showControls();
   };
-  const toggleFullscreen = async () => {
-    if (document.fullscreenElement) await document.exitFullscreen();
-    else if (document.fullscreenEnabled) await document.documentElement.requestFullscreen();
-  };
-  const handleFullscreen = () => toggleFullscreen().catch(() => {});
   playbackButton.addEventListener('click', togglePlayback);
-  fullscreenButton.addEventListener('click', handleFullscreen);
+  if (!overlay) installFullscreen(fullscreenButton, active => {
+    if (active) closeSettings?.();
+    showControls();
+  });
   stage.addEventListener('pointermove', showControls);
   stage.addEventListener('pointerdown', showControls);
   controls.addEventListener('pointerleave', showControls);
-  document.addEventListener('fullscreenchange', () => {
-    const active = Boolean(document.fullscreenElement);
-    const label = active ? '退出全屏' : '全屏';
-    fullscreenButton.dataset.fullscreen = String(active);
-    fullscreenButton.setAttribute('aria-label', label);
-    fullscreenButton.title = label + '（F）';
-  });
   document.addEventListener('keydown', event => {
     if (event.repeat || event.altKey || event.ctrlKey || event.metaKey) return;
     if (event.code === 'Space' && !event.target.closest?.('button, input, select, textarea, [contenteditable]')) {
       event.preventDefault();
       togglePlayback();
     }
-    if (event.code === 'KeyF') handleFullscreen();
   });
   document.addEventListener('visibilitychange', () => {
     const now = performance.now();
@@ -298,6 +294,7 @@ function createBackdrop() {
   const material = new THREE.ShaderMaterial({
     uniforms: {
       sceneImage: { value: null },
+      sceneImageScale: { value: new THREE.Vector2(1, 1) },
       waterEffect: { value: 0 },
       elapsed: motionTime,
       fishCenter: floorLight,
@@ -311,6 +308,7 @@ function createBackdrop() {
     `,
     fragmentShader: /* glsl */ `
       uniform sampler2D sceneImage;
+      uniform vec2 sceneImageScale;
       uniform float waterEffect;
       uniform float elapsed;
       uniform vec2 fishCenter;
@@ -329,6 +327,7 @@ function createBackdrop() {
         vec2 floorFlow = vec2(sin(p.y * 31.0 + p.x * 11.0 + t * 0.73), 0.46 * cos(p.x * 17.0 - p.y * 24.0 + t * 0.83));
         vec2 q = p + displacement * (0.00066 * waterEffect + surface * 0.0034 + floorMask * 0.0042) * edges;
         q += floorFlow * floorWave * 0.0062 * waterEffect;
+        q = (q - 0.5) * sceneImageScale + 0.5;
         vec3 rgb = texture2D(sceneImage, clamp(q, 0.001, 0.999)).rgb;
         float drift = sin(p.x * 23.0 - p.y * 8.0 + t * 0.37) * sin(p.x * 11.0 + p.y * 9.0 - t * 0.51);
         float beam = pow(max(0.0, sin((p.x + p.y * 0.2 + 0.017 * sin(t * 0.23)) * 28.0)), 8.0);
