@@ -64,9 +64,8 @@ export function createCaudalFin(mesh, tailBone, duration, poseBody) {
     const radius = (row - .5) / rows;
     bendEnvelope[i] = free[i] * (1 - (1 - radius) ** 2);
     return {
-      angle: Math.atan2(vector.y, -vector.x),
-      span: Math.hypot(vector.x, vector.y),
-      sweep: vector.z,
+      vector,
+      droop: free[i] * radius ** 1.10,
       blend: smoothstep(radius, .20, .97),
     };
   });
@@ -89,12 +88,12 @@ export function createCaudalFin(mesh, tailBone, duration, poseBody) {
   const scale = mesh.matrixWorld.getMaxScaleOnAxis();
   const mid = new Float32Array(samples);
   const tip = new Float32Array(samples);
-  const opening = new Float32Array(samples);
+  const droop = new Float32Array(samples);
   const start = new Vector3(), end = new Vector3(), velocity = new Vector3();
-  function acrossWater(before, state, after, station) {
+  function velocityAt(before, after, station) {
     start.copy(before.chord).multiplyScalar(station).add(before.root);
     end.copy(after.chord).multiplyScalar(station).add(after.root);
-    return velocity.subVectors(end, start).dot(state.normal) / (2 * dt * scale);
+    return velocity.subVectors(end, start).multiplyScalar(1 / (2 * dt * scale));
   }
   for (let i = 0; i < samples; i++) {
     const before = states[(i + samples - 1) % samples];
@@ -102,14 +101,16 @@ export function createCaudalFin(mesh, tailBone, duration, poseBody) {
     const after = states[(i + 1) % samples];
     // Drag opposes lateral motion through still water. The bounded targets
     // are equilibrium angles for a damped elastic response.
-    mid[i] = -.26 * Math.tanh(acrossWater(before, state, after, .29) / 1.30);
-    tip[i] = -.57 * Math.tanh(acrossWater(before, state, after, .97) / 1.40);
-    opening[i] = .62 + .38 * smoothstep(state.effort, .12, .88);
+    mid[i] = -.26 * Math.tanh(velocityAt(before, after, .29).dot(state.normal) / 1.30);
+    const tipFlow = velocityAt(before, after, .97);
+    tip[i] = -.57 * Math.tanh(tipFlow.dot(state.normal) / 1.40);
+    const tension = smoothstep(state.effort, .12, .88);
+    droop[i] = .036 + .48 * (1 - tension) + .075 * Math.tanh(tipFlow.y / .63);
   }
 
   const middleBend = periodicSpring(mid, dt, 25, .85);
   const trailingBend = periodicSpring(tip, dt, 15, .81);
-  const spread = periodicSpring(opening, dt, 15, .91);
+  const hanging = periodicSpring(droop, dt, 13, .88);
 
   const segment = new Vector3();
   const radial = new Vector3();
@@ -128,22 +129,23 @@ export function createCaudalFin(mesh, tailBone, duration, poseBody) {
     const mix = frame - index;
     const midBend = lerp(middleBend[here], middleBend[next], mix);
     const tipBend = lerp(trailingBend[here], trailingBend[next], mix);
-    const closure = 1 - clamp(lerp(spread[here], spread[next], mix), .62, 1);
+    const sag = clamp(lerp(hanging[here], hanging[next], mix), 0, .59);
     for (let column = 0; column < columns; column++) {
       const side = 2 * column / (columns - 1) - 1;
       const flexibility = 1 - .13 * side;
       for (let row = 1; row <= rows; row++) {
         const i = gridIndex(row, column);
         const rest = restSegments[i - 1];
-        // Close the angle between rays. Rotating each segment preserves its length.
-        const angle = rest.angle * (1 - closure * free[i]);
-        segment.set(-Math.cos(angle) * rest.span, Math.sin(angle) * rest.span, rest.sweep);
+        // Droop follows the chord. Adjacent rays lean downward together.
+        const pitch = sag * rest.droop;
+        const pitchCos = Math.cos(pitch);
+        const pitchSin = Math.sin(pitch);
+        const { x, y, z } = rest.vector;
+        const chord = x * pitchCos - y * pitchSin;
         const bend = bendEnvelope[i] * flexibility * lerp(midBend, tipBend, rest.blend);
-        const baseX = segment.x;
         const cos = Math.cos(bend);
         const sin = Math.sin(bend);
-        segment.x = baseX * cos + rest.sweep * sin;
-        segment.z = -baseX * sin + rest.sweep * cos;
+        segment.set(chord * cos + z * sin, x * pitchSin + y * pitchCos, -chord * sin + z * cos);
         rayPoints[i].copy(rayPoints[gridIndex(row - 1, column)]).add(segment);
       }
     }

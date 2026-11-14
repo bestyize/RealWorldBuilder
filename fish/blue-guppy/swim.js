@@ -8,9 +8,9 @@ const FORWARD = new Vector3(1, 0, 0);
 const { clamp, euclideanModulo: wrap, lerp, smoothstep } = MathUtils;
 // The active stroke travels through the trunk and ends at the fin root.
 const SPINE = [
-  ['Body', .051, .029, .34],
-  ['Peduncle', .109, .065, .60],
-  ['TailBase', .118, .103, .46],
+  ['Body', .051, .029, .34, -.10, .37],
+  ['Peduncle', .109, .065, .60, -.56, .53],
+  ['TailBase', .118, .103, .46, -.99, .37],
 ];
 
 // Some callers may still load a GLB with the previous tail shape keys.
@@ -67,6 +67,7 @@ export function createSwimmer(object, route) {
   const up = new Vector3();
   const lateral = new Vector3();
   const aim = new Vector3();
+  const leadingTangent = new Vector3();
   const scratch = new Vector3();
   const rotation = new Quaternion();
   const inverseModel = object.getWorldQuaternion(new Quaternion()).invert();
@@ -86,7 +87,7 @@ export function createSwimmer(object, route) {
   }
 
   const spine = (usesFinRays ? SPINE : SPINE.concat(LEGACY_TAIL))
-    .map(([name, amplitude, lag, bend]) => ({ ...bind(name), amplitude, lag, bend }));
+    .map(([name, amplitude, lag, bend, station, limit]) => ({ ...bind(name), amplitude, lag, bend, station, limit }));
   const pectorals = [[1, 'Pectoral_L', .45], [-1, 'Pectoral_R', 2.32]].map(([side, name, phase]) => ({
     ...bind(name), side, phase,
   }));
@@ -148,10 +149,11 @@ export function createSwimmer(object, route) {
     sample(time, head);
     const { distance, effort, phase, angle } = head;
     route.sample(distance, anchor, forward);
-    route.sample(distance + .32 * scale, scratch, aim);
+    route.sample(distance + (usesFinRays ? .36 : .32) * scale, scratch, aim);
     const turn = head.turn;
     const bend = turningBend(time, turn);
-    forward.lerp(aim, .50).normalize();
+    forward.lerp(aim, usesFinRays ? .72 : .50).normalize();
+    leadingTangent.copy(forward);
     lateral.crossVectors(forward, UP).normalize();
     up.crossVectors(lateral, forward);
 
@@ -169,8 +171,24 @@ export function createSwimmer(object, route) {
       sample(jointTime, delayed);
       const drive = .19 + 1.04 * delayed.effort;
       const localBend = turningBend(jointTime, delayed.turn);
+      let curveBend;
+      if (usesFinRays) {
+        // Each section still points along the part of the curve it occupies.
+        // The heading difference bends the trailing body inside the turn.
+        route.sample(distance + joint.station * scale, scratch, aim);
+        const delta = Math.atan2(
+          leadingTangent.z * aim.x - leadingTangent.x * aim.z,
+          leadingTangent.x * aim.x + leadingTangent.z * aim.z,
+        );
+        const signedOffset = delta + .14 * localBend;
+        curveBend = joint.limit * Math.tanh(signedOffset / joint.limit);
+        leadingTangent.copy(aim);
+      } else {
+        curveBend = joint.bend * localBend;
+      }
       const kick = drive * (Math.sin(delayed.phase) + .14 * Math.sin(2 * delayed.phase + .54));
-      const yaw = joint.bend * localBend + joint.amplitude * kick * (1 - .85 * Math.abs(localBend));
+      const pulseBend = usesFinRays ? .95 * Math.abs(curveBend) : .85 * Math.abs(localBend);
+      const yaw = curveBend + joint.amplitude * kick * (1 - pulseBend);
       const roll = .24 * joint.amplitude * Math.sin(delayed.phase - .74);
       orient(joint, yaw, roll);
     }
