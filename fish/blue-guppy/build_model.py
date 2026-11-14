@@ -20,8 +20,7 @@ from guppy_profile import (  # noqa: E402
 # Centers and pivots are listed from the stiff head to the soft trailing fin.
 SPINE = (
     ("Head", .41, .41), ("Body", -.02, .22), ("Peduncle", -.59, -.38),
-    ("TailBase", -.98, -.84), ("TailMid", -1.53, -1.29),
-    ("TailEdge", -2.20, -1.87),
+    ("TailBase", -.98, -.84),
 )
 
 
@@ -194,12 +193,11 @@ def smoothstep(lo, hi, value):
     return u * u * (3 - 2 * u)
 
 
-def add_fin_flex(obj, samples, root, tip_flex, axis, *, fan=False):
+def add_fin_flex(obj, samples, tip_flex, axis):
     obj.shape_key_add(name="Basis")
     bend = obj.shape_key_add(name="Flex")
     wave_a = obj.shape_key_add(name="WaveA")
     wave_b = obj.shape_key_add(name="WaveB")
-    gather = obj.shape_key_add(name="Gather") if fan else None
     for shape in (bend, wave_a, wave_b):
         shape.slider_min = -1
         shape.slider_max = 1
@@ -215,15 +213,9 @@ def add_fin_flex(obj, samples, root, tip_flex, axis, *, fan=False):
         bend.data[i].co = base + displacement * lobe
         wave_a.data[i].co = base + displacement * (.60 * math.cos(phase))
         wave_b.data[i].co = base + displacement * (.60 * math.sin(phase))
-        if gather:
-            offset = base - root
-            # Tension draws the outer rays inward without moving the peduncle.
-            gather.data[i].co = base + Vector((-.050 * offset.x, 0, -.105 * offset.z)) * span
 
 
 def membrane_clearance(maps, x, z):
-    if maps == "tail":
-        return 1 - smoothstep(469, 621, x)
     top, bottom, _ = sample_profile(BODY, x)
     edge = top - z if maps == "dorsal" else z - bottom
     return smoothstep(1, 48 if maps == "dorsal" else 29, edge)
@@ -246,7 +238,7 @@ def fin_mesh(name, maps, root, outline, mat, *, side=0, layers=16, cup=.035):
 
     vertices = [position(root[0], side, root[1])]
     uv = [fin_uv(*root)]
-    samples = [(0, .5, 0)]
+    samples = [(0, 0)] if maps == "tail" else [(0, .5, 0)]
     faces = []
     for row in range(1, layers + 1):
         radius = row / layers
@@ -258,7 +250,10 @@ def fin_mesh(name, maps, root, outline, mat, *, side=0, layers=16, cup=.035):
             camber = cup * (math.sin(arc * 2.7 * math.pi) + ripple) * radius**1.65
             vertices.append(position(x, side + camber, z))
             uv.append(fin_uv(x, z))
-            samples.append((radius, arc, membrane_clearance(maps, x, z)))
+            if maps == "tail":
+                samples.append((row, j))
+            else:
+                samples.append((radius, arc, membrane_clearance(maps, x, z)))
     for j in range(row_length - 1):
         faces.append((0, j + 1, j + 2))
     for row in range(layers - 1):
@@ -266,8 +261,13 @@ def fin_mesh(name, maps, root, outline, mat, *, side=0, layers=16, cup=.035):
             a = 1 + row * row_length + j
             faces.append((a, a + row_length, a + row_length + 1, a + 1))
     obj = mesh(name, vertices, faces, uv, mat)
-    tip_flex = {"tail": .29, "dorsal": .117, "anal": .079, "ventral": .088}[maps]
-    add_fin_flex(obj, samples, Vector(vertices[0]), tip_flex, Vector((0, 1, 0)), fan=maps == "tail")
+    if maps == "tail":
+        # Keep the ray grid address after glTF triangulation and vertex reordering.
+        ray_grid = obj.data.attributes.new("_FIN_RAY", "FLOAT2", "POINT")
+        ray_grid.data.foreach_set("vector", [component for sample in samples for component in sample])
+    else:
+        tip_flex = {"dorsal": .117, "anal": .079, "ventral": .088}[maps]
+        add_fin_flex(obj, samples, tip_flex, Vector((0, 1, 0)))
     return obj
 
 
@@ -299,7 +299,7 @@ def pectoral_mesh(side, mat):
             b = a + ray_segments + 1
             faces.append((a, b, b + 1, a + 1))
     obj = mesh("Pectoral membrane " + ("L" if side < 0 else "R"), vertices, faces, uv, mat)
-    add_fin_flex(obj, samples, root, .082, Vector((0, side * .28, .96)))
+    add_fin_flex(obj, samples, .082, Vector((0, side * .28, .96)))
     return obj
 
 
@@ -464,6 +464,7 @@ def build():
     bpy.ops.export_scene.gltf(
         filepath=str(ROOT / "blue-guppy.glb"), export_format="GLB", use_selection=True,
         export_texcoords=True, export_normals=True, export_tangents=True,
+        export_attributes=True,
         export_morph=True, export_morph_normal=True, export_morph_tangent=True,
         export_animations=False, export_yup=True, export_armature_object_remove=True,
     )

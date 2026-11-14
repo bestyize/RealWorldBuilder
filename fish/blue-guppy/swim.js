@@ -1,15 +1,20 @@
 import { MathUtils, Matrix4, Quaternion, Vector3 } from 'three';
 import { lowerIndex } from '../swim-route.js';
+import { createCaudalFin } from './caudal-fin.js';
 
 const TAU = 2 * Math.PI;
 const UP = new Vector3(0, 1, 0);
 const FORWARD = new Vector3(1, 0, 0);
 const { clamp, euclideanModulo: wrap, lerp, smoothstep } = MathUtils;
-// Bends and thrust travel from the trunk to the trailing edge of the fan.
+// The active stroke travels through the trunk and ends at the fin root.
 const SPINE = [
   ['Body', .051, .029, .34],
   ['Peduncle', .109, .065, .60],
-  ['TailBase', .108, .106, .53],
+  ['TailBase', .118, .103, .46],
+];
+
+// Some callers may still load a GLB with the previous tail shape keys.
+const LEGACY_TAIL = [
   ['TailMid', .075, .153, .28],
   ['TailEdge', .045, .201, .10],
 ];
@@ -66,6 +71,8 @@ export function createSwimmer(object, route) {
   const rotation = new Quaternion();
   const inverseModel = object.getWorldQuaternion(new Quaternion()).invert();
   const motion = { center: new Vector3() };
+  const tailMesh = object.getObjectByName('Caudal_fan');
+  const usesFinRays = tailMesh?.geometry?.hasAttribute('_fin_ray');
 
   function bind(name) {
     const bone = object.getObjectByName(name);
@@ -78,20 +85,22 @@ export function createSwimmer(object, route) {
     };
   }
 
-  const spine = SPINE.map(([name, amplitude, lag, bend]) => ({ ...bind(name), amplitude, lag, bend }));
+  const spine = (usesFinRays ? SPINE : SPINE.concat(LEGACY_TAIL))
+    .map(([name, amplitude, lag, bend]) => ({ ...bind(name), amplitude, lag, bend }));
   const pectorals = [[1, 'Pectoral_L', .45], [-1, 'Pectoral_R', 2.32]].map(([side, name, phase]) => ({
     ...bind(name), side, phase,
   }));
   // Each pair of wave weights propagates the deformation along the fin rays.
-  const membranes = [
-    ['Caudal_fan', .19, .68, .59, .47, 0],
+  const membraneSpecs = [
     ['Dorsal_sail', .14, .42, .55, .43, .73],
     ['Anal_fin', .085, .34, .48, .34, 1.02],
     ['Pelvic_fin_L', .098, .23, .38, .29, .88],
     ['Pelvic_fin_R', .126, .23, .37, .29, 1.19],
     ['Pectoral_membrane_L', .068, .55, .28, .13, .45],
     ['Pectoral_membrane_R', .079, .53, .28, .13, 2.32],
-  ].map(([name, lag, response, ripple, drag, offset]) => {
+  ];
+  if (!usesFinRays) membraneSpecs.push(['Caudal_fan', .19, .68, .59, .47, 0]);
+  const membranes = membraneSpecs.map(([name, lag, response, ripple, drag, offset]) => {
     const mesh = object.getObjectByName(name);
     const indices = mesh?.morphTargetDictionary;
     if (!indices || [indices.Flex, indices.WaveA, indices.WaveB].some(index => index === undefined)) {
@@ -134,7 +143,7 @@ export function createSwimmer(object, route) {
       .multiply(rotation.setFromAxisAngle(joint.roll, roll));
   }
 
-  function update(timeSeconds) {
+  function poseBody(timeSeconds) {
     const time = timeSeconds + startTime;
     sample(time, head);
     const { distance, effort, phase, angle } = head;
@@ -165,7 +174,24 @@ export function createSwimmer(object, route) {
       const roll = .24 * joint.amplitude * Math.sin(delayed.phase - .74);
       orient(joint, yaw, roll);
     }
+    return effort;
+  }
 
+  const caudalFin = usesFinRays ? createCaudalFin(
+    tailMesh, spine.at(-1).bone, duration,
+    time => {
+      const effort = poseBody(time);
+      object.updateMatrixWorld(true);
+      return effort;
+    },
+  ) : null;
+
+  function update(timeSeconds) {
+    const effort = poseBody(timeSeconds);
+    const time = timeSeconds + startTime;
+    const { angle, turn } = head;
+    const bend = turningBend(time, turn);
+    caudalFin?.(timeSeconds);
     const finPhase = pectoralPhase(angle, finBeats);
     for (const fin of pectorals) {
       const stroke = finPhase + fin.phase;
