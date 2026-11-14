@@ -4,7 +4,7 @@
 
 ### 45 秒 macOS 桌面水族箱演示
 
-https://github.com/user-attachments/assets/33c96b1b-59b5-4082-9f8c-38a51df450fa
+https://github.com/user-attachments/assets/458e246b-0db0-42d4-ad5e-4866ff1ede2e
 
 实时 3D 展厅。可以观赏一条龙鱼和六条不同花色的孔雀鱼共游，也可以单独看鱼或打开碎花垂耳兔的 3D 预览。
 
