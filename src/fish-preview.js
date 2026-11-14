@@ -6,9 +6,35 @@ import { installFullscreen } from './fullscreen.js';
 import { addSceneLights } from './lighting.js';
 import { fitSwimCamera, swimAspect } from './swim-camera.js';
 
+function installCameraDrag(canvas, rotate) {
+  let pointerId;
+  let lastX;
+  let lastY;
+
+  canvas.addEventListener('pointerdown', event => {
+    if (!event.isPrimary || event.button !== 0 || pointerId !== undefined) return;
+    pointerId = event.pointerId;
+    lastX = event.offsetX;
+    lastY = event.offsetY;
+    canvas.setPointerCapture(pointerId);
+  });
+  canvas.addEventListener('pointermove', event => {
+    if (event.pointerId !== pointerId) return;
+    // Canvas-local coordinates also follow the rotated layout on phones.
+    const scale = Math.PI / canvas.clientHeight;
+    rotate((event.offsetX - lastX) * scale, (event.offsetY - lastY) * scale);
+    lastX = event.offsetX;
+    lastY = event.offsetY;
+  });
+  canvas.addEventListener('lostpointercapture', event => {
+    if (event.pointerId === pointerId) pointerId = undefined;
+  });
+}
+
 export async function startFishPreview(species, route, { cameraDistance = 9.4, createSubjects } = {}) {
   const stage = document.querySelector('#preview-stage');
   const status = document.querySelector('#preview-status');
+  const resetView = document.querySelector('#preview-reset-view');
   const playButton = document.querySelector('#preview-play');
   const scrubber = document.querySelector('#preview-time');
   const timeLabel = document.querySelector('#preview-time-label');
@@ -16,10 +42,12 @@ export async function startFishPreview(species, route, { cameraDistance = 9.4, c
   try {
     const createFish = await loadFish(species, takeEmbeddedModel());
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    const canvas = renderer.domElement;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.NeutralToneMapping;
     renderer.toneMappingExposure = .99;
-    renderer.domElement.setAttribute('aria-hidden', 'true');
+    canvas.tabIndex = 0;
+    canvas.setAttribute('aria-label', '观察角度，使用方向键旋转');
 
     const scene = new THREE.Scene();
     scene.environment = createTankEnvironment(renderer);
@@ -33,15 +61,29 @@ export async function startFishPreview(species, route, { cameraDistance = 9.4, c
 
     const cameraFov = 25;
     const camera = new THREE.PerspectiveCamera(cameraFov, swimAspect, .12, 50);
-    camera.position.set(0, .12, cameraDistance);
-    camera.lookAt(0, .12, 0);
+    const target = new THREE.Vector3(0, .12, 0);
+    const front = Math.PI / 2;
+    const orbit = new THREE.Spherical(cameraDistance, front, 0);
 
     const duration = fish.duration;
     let time = 0;
     let playing = true;
     let anchor = performance.now();
     let frame = 0;
+    let contextLost = false;
     scrubber.max = String(duration);
+
+    function updateView() {
+      camera.position.setFromSpherical(orbit).add(target);
+      camera.lookAt(target);
+      if (!playing && !contextLost) renderer.render(scene, camera);
+    }
+
+    function rotate(horizontal, vertical) {
+      orbit.theta -= horizontal;
+      orbit.phi = THREE.MathUtils.clamp(orbit.phi - vertical, front - .6, front + .6);
+      updateView();
+    }
 
     function draw() {
       fish.update(time);
@@ -80,7 +122,7 @@ export async function startFishPreview(species, route, { cameraDistance = 9.4, c
 
     const resize = () => {
       const { clientWidth: width, clientHeight: height } = stage;
-      if (!width || !height) return;
+      if (contextLost || !width || !height) return;
       fitSwimCamera(camera, width, height, cameraFov);
       renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2, 1600 / Math.max(width, height)));
       renderer.setSize(width, height, false);
@@ -89,26 +131,44 @@ export async function startFishPreview(species, route, { cameraDistance = 9.4, c
 
     playButton.addEventListener('click', () => setPlaying(!playing));
     scrubber.addEventListener('input', () => setPlaying(false, scrubber.valueAsNumber));
+    resetView.addEventListener('click', () => {
+      orbit.set(cameraDistance, front, 0);
+      updateView();
+    });
+    installCameraDrag(canvas, rotate);
+    const keyRotation = new Map([
+      ['ArrowLeft', [-.12, 0]], ['ArrowRight', [.12, 0]],
+      ['ArrowUp', [0, -.12]], ['ArrowDown', [0, .12]],
+    ]);
+    canvas.addEventListener('keydown', event => {
+      const step = keyRotation.get(event.key);
+      if (!step || event.altKey || event.ctrlKey || event.metaKey) return;
+      event.preventDefault();
+      rotate(...step);
+    });
     document.addEventListener('visibilitychange', () => {
       cancelAnimationFrame(frame);
       frame = 0;
       anchor = performance.now();
       queueFrame();
     });
-    renderer.domElement.addEventListener('webglcontextlost', () => {
+    canvas.addEventListener('webglcontextlost', () => {
+      contextLost = true;
       playing = false;
       cancelAnimationFrame(frame);
       frame = 0;
-      playButton.disabled = scrubber.disabled = true;
+      canvas.tabIndex = -1;
+      resetView.disabled = playButton.disabled = scrubber.disabled = true;
       status.hidden = false;
       status.textContent = '图形连接已中断，请重新打开页面。';
     });
 
-    stage.prepend(renderer.domElement);
+    updateView();
+    stage.prepend(canvas);
     new ResizeObserver(resize).observe(stage);
     resize();
     status.hidden = true;
-    playButton.disabled = scrubber.disabled = false;
+    resetView.disabled = playButton.disabled = scrubber.disabled = false;
     installFullscreen(document.querySelector('#preview-fullscreen'), { landscape: true });
     queueFrame();
   } catch (error) {
