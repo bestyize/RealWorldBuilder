@@ -1,13 +1,15 @@
 import { MathUtils, Vector3 } from 'three';
 import { createSwimRoute } from '../swim-route.js';
 import { applyGuppyColorway } from './colorways.js';
+import { createSwimDrive, driveAcceleration } from './swim-drive.js';
 
 const { smoothstep } = MathUtils;
 const TAU = 2 * Math.PI;
 const DURATION = 43;
-const SAMPLES = 84;
-const SUBSTEPS = 24;
+const SAMPLES = DURATION * 8;
+const SUBSTEPS = 12;
 const STEP = DURATION / (SAMPLES * SUBSTEPS);
+const HEAD_STATION = .41;
 const CLEARANCE_POINTS = [
   [-1.84, -.76, .15], [-1.84, 0, .23], [-1.84, .76, .15],
   [-1.27, -.61, .14], [-1.28, .02, .23], [-1.27, .61, .14],
@@ -32,7 +34,7 @@ const RESIDENTS = [
 
 function guideProgress(time) {
   const phase = TAU * time / DURATION;
-  return phase / TAU + .021 * Math.sin(3 * phase - .65) + .010 * Math.sin(5 * phase + .4);
+  return phase / TAU + .006 * Math.sin(3 * phase - .65) + .003 * Math.sin(5 * phase + .4);
 }
 
 function yieldToNeighbour(state, difference, force) {
@@ -40,11 +42,12 @@ function yieldToNeighbour(state, difference, force) {
     .addScaledVector(state.heading, -.94 * force * difference.dot(state.heading));
 }
 
-function schoolTracks() {
-  const states = RESIDENTS.map(() => ({
+function schoolTracks(drives) {
+  const states = RESIDENTS.map((member, i) => ({
     position: new Vector3(), velocity: new Vector3(), target: new Vector3(),
     targetVelocity: new Vector3(), force: new Vector3(), separation: new Vector3(), track: [],
-    heading: new Vector3(), stations: CLEARANCE_POINTS.map(() => new Vector3()),
+    heading: new Vector3(), guide: new Vector3(), stations: CLEARANCE_POINTS.map(() => new Vector3()),
+    drive: drives[i], stroke: {}, thrustGain: (1.95 + .20 * Math.sin(member.phase * TAU)) * member.scale,
   }));
   const position = new Vector3();
   const tangent = new Vector3();
@@ -60,12 +63,13 @@ function schoolTracks() {
     for (const [i, member] of RESIDENTS.entries()) {
       const angleOffset = member.phase * TAU;
       const follow = .30 * Math.sin(2 * angle + angleOffset) + .19 * Math.sin(3 * angle - angleOffset);
-      const distance = start + shoalPath.length * progress + member.along + follow;
+      const distance = start + shoalPath.length * progress + member.along + HEAD_STATION * member.scale + follow;
       shoalPath.sample(distance, position, tangent);
       lateral.set(-tangent.z, 0, tangent.x).normalize();
       const width = 1 + .23 * Math.sin(2 * angle - 1.33);
       const side = member.side * width + .15 * Math.sin(angle + angleOffset);
       const height = member.height + .16 * Math.sin(2 * angle - angleOffset);
+      states[i].guide.copy(tangent);
       states[i].target.copy(position).addScaledVector(lateral, side);
       states[i].target.y += height;
     }
@@ -75,9 +79,9 @@ function schoolTracks() {
   for (const state of states) state.position.copy(state.target);
 
   const n = SAMPLES * SUBSTEPS;
-  // Simulate the preceding lap so the tracks begin with the shoal in motion.
+  // Settle the preceding laps so the tracks begin with the shoal in motion.
   // The periodic spline through the resulting samples can be scrubbed.
-  for (let frame = -n; frame < n; frame++) {
+  for (let frame = -2 * n; frame < n; frame++) {
     for (const state of states) state.targetVelocity.copy(state.target);
     targets(frame * STEP);
     average.set(0, 0, 0);
@@ -86,16 +90,22 @@ function schoolTracks() {
     for (const [i, state] of states.entries()) {
       const member = RESIDENTS[i];
       state.targetVelocity.subVectors(state.target, state.targetVelocity).multiplyScalar(1 / STEP);
-      // Follow the guide's forward pace while adjusting the distance to neighbours.
+      // The guide supplies a steering target; a swimmer still accelerates
+      // in response to its own half-strokes against drag.
       const stiffness = 3.14 + .13 * (i % 3);
       state.force.subVectors(state.target, state.position).multiplyScalar(stiffness);
-      state.force.addScaledVector(delta.subVectors(state.targetVelocity, state.velocity), 3.38);
+      delta.subVectors(state.targetVelocity, state.velocity);
+      const paceError = delta.dot(state.guide);
+      state.force.addScaledVector(delta, 3.38).addScaledVector(state.guide, -3.38 * paceError);
       state.force.addScaledVector(offset.subVectors(average, state.position), .058);
       state.separation.set(0, 0, 0);
       state.heading.copy(state.targetVelocity).normalize();
+      state.drive.sample((frame + .5) * STEP, state.stroke);
+      state.force.addScaledVector(state.guide,
+        driveAcceleration(0, paceError, state.stroke.thrust, state.thrustGain, 2.34));
       CLEARANCE_POINTS.forEach(([along, rise], j) => {
         const point = state.stations[j];
-        point.copy(state.position).addScaledVector(state.heading, along * member.scale);
+        point.copy(state.position).addScaledVector(state.heading, (along - HEAD_STATION) * member.scale);
         point.y += rise * member.scale;
       });
     }
@@ -148,10 +158,11 @@ function schoolTracks() {
 }
 
 export function createGuppySchool(createFish, group) {
-  const tracks = schoolTracks();
+  const drives = RESIDENTS.map(member => createSwimDrive(DURATION, member.phase));
+  const tracks = schoolTracks(drives);
   const fish = RESIDENTS.map((member, i) => {
-    const route = createSwimRoute(tracks[i], 0, { samplesPerWaypoint: 16 });
-    const swimmer = createFish(route, { scale: member.scale, phase: member.phase, trackDuration: DURATION });
+    const route = createSwimRoute(tracks[i], 0, { samplesPerWaypoint: 6 });
+    const swimmer = createFish(route, { scale: member.scale, phase: member.phase, drive: drives[i] });
     applyGuppyColorway(swimmer.object, member.colorway, 3.7 * (i + 1));
     group.add(swimmer.object);
     return swimmer;

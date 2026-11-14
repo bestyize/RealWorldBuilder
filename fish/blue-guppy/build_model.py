@@ -17,10 +17,10 @@ from guppy_profile import (  # noqa: E402
 )
 
 
-# Centers and pivots are listed from the stiff head to the soft trailing fin.
+# Pivots follow the trunk from the stiff skull to the base of the caudal fin.
 SPINE = (
-    ("Head", .41, .41), ("Body", -.02, .22), ("Peduncle", -.59, -.38),
-    ("TailBase", -.98, -.84),
+    ("Head", .41), ("Shoulder", .25), ("Spine_1", .08), ("Spine_2", -.11),
+    ("Spine_3", -.30), ("Spine_4", -.49), ("Peduncle", -.67), ("TailBase", -.84),
 )
 
 
@@ -342,12 +342,14 @@ def armature():
     with bpy.context.temp_override(object=rig, active_object=rig):
         bpy.ops.object.mode_set(mode="EDIT")
         previous = None
-        for name, _, x in SPINE:
+        for i, (name, x) in enumerate(SPINE):
             bone = data.edit_bones.new(name)
             bone.head = (x, 0, 0)
-            bone.tail = (x - .27, 0, 0)
+            end = SPINE[i + 1][1] if i + 1 < len(SPINE) else x - .20
+            bone.tail = (end, 0, 0)
             bone.align_roll(Vector((0, 0, 1)))
             bone.parent = previous
+            bone.use_connect = previous is not None
             previous = bone
         for side, name in ((-1, "Pectoral_L"), (1, "Pectoral_R")):
             bone = data.edit_bones.new(name)
@@ -360,14 +362,23 @@ def armature():
 
 
 def spine_weights(x):
-    if x >= SPINE[0][1]:
-        return ((SPINE[0][0], 1),)
-    for (head_name, head_x, _), (tail_name, tail_x, _) in zip(SPINE, SPINE[1:]):
-        if x >= tail_x:
-            t = (head_x - x) / (head_x - tail_x)
-            t = t * t * (3 - 2 * t)
-            return ((head_name, 1 - t), (tail_name, t))
-    return ((SPINE[-1][0], 1),)
+    # A cubic blend avoids pinning rings of scales to individual pivots.
+    # Extend each end weight so the face, pectoral roots and fan root stay seated.
+    n = len(SPINE)
+    u = max(-1, min(n, (.186 - x) * (n - 1) / .971))
+    i = math.floor(u)
+    t = u - i
+    weights = {}
+    for offset, amount in enumerate((
+        (1 - t)**3 / 6,
+        (3 * t**3 - 6 * t*t + 4) / 6,
+        (-3 * t**3 + 3 * t*t + 3 * t + 1) / 6,
+        t**3 / 6,
+    ), start=-1):
+        index = max(0, min(n - 1, i + offset))
+        name = SPINE[index][0]
+        weights[name] = weights.get(name, 0) + amount
+    return weights.items()
 
 
 def bind(obj, rig, fixed_bone=None):

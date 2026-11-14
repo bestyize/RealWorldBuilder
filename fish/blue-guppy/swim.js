@@ -1,114 +1,111 @@
 import { MathUtils, Matrix4, Quaternion, Vector3 } from 'three';
-import { lowerIndex } from '../swim-route.js';
 import { createCaudalFin } from './caudal-fin.js';
+import { createCruise, createSwimDrive } from './swim-drive.js';
 
 const TAU = 2 * Math.PI;
 const UP = new Vector3(0, 1, 0);
 const FORWARD = new Vector3(1, 0, 0);
-const { clamp, euclideanModulo: wrap, lerp, smoothstep } = MathUtils;
-// The active stroke travels through the trunk and ends at the fin root.
-const SPINE = [
-  ['Body', .051, .029, .34, -.10, .37],
-  ['Peduncle', .109, .065, .60, -.56, .53],
-  ['TailBase', .118, .103, .46, -.99, .37],
-];
+const { clamp, euclideanModulo: wrap, lerp } = MathUtils;
+const SPINE = ['Head', 'Shoulder', 'Spine_1', 'Spine_2', 'Spine_3', 'Spine_4', 'Peduncle', 'TailBase'];
 
-// Some callers may still load a GLB with the previous tail shape keys.
-const LEGACY_TAIL = [
-  ['TailMid', .075, .153, .28],
-  ['TailEdge', .045, .201, .10],
-];
-
-function steering(curvature) {
-  const amount = Math.abs(curvature);
-  return Math.sign(curvature) * smoothstep(amount, .12, 1.40);
-}
-
-function pectoralPhase(angle, beats) {
-  return beats * angle + .46 * Math.sin(2 * angle + .38);
-}
-
-function buildTiming(route, scale, phaseOffset, trackDuration) {
-  let duration = 0;
-  let cycles = 0;
-  const table = [];
-  const turnDistance = .38 * scale;
+function bindTransform(node, inverse) {
+  const matrix = new Matrix4().multiplyMatrices(inverse, node.matrixWorld);
   const position = new Vector3();
-  const tangent = new Vector3();
-  const fullParameter = route.samples.at(-1).parameter;
-  for (const { distance, curvature, parameter } of route.samples) {
-    const angle = TAU * distance / route.length;
-    const phrase = .5 + .5 * Math.sin(4 * angle + .38 + phaseOffset + .52 * Math.sin(3 * angle - .2));
-    const effort = .07 + .93 * phrase ** 1.8;
-    const behind = route.sample(distance - turnDistance, position, tangent);
-    const ahead = route.sample(distance + turnDistance, position, tangent);
-    const turn = steering(scale * (.53 * curvature + .20 * behind + .27 * ahead));
-    const speed = .61 + .53 * effort - .17 * Math.abs(turn);
-    const cadence = (1.06 + 1.55 * effort + .16 * Math.abs(turn)) * (1 + .11 * Math.sin(phaseOffset));
-    const previous = table.at(-1);
-    if (previous) {
-      // A recorded track already supplies the pace of the group. Its
-      // waypoint spacing describes where each fish was at regular times.
-      const nextTime = trackDuration === undefined
-        ? duration + 2 * (distance - previous.distance) / (previous.speed + speed)
-        : trackDuration * (parameter / fullParameter);
-      const dt = nextTime - duration;
-      cycles += .5 * dt * (cadence + previous.cadence);
-      duration = nextTime;
-    }
-    table.push({ distance, time: duration, cycles, speed, cadence, effort, turn });
-  }
-  return { table, duration, cycles };
+  const rotation = new Quaternion();
+  matrix.decompose(position, rotation, new Vector3());
+  return { position, rotation };
 }
 
-export function createSwimmer(object, route, { phase = 0, trackDuration } = {}) {
-  const phaseOffset = TAU * phase;
+function requireBone(object, name) {
+  const bone = object.getObjectByName(name);
+  if (!bone?.isBone) throw new Error(`Blue guppy skeleton is missing ${name}`);
+  return bone;
+}
+
+function yawBetween(a, b) {
+  return Math.atan2(a.z * b.x - a.x * b.z, a.x * b.x + a.z * b.z);
+}
+
+// Group tracks record positions at regular times. The route stores arc
+// lengths at uniform parameter intervals, so seeking uses those same times.
+function recordedPace(route, duration) {
+  return (time, out) => {
+    const frame = wrap(time, duration) * (route.samples.length - 1) / duration;
+    const i = Math.min(route.samples.length - 2, Math.floor(frame));
+    const a = route.samples[i].distance;
+    const b = route.samples[i + 1].distance;
+    out.distance = lerp(a, b, frame - i);
+    out.speed = (b - a) * (route.samples.length - 1) / duration;
+  };
+}
+
+export function createSwimmer(object, route, { phase = 0, drive: groupDrive } = {}) {
   const scale = Math.abs(object.scale.x);
-  const { table, duration, cycles } = buildTiming(route, scale, phaseOffset, trackDuration);
-  const startTime = table[route.startIndex].time;
-  const beatScale = Math.max(1, Math.round(cycles)) / cycles;
-  const finBeats = Math.max(1, Math.round(duration * 3.35));
+  const duration = groupDrive?.duration ?? route.length / (.70 * scale);
+  const drive = groupDrive ?? createSwimDrive(duration, phase);
+  const pace = groupDrive ? recordedPace(route, duration)
+    : createCruise(drive, route.length, route.samples[route.startIndex].distance);
+  const finBeats = Math.round(duration * 3.1);
+  const phaseOffset = TAU * phase;
   const basis = new Matrix4();
   const anchor = new Vector3();
   const forward = new Vector3();
   const up = new Vector3();
   const lateral = new Vector3();
-  const aim = new Vector3();
-  const leadingTangent = new Vector3();
+  const headTangent = new Vector3();
+  const turnEntry = new Vector3();
+  const turnExit = new Vector3();
+  const trailTangent = new Vector3();
   const scratch = new Vector3();
   const rotation = new Quaternion();
-  const inverseModel = object.getWorldQuaternion(new Quaternion()).invert();
-  const motion = { center: new Vector3() };
-  const tailMesh = object.getObjectByName('Caudal_fan');
-  const usesFinRays = tailMesh?.geometry?.hasAttribute('_fin_ray');
+  const inverseRoot = new Quaternion();
+  const inverseParent = new Quaternion();
+  const motion = {
+    head: new Vector3(), center: new Vector3(), heading: new Vector3(),
+    turn: 0, speed: 0, phase: 0, effort: 0, thrust: 0,
+  };
 
-  function bind(name) {
-    const bone = object.getObjectByName(name);
-    if (!bone?.isBone) throw new Error(`Blue guppy skeleton is missing ${name}`);
-    const inverse = bone.getWorldQuaternion(new Quaternion()).premultiply(inverseModel).invert();
+  object.updateWorldMatrix(true, true);
+  const inverseBind = object.matrixWorld.clone().invert();
+  const joints = SPINE.map(name => {
+    const bone = requireBone(object, name);
     return {
-      bone, rest: bone.quaternion.clone(),
-      yaw: UP.clone().applyQuaternion(inverse),
-      roll: FORWARD.clone().applyQuaternion(inverse),
+      bone, ...bindTransform(bone, inverseBind),
+      parentBind: bindTransform(bone.parent, inverseBind).rotation,
+      inModel: new Quaternion(), pose: new Quaternion(),
     };
+  });
+  const stations = [0];
+  for (let i = 1; i < joints.length; i++) {
+    const joint = joints[i];
+    const prior = joints[i - 1];
+    joint.parentOffset = prior.rotation.clone().invert().multiply(joint.parentBind);
+    stations.push(stations[i - 1] + joint.position.distanceTo(prior.position));
   }
+  // Extend the trunk's tangent into the tail root before water bends the fan.
+  const trunkLength = stations.at(-1);
+  stations.push(trunkLength + .16);
+  const length = stations.at(-1);
+  const offsets = new Float64Array(stations.length);
 
-  const spine = (usesFinRays ? SPINE : SPINE.concat(LEGACY_TAIL))
-    .map(([name, amplitude, lag, bend, station, limit]) => ({ ...bind(name), amplitude, lag, bend, station, limit }));
-  const pectorals = [[1, 'Pectoral_L', .45], [-1, 'Pectoral_R', 2.32]].map(([side, name, phase]) => ({
-    ...bind(name), side, phase,
-  }));
-  // Each pair of wave weights propagates the deformation along the fin rays.
-  const membraneSpecs = [
-    ['Dorsal_sail', .14, .42, .55, .43, .73],
+  const pectorals = [[1, 'Pectoral_L', .45], [-1, 'Pectoral_R', 2.32]]
+    .map(([side, name, offset]) => {
+      const bone = requireBone(object, name);
+      const inverse = bindTransform(bone, inverseBind).rotation.invert();
+      return {
+        bone, side, offset, rest: bone.quaternion.clone(),
+        yaw: UP.clone().applyQuaternion(inverse),
+        roll: FORWARD.clone().applyQuaternion(inverse),
+      };
+    });
+  const membranes = [
+    ['Dorsal_sail', .12, .42, .55, .43, .73],
     ['Anal_fin', .085, .34, .48, .34, 1.02],
     ['Pelvic_fin_L', .098, .23, .38, .29, .88],
     ['Pelvic_fin_R', .126, .23, .37, .29, 1.19],
     ['Pectoral_membrane_L', .068, .55, .28, .13, .45],
     ['Pectoral_membrane_R', .079, .53, .28, .13, 2.32],
-  ];
-  if (!usesFinRays) membraneSpecs.push(['Caudal_fan', .19, .68, .59, .47, 0]);
-  const membranes = membraneSpecs.map(([name, lag, response, ripple, drag, offset]) => {
+  ].map(([name, lag, response, ripple, drag, offset]) => {
     const mesh = object.getObjectByName(name);
     const indices = mesh?.morphTargetDictionary;
     if (!indices || [indices.Flex, indices.WaveA, indices.WaveB].some(index => index === undefined)) {
@@ -122,131 +119,114 @@ export function createSwimmer(object, route, { phase = 0, trackDuration } = {}) 
 
   const head = {};
   const delayed = {};
-  const previous = {};
-  function sample(time, state) {
-    const wrapped = wrap(time, duration);
-    const i = lowerIndex(table, 'time', wrapped);
-    const a = table[i];
-    const b = table[i + 1];
-    const u = (wrapped - a.time) / (b.time - a.time);
-    state.distance = lerp(a.distance, b.distance, u);
-    state.effort = lerp(a.effort, b.effort, u);
-    state.phase = TAU * beatScale * lerp(a.cycles, b.cycles, u) + phaseOffset;
-    state.angle = TAU * wrapped / duration;
-    state.turn = lerp(a.turn, b.turn, u);
-  }
+  const travel = {};
+  function poseBody(time) {
+    drive.sample(time, head);
+    pace(time, travel);
+    const s = travel.distance;
+    route.sample(s, anchor, headTangent);
+    route.sample(s + .25 * scale, scratch, turnEntry);
+    route.sample(s - .50 * scale, scratch, turnExit);
+    const turn = Math.tanh(1.9 * yawBetween(turnExit, turnEntry));
+    headTangent.lerp(turnEntry, .45).normalize();
+    route.sample(s - 1.09 * scale, scratch, trailTangent);
+    const arc = 1.22 * Math.tanh((yawBetween(headTangent, trailTangent) - .32 * turn) / 1.13);
+    const angle = TAU * wrap(time, duration) / duration;
+    const bank = -.097 * turn + .015 * Math.sin(2 * angle + .2);
 
-  function turningBend(time, turn) {
-    // A stronger initial bend eases back on a sustained arc. A small
-    // counter-bend appears naturally when the turning demand falls away.
-    sample(time - .31, previous);
-    const recent = previous.turn;
-    sample(time - .69, previous);
-    const change = (turn - recent) / 2 + (turn - previous.turn) / 2;
-    return .058 * turn + .38 * Math.tanh(change);
-  }
-
-  function orient(joint, yaw, roll) {
-    joint.bone.quaternion.copy(joint.rest).multiply(rotation.setFromAxisAngle(joint.yaw, yaw))
-      .multiply(rotation.setFromAxisAngle(joint.roll, roll));
-  }
-
-  function poseBody(timeSeconds) {
-    const time = timeSeconds + startTime;
-    sample(time, head);
-    const { distance, effort, phase, angle } = head;
-    route.sample(distance, anchor, forward);
-    route.sample(distance + (usesFinRays ? .36 : .32) * scale, scratch, aim);
-    const turn = head.turn;
-    const bend = turningBend(time, turn);
-    forward.lerp(aim, usesFinRays ? .72 : .50).normalize();
-    leadingTangent.copy(forward);
-    lateral.crossVectors(forward, UP).normalize();
-    up.crossVectors(lateral, forward);
-
-    // The head steers first. Roll and lift are small corrections to the path.
-    const bank = -.048 * turn - .16 * bend + .023 * Math.sin(2 * angle + .4);
-    object.quaternion.setFromRotationMatrix(basis.makeBasis(forward, up, lateral))
-      .multiply(rotation.setFromAxisAngle(UP, .035 * turn + .13 * bend + .034 * effort * Math.sin(phase)))
-      .multiply(rotation.setFromAxisAngle(FORWARD, bank));
-    object.position.copy(anchor)
-      .addScaledVector(lateral, scale * (.016 + .014 * effort) * Math.sin(phase - .32));
-    object.position.y += scale * (.048 * Math.sin(2 * angle + .30) + .031 * Math.sin(3 * angle - .46));
-
-    for (const joint of spine) {
-      const jointTime = time - joint.lag;
-      sample(jointTime, delayed);
-      const drive = .19 + 1.04 * delayed.effort;
-      const localBend = turningBend(jointTime, delayed.turn);
-      let curveBend;
-      if (usesFinRays) {
-        // Each section still points along the part of the curve it occupies.
-        // The heading difference bends the trailing body inside the turn.
-        route.sample(distance + joint.station * scale, scratch, aim);
-        const delta = Math.atan2(
-          leadingTangent.z * aim.x - leadingTangent.x * aim.z,
-          leadingTangent.x * aim.x + leadingTangent.z * aim.z,
-        );
-        const signedOffset = delta + .14 * localBend;
-        curveBend = joint.limit * Math.tanh(signedOffset / joint.limit);
-        leadingTangent.copy(aim);
-      } else {
-        curveBend = joint.bend * localBend;
-      }
-      const kick = drive * (Math.sin(delayed.phase) + .14 * Math.sin(2 * delayed.phase + .54));
-      const pulseBend = usesFinRays ? .95 * Math.abs(curveBend) : .85 * Math.abs(localBend);
-      const yaw = curveBend + joint.amplitude * kick * (1 - pulseBend);
-      const roll = .24 * joint.amplitude * Math.sin(delayed.phase - .74);
-      orient(joint, yaw, roll);
+    // Offset one continuous midline with a wave whose reach grows toward
+    // the tail. The pulse itself also arrives later along the body.
+    for (let i = 0; i < stations.length; i++) {
+      const u = stations[i] / length;
+      drive.sample(time - .085 * u, delayed);
+      const effort = lerp(head.effort, delayed.effort, .68);
+      const envelope = (.019 * u + .157 * u ** 2.08) *
+        (.17 + 1.03 * effort + .13 * Math.abs(turn));
+      const wave = head.phase - 3.78 * u;
+      offsets[i] = envelope * (Math.sin(wave) + .084 * Math.sin(2 * wave - .5));
     }
-    return effort;
+
+    for (let i = 0; i < joints.length; i++) {
+      const u = (stations[i] + stations[i + 1]) / (2 * length);
+      // Mix the local tangent history with a broad bend over the whole
+      // trunk so a tight patch of route cannot kink a single joint.
+      route.sample(s - stations[i] * scale, scratch, forward);
+      const trail = .99 * Math.tanh(yawBetween(headTangent, forward) / .99);
+      const along = stations[i] / trunkLength;
+      const steering = i === 0 ? .018 * turn : .29 * trail + .71 * arc * along * (.64 + .36 * along);
+      const wave = Math.atan2(offsets[i + 1] - offsets[i], stations[i + 1] - stations[i]);
+      const yaw = steering + wave * (1 - .28 * Math.abs(turn));
+      forward.copy(headTangent).applyAxisAngle(UP, yaw);
+      lateral.crossVectors(forward, UP).normalize();
+      up.crossVectors(lateral, forward);
+      const roll = bank * (1 - .45 * u) + .040 * u * head.effort * Math.sin(head.phase - 3.2 * u);
+      joints[i].pose.setFromRotationMatrix(basis.makeBasis(forward, up, lateral))
+        .multiply(rotation.setFromAxisAngle(FORWARD, roll));
+    }
+
+    object.quaternion.copy(joints[0].pose);
+    object.position.copy(joints[0].position).multiply(object.scale)
+      .applyQuaternion(object.quaternion).negate().add(anchor);
+    inverseRoot.copy(object.quaternion).invert();
+
+    // Put the midline's frames into the rig's local coordinates. Only
+    // rotations change, so every segment retains its original length.
+    for (const [i, joint] of joints.entries()) {
+      joint.inModel.copy(inverseRoot).multiply(joint.pose).multiply(joint.rotation);
+      inverseParent.copy(i ? joints[i - 1].inModel : joint.parentBind);
+      if (i) inverseParent.multiply(joint.parentOffset);
+      joint.bone.quaternion.copy(inverseParent.invert()).multiply(joint.inModel);
+    }
+
+    motion.head.copy(anchor);
+    motion.center.copy(object.position);
+    motion.heading.copy(FORWARD).applyQuaternion(object.quaternion);
+    motion.speed = travel.speed;
+    motion.turn = turn;
+    motion.phase = head.phase;
+    motion.effort = head.effort;
+    motion.thrust = head.thrust;
+    return head.effort;
   }
 
-  const caudalFin = usesFinRays ? createCaudalFin(
-    tailMesh, spine.at(-1).bone, duration,
-    time => {
-      const effort = poseBody(time);
-      object.updateMatrixWorld(true);
-      return effort;
-    },
-  ) : null;
+  const tailMesh = object.getObjectByName('Caudal_fan');
+  const caudalFin = createCaudalFin(tailMesh, joints.at(-1).bone, duration, time => {
+    const effort = poseBody(time);
+    object.updateMatrixWorld(true);
+    return effort;
+  });
 
-  function update(timeSeconds) {
-    const effort = poseBody(timeSeconds);
-    const time = timeSeconds + startTime;
-    const { angle, turn } = head;
-    const bend = turningBend(time, turn);
-    caudalFin?.(timeSeconds);
-    const finPhase = pectoralPhase(angle, finBeats) + phaseOffset;
+  function pectoralPhase(time) {
+    const angle = TAU * wrap(time, duration) / duration;
+    return finBeats * angle + .46 * Math.sin(3 * angle + .38) + phaseOffset;
+  }
+
+  function update(time) {
+    const effort = poseBody(time);
+    caudalFin(time);
+    const { turn } = motion;
     for (const fin of pectorals) {
-      const stroke = finPhase + fin.phase;
-      const trim = (.33 + .60 * (1 - effort)) * (1 + .28 * fin.side * bend);
+      const stroke = pectoralPhase(time) + fin.offset;
+      const trim = (.35 + .56 * (1 - effort)) * (1 + .28 * fin.side * turn);
       const pull = .5 + .5 * Math.sin(stroke);
-      orient(fin, -fin.side * (.22 * trim * pull ** 1.5 + .09 * turn),
-        fin.side * trim * (.11 + .25 * Math.sin(stroke - .70)));
+      fin.bone.quaternion.copy(fin.rest)
+        .multiply(rotation.setFromAxisAngle(fin.yaw, -fin.side * (.23 * trim * pull ** 1.5 + .07 * turn)))
+        .multiply(rotation.setFromAxisAngle(fin.roll, fin.side * trim * (.12 + .26 * Math.sin(stroke - .70))));
     }
 
     for (const fin of membranes) {
       const finTime = time - fin.lag;
-      sample(finTime, delayed);
-      const beat = fin.pectoral ? pectoralPhase(delayed.angle, finBeats) + fin.offset + phaseOffset
-        : delayed.phase - fin.offset;
-      const flowTurn = .20 * delayed.turn + 1.15 * turningBend(finTime, delayed.turn);
-      const load = fin.pectoral ? .28 + .62 * (1 - delayed.effort) : .32 + .55 * delayed.effort;
-      const drift = .080 * Math.sin(5 * angle + fin.offset) + .045 * Math.sin(8 * angle - .47);
-      const bend = fin.response * load * Math.sin(beat - .86) - fin.drag * flowTurn + drift;
-      const wave = fin.ripple * load * (1 + .15 * Math.abs(flowTurn));
-      const { Flex, WaveA, WaveB, Gather } = fin.indices;
+      drive.sample(finTime, delayed);
+      const beat = fin.pectoral ? pectoralPhase(finTime) + fin.offset : delayed.phase - fin.offset;
+      const load = fin.pectoral ? .31 + .58 * (1 - delayed.effort) : .24 + .59 * delayed.effort;
+      const bend = fin.response * load * Math.sin(beat - .86) - fin.drag * turn * .52;
+      const wave = fin.ripple * load * (1 + .15 * Math.abs(turn));
+      const { Flex, WaveA, WaveB } = fin.indices;
       fin.weights[Flex] = clamp(bend, -.94, .94);
       fin.weights[WaveA] = wave * Math.sin(beat);
       fin.weights[WaveB] = -wave * Math.cos(beat);
-      if (Gather !== undefined) {
-        const stroke = Math.sin(beat - .80);
-        fin.weights[Gather] = .11 + (.22 + .47 * delayed.effort) * stroke ** 2 + .13 * Math.abs(turn);
-      }
     }
-
-    motion.center.copy(object.position);
+    return motion;
   }
 
   update(0);
