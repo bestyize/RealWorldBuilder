@@ -1,0 +1,4 @@
+interface:
+  display_name: "水族箱创作流程"
+  short_description: "从水族箱鱼种概念图、游戏资产和三维模型到可交互游动预览"
+  default_prompt: "用 $aquarium-creation 设计一个新的水族箱鱼种，按我指定的阶段交付。"
