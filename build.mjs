@@ -24,12 +24,13 @@ function bundleScript(entry) {
   }).then(bundle => bundle.outputFiles[0].text.replace(/<\/script/gi, '<\\/script'));
 }
 
-const [aquariumScript, aquariumTemplate, previewTemplate, arowanaModel, guppyModel, backgrounds] = await Promise.all([
+const [aquariumScript, aquariumTemplate, previewTemplate, arowanaModel, guppyModel, aquascape, backgrounds] = await Promise.all([
   bundleScript('./src/viewer.js'),
   readFile(file('./src/viewer-template.html'), 'utf8'),
   readFile(file('./src/fish-preview-template.html'), 'utf8'),
   readFile(file(arowana.modelFile)),
   readFile(file(blueGuppy.modelFile)),
+  readFile(file('./assets/rocky-shallows.png')),
   Promise.all(presets.map(async ({ filename, ...preset }) => {
     if (!filename) return preset;
     const asset = await readFile(file(`./assets/${filename}`));
@@ -77,7 +78,8 @@ async function writeRabbitPreview() {
 }
 
 await Promise.all([
-  writeFile(file('./aquarium.html'), embedPlayer(aquariumTemplate, aquariumScript, {
+  writeFile(file('./aquarium.html'), embedPlayer(aquariumTemplate.replace('__AQUASCAPE_URL__', () =>
+    'data:image/png;base64,' + aquascape.toString('base64')), aquariumScript, {
     [`model-data-${arowana.id}`]: arowanaModel,
     [`model-data-${blueGuppy.id}`]: guppyModel,
   })),

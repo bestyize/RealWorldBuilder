@@ -2,9 +2,11 @@ import * as THREE from 'three';
 import { arowana } from '../fish/arowana/index.js';
 import { blueGuppy } from '../fish/blue-guppy/index.js';
 import { createGuppySchool } from '../fish/blue-guppy/school.js';
+import { soloGuppyRoute } from '../fish/blue-guppy/solo-route.js';
 import { loadFish } from '../fish/load-fish.js';
 import { installBackgrounds, loadBackground } from './backgrounds.js';
 import { cruiseRoute } from './cruise-route.js';
+import { installDisplay } from './display.js';
 import { takeEmbeddedData, takeSpeciesModel } from './embedded-data.js';
 import { createTankEnvironment } from './environment.js';
 import { installLighting } from './lighting.js';
@@ -13,9 +15,11 @@ import { installSettings } from './settings.js';
 const stage = document.querySelector('#tank');
 const status = document.querySelector('#status');
 const controls = document.querySelector('#controls');
+const aquascapeLayer = document.querySelector('#rocky-shallows');
 const playbackButton = document.querySelector('#playback');
 const fullscreenButton = document.querySelector('#fullscreen');
 const overlay = location.hash === '#overlay';
+const plantedScene = !overlay && new URLSearchParams(location.search).get('scene') === 'planted';
 const aspect = 16 / 9;
 const cameraDistance = 11;
 const viewHeight = 4.5;
@@ -97,7 +101,8 @@ async function start() {
   stage.prepend(renderer.domElement);
 
   const backgrounds = JSON.parse(takeEmbeddedData('#background-presets'));
-  const initialBackground = overlay ? backgrounds.find(background => background.id === 'transparent') : backgrounds[0];
+  const backgroundId = overlay ? 'transparent' : plantedScene ? 'black' : backgrounds[0].id;
+  const initialBackground = backgrounds.find(background => background.id === backgroundId);
   const [createArowana, createGuppy, backdrop] = await Promise.all([
     loadFish(arowana, takeSpeciesModel(arowana.id)),
     overlay ? null : loadFish(blueGuppy, takeSpeciesModel(blueGuppy.id)),
@@ -108,23 +113,19 @@ async function start() {
   const scene = new THREE.Scene();
   const cameraFov = THREE.MathUtils.radToDeg(2 * Math.atan(viewHeight / (2 * cameraDistance)));
   const camera = new THREE.PerspectiveCamera(cameraFov, aspect, 0.12, 50);
-  const cameraHeight = overlay ? 0.05 : -0.31;
-  camera.position.set(0, cameraHeight, cameraDistance);
-  camera.lookAt(0, cameraHeight, 0);
   const backdropMesh = createBackdrop();
   const bubbles = createBubbles();
   scene.add(backdropMesh, bubbles);
   scene.environment = createTankEnvironment(renderer);
 
-  const residents = [createArowana(cruiseRoute)];
+  const dragon = createArowana(cruiseRoute);
+  const residents = [dragon];
+  let solo;
+  let school;
   if (createGuppy) {
-    const shoalLayer = new THREE.Group();
-    const shoal = createGuppySchool(createGuppy, shoalLayer);
-    // Keep the whole shoal below the arowana's route, including the fan
-    // tails at full spread. Scale the fish and their paths together.
-    shoalLayer.scale.setScalar(0.49);
-    shoalLayer.position.set(0, -1.22, -0.34);
-    residents.push(shoal);
+    solo = createGuppy(soloGuppyRoute);
+    school = createGuppySchool(createGuppy, new THREE.Group());
+    residents.push(solo, school);
   }
   for (const { object } of residents) {
     object.traverse(mesh => {
@@ -135,11 +136,34 @@ async function start() {
     });
     scene.add(object);
   }
-  aquarium = { renderer, scene, camera, residents };
+  aquarium = { renderer, scene, camera, residents: [] };
   const redraw = () => {
     if (!playing) draw(playhead);
   };
   installLighting(scene, redraw);
+
+  function applyDisplay({ fish, aquascape }) {
+    const mixed = fish === 'mixed';
+    dragon.object.visible = mixed || fish === 'arowana';
+    if (solo) solo.object.visible = fish === 'guppy';
+    if (school) {
+      school.object.visible = mixed || fish === 'school';
+      // Scale both the shoal and its route to suit the other residents.
+      const scale = mixed ? 0.49 : 0.69;
+      school.object.scale.setScalar(scale);
+      school.object.position.set(0, mixed ? -1.22 : -0.18, mixed ? -0.34 : -0.35);
+      // With the foreground enabled, raise the shoal above the sand. In a
+      // mixed tank the rock and plants can still briefly hide a passing fish.
+      if (aquascape) school.object.position.y += mixed ? 0.28 : 0.36;
+    }
+    const cameraHeight = mixed ? -0.31 : 0.05;
+    const distance = fish === 'guppy' ? 12.0 : cameraDistance;
+    camera.position.set(0, cameraHeight, distance);
+    camera.lookAt(0, cameraHeight, 0);
+    aquascapeLayer.hidden = !aquascape;
+    aquarium.residents = residents.filter(fish => fish.object.visible);
+    redraw();
+  }
 
   function applyBackground(texture, background) {
     if (texture) {
@@ -157,8 +181,11 @@ async function start() {
   }
 
   applyBackground(backdrop, initialBackground);
-  if (!overlay) {
-    await installBackgrounds(backgrounds, applyBackground);
+  if (overlay) {
+    applyDisplay({ fish: 'arowana', aquascape: false });
+  } else {
+    await installBackgrounds(backgrounds, applyBackground, plantedScene ? initialBackground : undefined);
+    installDisplay(applyDisplay, plantedScene ? { fish: 'mixed', aquascape: true } : undefined);
     closeSettings = installSettings();
   }
 
@@ -204,6 +231,7 @@ function draw(time) {
   for (const fish of residents) fish.update(time);
   const fishPosition = residents[0]?.getMotion?.()?.center;
   if (fishPosition) floorLight.value.set(0.5 + fishPosition.x / 8, 0.5 + fishPosition.z / 6);
+  else floorLight.value.set(0.5, 0.5);
   renderer.render(scene, camera);
 }
 

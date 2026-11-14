@@ -1,12 +1,14 @@
 # RealWorldBuilder
 
-实时 3D 水族箱。一条龙鱼和六条不同花色的孔雀鱼同缸游动，支持切换背景、自定义图片、调节灯光和透明叠加。
+实时 3D 展厅。可以观赏一条龙鱼和六条不同花色的孔雀鱼共游，也可以单独看鱼或打开小幸运毛绒兔的照片与 3D 预览。
 
-[打开在线水族箱](https://bestyize.github.io/RealWorldBuilder/)
+[打开 GitHub Pages](https://bestyize.github.io/RealWorldBuilder/)
 
-打开 [aquarium.html](aquarium.html) 即可离线运行。点击右上角「设置」进入控制面板。「背景」页可以切换六套预设，或选择本机的 JPG、PNG、WebP 图片。「灯光」页可以调节水族箱的灯光和反射。按 B 或 L 可以直接打开对应页面。
+打开 [index.html](index.html) 浏览展厅，或直接打开 [aquarium.html](aquarium.html) 离线观赏。在展厅选择「生态水族箱」，会以砂石水草和混养画面开场。直接打开水族箱会恢复这个浏览器上次的选择。点击右上角「设置」可切换单条龙鱼、单条孔雀鱼、孔雀鱼群或同缸，也可以独立开关砂石水草造景。
 
-在「背景」里选「透明」可以观看透明背景下的同缸画面。点击「打开龙鱼透明播放页」可进入 `aquarium.html#overlay`，单独叠加龙鱼，保留鳍和轮廓的透明度。
+「背景」页可以切换六套预设，或选择本机的 JPG、PNG、WebP 图片。「灯光」页可以调节水族箱的灯光和反射。按 D、B 或 L 可以直接打开对应页面。
+
+在「背景」里选「透明」，可以在透明底上显示当前选中的鱼和造景。点击「打开龙鱼透明播放页」可进入 `aquarium.html#overlay`，单独叠加龙鱼，保留鳍和轮廓的透明度。
 
 把播放页用作 OBS 浏览器源时，可在仓库目录运行 `python3 -m http.server 8000 --bind 127.0.0.1`，再填入 `http://127.0.0.1:8000/aquarium.html#overlay`。嵌入网页时，把 iframe 放到画面图层上方。
 
@@ -20,9 +22,9 @@
 
 预设以山水客厅为初始背景。自定义图按原比例居中裁切成 16∶9，画面最长边保留至 2560 像素。浏览器允许本地存储时，同一地址重新打开会恢复所选背景和最近一张自定义图。
 
-每个鱼种在各自目录维护 Blender 工程、GLB 和游动代码。可以分别打开[龙鱼](fish/arowana/preview.html)、[单条蓝扇尾孔雀鱼](fish/blue-guppy/preview.html)和[六条孔雀鱼群](fish/blue-guppy/school-preview.html)的独立预览。
+每个鱼种在各自目录维护 Blender 工程、GLB 和游动代码。可以分别打开[龙鱼](fish/arowana/preview.html)、[单条蓝扇尾孔雀鱼](fish/blue-guppy/preview.html)和[六条孔雀鱼群](fish/blue-guppy/school-preview.html)的独立预览。[小幸运兔子](objects/plush-rabbit/preview.html)可以查看照片渲染和可旋转的实时模型。
 
-修改源码或素材后，在仓库根目录运行 `npm ci` 和 `npm run build`，重新生成水族箱和三个可离线打开的独立预览。
+展厅使用 `index.html`、`src/gallery.css` 和 `assets/gallery/` 中的素材。修改预览源码或模型后，在仓库根目录运行 `npm ci` 和 `npm run build`，重新生成水族箱、鱼类和小幸运的独立预览。
 
 ## 背景素材
 

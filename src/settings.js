@@ -4,8 +4,8 @@ export function installSettings() {
   const panel = document.querySelector('#settings-panel');
   const close = document.querySelector('#settings-close');
   const tabs = [...panel.querySelectorAll('[role="tab"]')];
-  const shortcuts = { KeyB: tabs[0], KeyL: tabs[1] };
-  let activeTab = tabs[0];
+  const shortcuts = Object.fromEntries(tabs.map(tab => [`Key${tab.getAttribute('aria-keyshortcuts')}`, tab]));
+  let activeTab = tabs.find(tab => tab.getAttribute('aria-selected') === 'true');
 
   function select(tab) {
     activeTab = tab;

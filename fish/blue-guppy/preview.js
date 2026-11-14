@@ -1,13 +1,5 @@
 import { startFishPreview } from '../../src/fish-preview.js';
-import { createSwimRoute } from '../swim-route.js';
 import { blueGuppy } from './index.js';
+import { soloGuppyRoute } from './solo-route.js';
 
-const route = createSwimRoute([
-  [-1.50, -.16, .44], [-.70, -.15, .86], [.20, -.12, 1.00], [1.28, -.03, .97],
-  [2.13, .14, .57], [2.34, .23, -.16], [2.08, .26, -.95], [1.26, .22, -1.13],
-  [.45, .09, -.70], [-.38, -.02, -.24], [-1.27, -.11, .16], [-2.23, -.07, .28],
-  [-2.80, .05, -.29], [-2.65, .16, -1.11], [-1.86, .25, -1.51],
-  [-1.06, .22, -1.39], [-.80, .11, -.84], [-1.15, -.04, -.17],
-], 1.1);
-
-startFishPreview(blueGuppy, route, { cameraDistance: 12.0 });
+startFishPreview(blueGuppy, soloGuppyRoute, { cameraDistance: 12.0 });

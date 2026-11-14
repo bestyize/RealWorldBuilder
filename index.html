@@ -3,10 +3,110 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="refresh" content="0; url=./aquarium.html">
-  <title>RealWorldBuilder · 水族箱</title>
+  <meta name="theme-color" content="#f7f6f0">
+  <meta name="description" content="在 RealWorldBuilder 观赏生态水族箱、龙鱼、孔雀鱼和小幸运毛绒兔。">
+  <title>微观展厅 · RealWorldBuilder</title>
+  <link rel="stylesheet" href="./src/gallery.css">
 </head>
-<body>
-  <a href="./aquarium.html">打开水族箱</a>
+<body id="top">
+  <a class="skip-link" href="#gallery">跳至展品</a>
+  <header class="site-header">
+    <div class="container header-content">
+      <a class="wordmark" href="./index.html">
+        <span class="brand-mark" aria-hidden="true"></span>
+        RealWorldBuilder
+      </a>
+      <nav aria-label="展厅导航">
+        <a href="#aquarium">水族箱</a>
+        <a href="#fish">鱼类</a>
+        <a href="#rabbit">小幸运</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container" id="gallery">
+    <div class="intro">
+      <h1>微观展厅</h1>
+      <p>看鱼在水草间游动，也近看毛绒与布料的纹理。</p>
+    </div>
+
+    <section class="aquarium-feature" id="aquarium" aria-labelledby="aquarium-title">
+      <img class="aquarium-image" src="./assets/gallery/aquarium.webp" width="1480" height="833" alt="" fetchpriority="high">
+      <div class="aquarium-copy">
+        <h2 id="aquarium-title">生态水族箱</h2>
+        <p>龙鱼与六条孔雀鱼在砂石和水草间共游。你可以切换鱼类、背景和灯光。</p>
+        <a class="entry entry-light" href="./aquarium.html?scene=planted">
+          进入水族箱 <span aria-hidden="true">↗</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="fish-section" id="fish" aria-labelledby="fish-title">
+      <div class="section-heading">
+        <h2 id="fish-title">鱼类观察</h2>
+        <p>每个展品都可以暂停和拖动进度。</p>
+      </div>
+      <ul class="fish-grid">
+        <li>
+          <a class="fish-card" href="./fish/arowana/preview.html">
+            <div class="fish-image arowana">
+              <img src="./assets/gallery/arowana.webp" width="720" height="326" alt="" loading="lazy">
+            </div>
+            <div class="fish-copy">
+              <div>
+                <h3>龙鱼</h3>
+                <p>近看鳞片反光与鱼身转向</p>
+              </div>
+              <span class="card-arrow" aria-hidden="true">↗</span>
+            </div>
+          </a>
+        </li>
+        <li>
+          <a class="fish-card" href="./fish/blue-guppy/preview.html">
+            <div class="fish-image guppy">
+              <img src="./assets/gallery/guppy.webp" width="580" height="448" alt="" loading="lazy">
+            </div>
+            <div class="fish-copy">
+              <div>
+                <h3>蓝扇尾孔雀鱼</h3>
+                <p>观察尾鳍如何随水摆动</p>
+              </div>
+              <span class="card-arrow" aria-hidden="true">↗</span>
+            </div>
+          </a>
+        </li>
+        <li>
+          <a class="fish-card" href="./fish/blue-guppy/school-preview.html">
+            <div class="fish-image school">
+              <img src="./assets/gallery/school.webp" width="720" height="452" alt="" loading="lazy">
+            </div>
+            <div class="fish-copy">
+              <div>
+                <h3>孔雀鱼群</h3>
+                <p>六条孔雀鱼，四种花色</p>
+              </div>
+              <span class="card-arrow" aria-hidden="true">↗</span>
+            </div>
+          </a>
+        </li>
+      </ul>
+    </section>
+
+    <section class="rabbit-feature" id="rabbit" aria-labelledby="rabbit-title">
+      <div class="rabbit-copy">
+        <h2 id="rabbit-title">小幸运兔子</h2>
+        <p>奶油色绒毛、碎花长耳和蝴蝶结。可以从不同角度看照片渲染，也可以亲手转动 3D 模型。</p>
+        <a class="entry entry-warm" href="./objects/plush-rabbit/preview.html">
+          看小幸运 <span aria-hidden="true">↗</span>
+        </a>
+      </div>
+      <img class="rabbit-image" src="./assets/gallery/rabbit.webp" width="960" height="960" alt="带碎花长耳和蝴蝶结的奶油色毛绒兔" loading="lazy">
+    </section>
+
+  </main>
+  <footer class="container page-footer">
+    <a href="https://github.com/bestyize/RealWorldBuilder">GitHub <span aria-hidden="true">↗</span></a>
+    <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+  </footer>
 </body>
 </html>

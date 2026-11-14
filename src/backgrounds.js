@@ -9,7 +9,7 @@ export function loadBackground(background) {
   return background.imageUrl ? loader.loadAsync(background.imageUrl) : null;
 }
 
-export function installBackgrounds(presets, apply) {
+export function installBackgrounds(presets, apply, initialPreset) {
   const choices = document.querySelector('#background-choices');
   const overlayLink = document.querySelector('#background-overlay');
   const customChoice = document.querySelector('#background-custom');
@@ -17,7 +17,7 @@ export function installBackgrounds(presets, apply) {
   const browse = document.querySelector('#background-browse');
   const status = document.querySelector('#background-status');
   const saved = readSavedBackground();
-  let current = presets[0];
+  let current = initialPreset ?? presets[0];
   let custom;
   let request = 0;
 
@@ -114,6 +114,7 @@ export function installBackgrounds(presets, apply) {
     showCustom({ id: 'custom', name: saved.custom.name, imageUrl: saved.custom.imageUrl, waterEffect: 0 });
   }
   updateSelection();
+  if (initialPreset) return;
   const restored = saved.selected === 'custom' ? custom : presets.find(preset => preset.id === saved.selected);
   return restored && restored !== current ? select(restored) : undefined;
 }

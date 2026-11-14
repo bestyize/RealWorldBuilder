@@ -45,6 +45,7 @@
       background: #091526;
     }
     .tank canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    .aquascape-layer { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
     .status {
       position: absolute;
       inset: 0;
@@ -82,7 +83,8 @@
       transform: translate(-50%, 0);
     }
     body[data-presentation="true"] .controls,
-    body[data-presentation="true"] .settings-toggle { visibility: hidden; }
+    body[data-presentation="true"] .settings-toggle,
+    body[data-presentation="true"] .gallery-link { visibility: hidden; }
     .controls button {
       display: grid;
       place-items: center;
@@ -122,7 +124,7 @@
     button[data-fullscreen="true"] .fullscreen i:nth-child(2) { border-width: 0 0 2px 2px; }
     button[data-fullscreen="true"] .fullscreen i:nth-child(3) { border-width: 2px 0 0 2px; }
     button[data-fullscreen="true"] .fullscreen i:nth-child(4) { border-width: 2px 2px 0 0; }
-    .settings-toggle {
+    .settings-toggle, .gallery-link {
       position: absolute;
       z-index: 1;
       top: clamp(12px, 3vw, 26px);
@@ -143,7 +145,12 @@
       -webkit-backdrop-filter: blur(14px);
       backdrop-filter: blur(14px);
     }
-    .settings-toggle:hover { background: #172c3d; }
+    .gallery-link {
+      left: clamp(12px, 3vw, 26px);
+      right: auto;
+      text-decoration: none;
+    }
+    .settings-toggle:hover, .gallery-link:hover { background: #172c3d; }
     .workspace[data-settings-open="true"] .settings-toggle { visibility: hidden; }
     .settings-glyph { position: relative; width: 15px; height: 13px; color: #96dce9; }
     .settings-glyph i { position: absolute; inset: 0 0 auto; height: 1px; background: currentColor; }
@@ -203,7 +210,7 @@
     .settings-header button:hover { background: #1c2b38; color: #f4fbff; }
     .settings-tabs {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       flex: none;
       gap: 4px;
       margin: 14px 21px 0;
@@ -238,13 +245,33 @@
       scrollbar-color: #354958 transparent;
     }
     .background-fields { padding-bottom: 21px; }
-    .background-fields h2 {
+    .background-fields h2, .display-fields legend {
       margin: 0 0 10px;
       color: #aac3d3;
       font-size: 12px;
       font-weight: 600;
       letter-spacing: .04em;
     }
+    .display-fields fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+    .display-fields legend { padding: 0; }
+    .display-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .display-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 42px;
+      padding: 8px 10px;
+      border: 1px solid #2b3c4b;
+      border-radius: 7px;
+      background: #101d28;
+      color: #e5eff6;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .display-option:hover { border-color: #7293a3; background: #172b39; }
+    .display-option:has(:checked) { border-color: var(--accent); background: #17313e; }
+    .display-option input { margin: 0; flex: none; accent-color: var(--accent); cursor: pointer; }
+    .display-fields fieldset + fieldset { margin-top: 22px; }
     .background-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
     .background-choice {
       display: block;
@@ -359,7 +386,7 @@
       background: #c6edf4;
       box-shadow: 0 0 0 2px #0b141e;
     }
-    .settings-toggle:focus-visible, .settings-panel :focus-visible {
+    .settings-toggle:focus-visible, .gallery-link:focus-visible, .settings-panel :focus-visible {
       outline: 2px solid #9ee3ee;
       outline-offset: 3px;
     }
@@ -399,6 +426,7 @@
   <main class="workspace" id="workspace">
     <section class="aquarium-view" aria-label="水族箱">
       <div class="tank" id="tank">
+        <img class="aquascape-layer" id="rocky-shallows" src="__AQUASCAPE_URL__" alt="" hidden>
         <div class="status" id="status" role="status">正在打开水族箱…</div>
         <div class="controls" id="controls" hidden>
           <button id="playback" type="button" aria-label="暂停" title="暂停（空格）">
@@ -409,6 +437,7 @@
           </button>
         </div>
       </div>
+      <a class="gallery-link" href="./index.html"><span aria-hidden="true">←</span> 展厅</a>
       <button class="settings-toggle" id="settings-toggle" type="button" aria-controls="settings-panel"
         aria-expanded="false" hidden>
         <span class="settings-glyph" aria-hidden="true"><i></i><i></i><i></i></span>
@@ -421,12 +450,31 @@
         <button id="settings-close" type="button" aria-label="收起控制面板" title="收起（Esc）">×</button>
       </header>
       <div class="settings-tabs" role="tablist" aria-label="设置">
-        <button id="background-tab" type="button" role="tab" aria-selected="true" aria-controls="background-section"
-          aria-keyshortcuts="B" title="背景（B）">背景</button>
+        <button id="display-tab" type="button" role="tab" aria-selected="true" aria-controls="display-section"
+          aria-keyshortcuts="D" title="展示（D）">展示</button>
+        <button id="background-tab" type="button" role="tab" aria-selected="false" aria-controls="background-section"
+          aria-keyshortcuts="B" title="背景（B）" tabindex="-1">背景</button>
         <button id="lighting-tab" type="button" role="tab" aria-selected="false" aria-controls="lighting-section"
           aria-keyshortcuts="L" title="灯光（L）" tabindex="-1">灯光</button>
       </div>
-      <div class="panel-section" id="background-section" role="tabpanel" aria-labelledby="background-tab">
+      <div class="panel-section" id="display-section" role="tabpanel" aria-labelledby="display-tab">
+        <div class="panel-scroll display-fields">
+          <fieldset>
+            <legend>鱼</legend>
+            <div class="display-options">
+              <label class="display-option"><input type="radio" name="fish-display" value="mixed" checked>同缸</label>
+              <label class="display-option"><input type="radio" name="fish-display" value="arowana">单条龙鱼</label>
+              <label class="display-option"><input type="radio" name="fish-display" value="guppy">单条孔雀鱼</label>
+              <label class="display-option"><input type="radio" name="fish-display" value="school">孔雀鱼群</label>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>造景</legend>
+            <label class="display-option"><input type="checkbox" id="display-aquascape">砂石水草</label>
+          </fieldset>
+        </div>
+      </div>
+      <div class="panel-section" id="background-section" role="tabpanel" aria-labelledby="background-tab" hidden>
         <div class="panel-scroll background-fields">
           <h2 id="background-presets-title">预设背景</h2>
           <div class="background-grid" id="background-choices" role="group" aria-labelledby="background-presets-title"></div>
