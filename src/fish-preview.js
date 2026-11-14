@@ -4,7 +4,7 @@ import { takeEmbeddedModel } from './embedded-data.js';
 import { createTankEnvironment } from './environment.js';
 import { addSceneLights } from './lighting.js';
 
-export async function startFishPreview(species, route) {
+export async function startFishPreview(species, route, { cameraDistance = 9.4 } = {}) {
   const stage = document.querySelector('#preview-stage');
   const status = document.querySelector('#preview-status');
   const playButton = document.querySelector('#preview-play');
@@ -30,7 +30,7 @@ export async function startFishPreview(species, route) {
     scene.add(fish.object);
 
     const camera = new THREE.PerspectiveCamera(25, 16 / 9, .12, 50);
-    camera.position.set(0, .12, 9.4);
+    camera.position.set(0, .12, cameraDistance);
     camera.lookAt(0, .12, 0);
 
     const duration = fish.duration;

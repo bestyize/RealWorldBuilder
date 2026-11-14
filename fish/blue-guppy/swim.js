@@ -5,52 +5,57 @@ const TAU = 2 * Math.PI;
 const UP = new Vector3(0, 1, 0);
 const FORWARD = new Vector3(1, 0, 0);
 const { clamp, euclideanModulo: wrap, lerp, smoothstep } = MathUtils;
-// Bend builds through the trunk. The broad fan follows with a readable delay.
+// Bends and thrust travel from the trunk to the trailing edge of the fan.
 const SPINE = [
-  ['Body', .032, .035, .27, .06],
-  ['Peduncle', .087, .075, .57, .16],
-  ['TailBase', .096, .112, .58, .36],
-  ['TailMid', .075, .155, .30, .53],
-  ['TailEdge', .044, .200, .12, .69],
+  ['Body', .051, .029, .34],
+  ['Peduncle', .109, .065, .60],
+  ['TailBase', .108, .106, .53],
+  ['TailMid', .075, .153, .28],
+  ['TailEdge', .045, .201, .10],
 ];
 
 function steering(curvature) {
   const amount = Math.abs(curvature);
-  return Math.sign(curvature) * .93 * smoothstep(amount, .19, 1.46);
+  return Math.sign(curvature) * smoothstep(amount, .12, 1.40);
 }
 
 function pectoralPhase(angle, beats) {
   return beats * angle + .46 * Math.sin(2 * angle + .38);
 }
 
-function buildTiming(route) {
+function buildTiming(route, scale) {
   let duration = 0;
   let cycles = 0;
   const table = [];
+  const turnDistance = .38 * scale;
+  const position = new Vector3();
+  const tangent = new Vector3();
   for (const { distance, curvature } of route.samples) {
     const angle = TAU * distance / route.length;
-    const phrase = .5 + .5 * Math.sin(3 * angle + .32 + .38 * Math.sin(2 * angle - .2));
-    const effort = .15 + .85 * phrase ** 1.6;
-    const turn = Math.abs(steering(curvature));
-    const speed = .53 + .43 * effort - .20 * turn;
-    const cadence = 1.18 + 1.42 * effort + .19 * turn;
+    const phrase = .5 + .5 * Math.sin(4 * angle + .38 + .52 * Math.sin(3 * angle - .2));
+    const effort = .07 + .93 * phrase ** 1.8;
+    const behind = route.sample(distance - turnDistance, position, tangent);
+    const ahead = route.sample(distance + turnDistance, position, tangent);
+    const turn = steering(scale * (.53 * curvature + .20 * behind + .27 * ahead));
+    const speed = .61 + .53 * effort - .17 * Math.abs(turn);
+    const cadence = 1.06 + 1.55 * effort + .16 * Math.abs(turn);
     const previous = table.at(-1);
     if (previous) {
       const dt = 2 * (distance - previous.distance) / (previous.speed + speed);
       duration += dt;
       cycles += .5 * dt * (cadence + previous.cadence);
     }
-    table.push({ distance, time: duration, cycles, speed, cadence, effort });
+    table.push({ distance, time: duration, cycles, speed, cadence, effort, turn });
   }
   return { table, duration, cycles };
 }
 
 export function createSwimmer(object, route) {
-  const { table, duration, cycles } = buildTiming(route);
+  const scale = Math.abs(object.scale.x);
+  const { table, duration, cycles } = buildTiming(route, scale);
   const startTime = table[route.startIndex].time;
   const beatScale = Math.max(1, Math.round(cycles)) / cycles;
   const finBeats = Math.max(1, Math.round(duration * 3.35));
-  const scale = Math.abs(object.scale.x);
   const basis = new Matrix4();
   const anchor = new Vector3();
   const forward = new Vector3();
@@ -73,7 +78,7 @@ export function createSwimmer(object, route) {
     };
   }
 
-  const spine = SPINE.map(([name, amplitude, lag, bend, trail]) => ({ ...bind(name), amplitude, lag, bend, trail }));
+  const spine = SPINE.map(([name, amplitude, lag, bend]) => ({ ...bind(name), amplitude, lag, bend }));
   const pectorals = [[1, 'Pectoral_L', .45], [-1, 'Pectoral_R', 2.32]].map(([side, name, phase]) => ({
     ...bind(name), side, phase,
   }));
@@ -100,6 +105,7 @@ export function createSwimmer(object, route) {
 
   const head = {};
   const delayed = {};
+  const previous = {};
   function sample(time, state) {
     const wrapped = wrap(time, duration);
     const i = lowerIndex(table, 'time', wrapped);
@@ -110,6 +116,17 @@ export function createSwimmer(object, route) {
     state.effort = lerp(a.effort, b.effort, u);
     state.phase = TAU * beatScale * lerp(a.cycles, b.cycles, u);
     state.angle = TAU * wrapped / duration;
+    state.turn = lerp(a.turn, b.turn, u);
+  }
+
+  function turningBend(time, turn) {
+    // A stronger initial bend eases back on a sustained arc. A small
+    // counter-bend appears naturally when the turning demand falls away.
+    sample(time - .31, previous);
+    const recent = previous.turn;
+    sample(time - .69, previous);
+    const change = (turn - recent) / 2 + (turn - previous.turn) / 2;
+    return .058 * turn + .38 * Math.tanh(change);
   }
 
   function orient(joint, yaw, roll) {
@@ -121,27 +138,30 @@ export function createSwimmer(object, route) {
     const time = timeSeconds + startTime;
     sample(time, head);
     const { distance, effort, phase, angle } = head;
-    const current = route.sample(distance, anchor, forward);
-    const upcoming = route.sample(distance + .25 * scale, scratch, aim);
-    const turn = steering(.60 * current + .40 * upcoming);
-    forward.lerp(aim, .36).normalize();
+    route.sample(distance, anchor, forward);
+    route.sample(distance + .32 * scale, scratch, aim);
+    const turn = head.turn;
+    const bend = turningBend(time, turn);
+    forward.lerp(aim, .50).normalize();
     lateral.crossVectors(forward, UP).normalize();
     up.crossVectors(lateral, forward);
 
     // The head steers first. Roll and lift are small corrections to the path.
-    const bank = -.143 * turn + .027 * Math.sin(2 * angle + .4);
+    const bank = -.048 * turn - .16 * bend + .023 * Math.sin(2 * angle + .4);
     object.quaternion.setFromRotationMatrix(basis.makeBasis(forward, up, lateral))
-      .multiply(rotation.setFromAxisAngle(UP, .083 * turn + .031 * effort * Math.sin(phase)))
+      .multiply(rotation.setFromAxisAngle(UP, .035 * turn + .13 * bend + .034 * effort * Math.sin(phase)))
       .multiply(rotation.setFromAxisAngle(FORWARD, bank));
     object.position.copy(anchor)
       .addScaledVector(lateral, scale * (.016 + .014 * effort) * Math.sin(phase - .32));
     object.position.y += scale * (.048 * Math.sin(2 * angle + .30) + .031 * Math.sin(3 * angle - .46));
 
     for (const joint of spine) {
-      sample(time - joint.lag, delayed);
-      const curve = route.sample(distance - joint.trail * scale, scratch, aim);
-      const kick = (.27 + .88 * delayed.effort) * (Math.sin(delayed.phase) + .12 * Math.sin(2 * delayed.phase + .54));
-      const yaw = joint.bend * steering(curve) + joint.amplitude * kick;
+      const jointTime = time - joint.lag;
+      sample(jointTime, delayed);
+      const drive = .19 + 1.04 * delayed.effort;
+      const localBend = turningBend(jointTime, delayed.turn);
+      const kick = drive * (Math.sin(delayed.phase) + .14 * Math.sin(2 * delayed.phase + .54));
+      const yaw = joint.bend * localBend + joint.amplitude * kick * (1 - .85 * Math.abs(localBend));
       const roll = .24 * joint.amplitude * Math.sin(delayed.phase - .74);
       orient(joint, yaw, roll);
     }
@@ -149,17 +169,18 @@ export function createSwimmer(object, route) {
     const finPhase = pectoralPhase(angle, finBeats);
     for (const fin of pectorals) {
       const stroke = finPhase + fin.phase;
-      const trim = (.33 + .60 * (1 - effort)) * (1 + .22 * fin.side * turn);
+      const trim = (.33 + .60 * (1 - effort)) * (1 + .28 * fin.side * bend);
       const pull = .5 + .5 * Math.sin(stroke);
       orient(fin, -fin.side * (.22 * trim * pull ** 1.5 + .09 * turn),
         fin.side * trim * (.11 + .25 * Math.sin(stroke - .70)));
     }
 
     for (const fin of membranes) {
-      sample(time - fin.lag, delayed);
+      const finTime = time - fin.lag;
+      sample(finTime, delayed);
       const beat = fin.pectoral ? pectoralPhase(delayed.angle, finBeats) + fin.offset
         : delayed.phase - fin.offset;
-      const flowTurn = lerp(turn, steering(route.sample(delayed.distance, scratch, aim)), .72);
+      const flowTurn = .20 * delayed.turn + 1.15 * turningBend(finTime, delayed.turn);
       const load = fin.pectoral ? .28 + .62 * (1 - delayed.effort) : .32 + .55 * delayed.effort;
       const drift = .080 * Math.sin(5 * angle + fin.offset) + .045 * Math.sin(8 * angle - .47);
       const bend = fin.response * load * Math.sin(beat - .86) - fin.drag * flowTurn + drift;
