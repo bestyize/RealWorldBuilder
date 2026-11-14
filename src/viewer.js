@@ -19,7 +19,11 @@ const aquascapeLayer = document.querySelector('#rocky-shallows');
 const playbackButton = document.querySelector('#playback');
 const fullscreenButton = document.querySelector('#fullscreen');
 const overlay = location.hash === '#overlay';
-const plantedScene = !overlay && new URLSearchParams(location.search).get('scene') === 'planted';
+const scenePresets = new Map([
+  ['living-room', { background: 'living-room', aquascape: false }],
+  ['planted', { background: 'black', aquascape: true }],
+]);
+const entryScene = scenePresets.get(new URLSearchParams(location.search).get('scene'));
 const aspect = 16 / 9;
 const cameraDistance = 11;
 const viewHeight = 4.5;
@@ -101,7 +105,7 @@ async function start() {
   stage.prepend(renderer.domElement);
 
   const backgrounds = JSON.parse(takeEmbeddedData('#background-presets'));
-  const backgroundId = overlay ? 'transparent' : plantedScene ? 'black' : backgrounds[0].id;
+  const backgroundId = overlay ? 'transparent' : (entryScene?.background ?? backgrounds[0].id);
   const initialBackground = backgrounds.find(background => background.id === backgroundId);
   const [createArowana, createGuppy, backdrop] = await Promise.all([
     loadFish(arowana, takeSpeciesModel(arowana.id)),
@@ -184,8 +188,8 @@ async function start() {
   if (overlay) {
     applyDisplay({ fish: 'arowana', aquascape: false });
   } else {
-    await installBackgrounds(backgrounds, applyBackground, plantedScene ? initialBackground : undefined);
-    installDisplay(applyDisplay, plantedScene ? { fish: 'mixed', aquascape: true } : undefined);
+    await installBackgrounds(backgrounds, applyBackground, entryScene ? initialBackground : undefined);
+    installDisplay(applyDisplay, entryScene ? { fish: 'mixed', aquascape: entryScene.aquascape } : undefined);
     closeSettings = installSettings();
   }
 

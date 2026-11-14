@@ -100,6 +100,7 @@ section { scroll-margin-top: 26px; }
 .aquarium-feature {
   --art-width: 85%;
   --fade-edge: calc(100% - var(--art-width) + 10%);
+  --tank-shade: #0b1b30;
   position: relative;
   display: flex;
   min-height: clamp(365px, 33.4vw, 485px);
@@ -107,7 +108,7 @@ section { scroll-margin-top: 26px; }
   overflow: hidden;
   isolation: isolate;
   border-radius: 17px;
-  background: radial-gradient(ellipse at 72% -5%, #50675a 0, #254238 29%, #132b24 58%, #0d211a 95%);
+  background: var(--tank-shade);
   color: #f6f6ed;
 }
 .aquarium-image {
@@ -124,7 +125,7 @@ section { scroll-margin-top: 26px; }
   position: absolute;
   z-index: -1;
   inset: 0;
-  background: linear-gradient(90deg, #11251e 0, #11251e var(--fade-edge), #11251e00 45%);
+  background: linear-gradient(90deg, var(--tank-shade) 0, var(--tank-shade) var(--fade-edge), transparent 46%);
   pointer-events: none;
 }
 .aquarium-copy { width: 34%; padding: 36px 0 36px clamp(30px, 5.35vw, 80px); }
@@ -269,7 +270,7 @@ section { scroll-margin-top: 26px; }
   .site-header nav { gap: 20px; }
   .aquarium-feature { display: grid; align-items: end; min-height: 0; }
   .aquarium-image { position: relative; inset: auto; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: contain; }
-  .aquarium-feature::after { background: linear-gradient(0deg, #11251e 0, #11251e 27%, #11251e00 57%); }
+  .aquarium-feature::after { background: linear-gradient(0deg, var(--tank-shade) 45%, transparent 57%); }
   .aquarium-copy { width: auto; padding: 23px 25px 26px; }
   .aquarium-copy p { max-width: 27em; margin-top: 10px; }
   .entry { margin-top: 19px; }
