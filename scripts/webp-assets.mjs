@@ -8,11 +8,12 @@ const GLB_MAGIC = 0x46546c67;
 const lossless = { lossless: true, exact: true, effort: 5 };
 const photographic = quality => ({ quality, smartSubsample: true, effort: 5 });
 
-export async function webpDataUrl(path, { quality } = {}) {
+export async function webpImage(path, { quality, width } = {}) {
   const bytes = await readFile(path);
   const options = quality === undefined ? lossless : photographic(quality);
-  const image = await sharp(bytes).webp(options).toBuffer();
-  return 'data:image/webp;base64,' + image.toString('base64');
+  const image = sharp(bytes);
+  if (width) image.resize({ width, withoutEnlargement: true });
+  return image.webp(options).toBuffer();
 }
 
 export async function webpModel(path) {

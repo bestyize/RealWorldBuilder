@@ -4,10 +4,10 @@ import { blueGuppy } from '../fish/blue-guppy/index.js';
 import { createGuppySchool } from '../fish/blue-guppy/school.js';
 import { soloGuppyRoute } from '../fish/blue-guppy/solo-route.js';
 import { loadFish } from '../fish/load-fish.js';
-import { installBackgrounds, loadBackground } from './backgrounds.js';
+import { installBackgrounds } from './backgrounds.js';
 import { cruiseRoute } from './cruise-route.js';
 import { installDisplay } from './display.js';
-import { takeEmbeddedData, takeSpeciesModel } from './embedded-data.js';
+import { readModel } from './model-data.js';
 import { createTankEnvironment } from './environment.js';
 import { installLighting } from './lighting.js';
 import { installSettings } from './settings.js';
@@ -29,6 +29,7 @@ const cameraDistance = 11;
 const viewHeight = 4.5;
 const motionTime = { value: 0 };
 const floorLight = { value: new THREE.Vector2(0.5, 0.5) };
+const waterLightMaterials = new WeakSet();
 
 let aquarium;
 let frameRequest = 0;
@@ -86,7 +87,7 @@ window.addEventListener('hashchange', () => {
 
 window.aquarium.ready = start().catch(error => {
   status.hidden = false;
-  status.textContent = '无法打开实时水族箱，请在支持 WebGL 2 的浏览器中打开。';
+  status.textContent = '水族箱加载失败。请刷新重试，并确认浏览器支持 WebGL 2。';
   throw error;
 });
 window.aquarium.ready.catch(() => {});
@@ -104,14 +105,9 @@ async function start() {
   });
   stage.prepend(renderer.domElement);
 
-  const backgrounds = JSON.parse(takeEmbeddedData('#background-presets'));
-  const backgroundId = overlay ? 'transparent' : (entryScene?.background ?? backgrounds[0].id);
-  const initialBackground = backgrounds.find(background => background.id === backgroundId);
-  const [createArowana, createGuppy, backdrop] = await Promise.all([
-    loadFish(arowana, takeSpeciesModel(arowana.id)),
-    overlay ? null : loadFish(blueGuppy, takeSpeciesModel(blueGuppy.id)),
-    loadBackground(initialBackground),
-  ]);
+  const assets = document.querySelector('#aquarium-assets');
+  const { backgrounds, aquascapeUrl } = JSON.parse(assets.textContent);
+  assets.remove();
   const textureAnisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
 
   const scene = new THREE.Scene();
@@ -119,39 +115,85 @@ async function start() {
   const camera = new THREE.PerspectiveCamera(cameraFov, aspect, 0.12, 50);
   const backdropMesh = createBackdrop();
   const bubbles = createBubbles();
+  backdropMesh.visible = bubbles.visible = false;
   scene.add(backdropMesh, bubbles);
   scene.environment = createTankEnvironment(renderer);
 
-  const dragon = createArowana(cruiseRoute);
-  const residents = [dragon];
-  let solo;
-  let school;
-  if (createGuppy) {
-    solo = createGuppy(soloGuppyRoute);
-    school = createGuppySchool(createGuppy, new THREE.Group());
-    residents.push(solo, school);
-  }
-  for (const { object } of residents) {
-    object.traverse(mesh => {
-      if (!mesh.isMesh) return;
-      mesh.frustumCulled = false;
-      const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-      for (const material of materials) addMovingWaterLight(material, textureAnisotropy);
-    });
-    scene.add(object);
-  }
   aquarium = { renderer, scene, camera, residents: [] };
   const redraw = () => {
     if (!playing) draw(playhead);
   };
   installLighting(scene, redraw);
 
-  function applyDisplay({ fish, aquascape }) {
+  const speciesLoads = new Map();
+  const modes = {
+    mixed: ['arowana', 'school'],
+    arowana: ['arowana'],
+    guppy: ['guppy'],
+    school: ['school'],
+  };
+  const residents = new Map();
+  let aquascapeLoad;
+
+  function loadSpecies(species) {
+    if (!speciesLoads.has(species.id)) {
+      const pending = readModel(`model-data-${species.id}`)
+        .then(bytes => loadFish(species, bytes))
+        .catch(error => {
+          speciesLoads.delete(species.id);
+          throw error;
+        });
+      speciesLoads.set(species.id, pending);
+    }
+    return speciesLoads.get(species.id);
+  }
+
+  async function loadResident(kind) {
+    const createFish = await loadSpecies(kind === 'arowana' ? arowana : blueGuppy);
+    if (residents.has(kind)) return residents.get(kind);
+    const resident = kind === 'school'
+      ? createGuppySchool(createFish, new THREE.Group())
+      : createFish(kind === 'arowana' ? cruiseRoute : soloGuppyRoute);
+    const { object } = resident;
+    object.traverse(mesh => {
+      if (!mesh.isMesh) return;
+      mesh.frustumCulled = false;
+      const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+      for (const material of materials) addMovingWaterLight(material, textureAnisotropy);
+    });
+    residents.set(kind, resident);
+    return resident;
+  }
+
+  function loadAquascape() {
+    if (!aquascapeLoad) {
+      aquascapeLayer.src = aquascapeUrl;
+      aquascapeLoad = aquascapeLayer.decode().catch(error => {
+        aquascapeLoad = undefined;
+        aquascapeLayer.removeAttribute('src');
+        throw error;
+      });
+    }
+    return aquascapeLoad;
+  }
+
+  async function prepareDisplay({ fish, aquascape }, { optionalAquascape = false } = {}) {
+    const [residents, hasAquascape] = await Promise.all([
+      Promise.all(modes[fish].map(loadResident)),
+      aquascape && loadAquascape().then(() => true, error => {
+        if (!optionalAquascape) throw error;
+        return false;
+      }),
+    ]);
+    return { residents, hasAquascape };
+  }
+
+  function applyDisplay({ fish, aquascape }, active) {
     const mixed = fish === 'mixed';
-    dragon.object.visible = mixed || fish === 'arowana';
-    if (solo) solo.object.visible = fish === 'guppy';
-    if (school) {
-      school.object.visible = mixed || fish === 'school';
+    for (const { object } of aquarium.residents) scene.remove(object);
+    for (const { object } of active) scene.add(object);
+    if (mixed || fish === 'school') {
+      const school = residents.get('school');
       // Scale both the shoal and its route to suit the other residents.
       const scale = mixed ? 0.49 : 0.69;
       school.object.scale.setScalar(scale);
@@ -165,7 +207,7 @@ async function start() {
     camera.position.set(0, cameraHeight, distance);
     camera.lookAt(0, cameraHeight, 0);
     aquascapeLayer.hidden = !aquascape;
-    aquarium.residents = residents.filter(fish => fish.object.visible);
+    aquarium.residents = active;
     redraw();
   }
 
@@ -184,12 +226,17 @@ async function start() {
     redraw();
   }
 
-  applyBackground(backdrop, initialBackground);
   if (overlay) {
-    applyDisplay({ fish: 'arowana', aquascape: false });
+    const display = { fish: 'arowana', aquascape: false };
+    applyBackground(null, backgrounds.find(background => background.id === 'transparent'));
+    const { residents } = await prepareDisplay(display);
+    applyDisplay(display, residents);
   } else {
-    await installBackgrounds(backgrounds, applyBackground, entryScene ? initialBackground : undefined);
-    installDisplay(applyDisplay, entryScene ? { fish: 'mixed', aquascape: entryScene.aquascape } : undefined);
+    const initialDisplay = entryScene && { fish: 'mixed', aquascape: entryScene.aquascape };
+    await Promise.all([
+      installBackgrounds(backgrounds, applyBackground, entryScene?.background),
+      installDisplay(prepareDisplay, applyDisplay, initialDisplay),
+    ]);
     closeSettings = installSettings();
   }
 
@@ -353,8 +400,8 @@ function createBackdrop() {
 }
 
 function addMovingWaterLight(material, anisotropy) {
-  if (!material.isMeshStandardMaterial || material.userData.waterLight) return;
-  material.userData.waterLight = true;
+  if (!material.isMeshStandardMaterial || waterLightMaterials.has(material)) return;
+  waterLightMaterials.add(material);
   for (const map of [material.map, material.normalMap, material.roughnessMap,
     material.iridescenceMap, material.iridescenceThicknessMap]) {
     if (map) map.anisotropy = anisotropy;

@@ -4,7 +4,9 @@
 
 [打开 GitHub Pages](https://bestyize.github.io/RealWorldBuilder/)
 
-打开 [index.html](index.html) 浏览展厅，或直接打开 [aquarium.html](aquarium.html) 离线观赏。从展厅进入水族箱时，默认使用「山水客厅」，显示龙鱼和孔雀鱼同缸，砂石水草处于关闭状态。直接打开水族箱会恢复这个浏览器上次的选择。点击右上角「设置」可切换单条龙鱼、单条孔雀鱼、孔雀鱼群或同缸，也可以独立开关砂石水草造景。
+从展厅进入 [水族箱](aquarium.html?scene=living-room) 时，默认使用「山水客厅」，显示龙鱼和孔雀鱼同缸，砂石水草处于关闭状态。直接访问水族箱会恢复这个浏览器上次的选择。点击右上角「设置」可切换单条龙鱼、单条孔雀鱼、孔雀鱼群或同缸，也可以独立开关砂石水草造景。
+
+展厅的「下载离线版」提供 [aquarium-offline.html](aquarium-offline.html)。保存文件后可双击打开，模型、贴图、背景和播放代码都在文件内。透明叠加可使用 `aquarium-offline.html#overlay`。本地测试网页版时，在仓库运行 `python3 -m http.server 8000 --bind 127.0.0.1`，并访问 `http://127.0.0.1:8000/`。
 
 「背景」页可以切换六套预设，或选择本机的 JPG、PNG、WebP 图片。「灯光」页可以调节水族箱的灯光和反射。按 D、B 或 L 可以直接打开对应页面。
 
@@ -24,7 +26,7 @@
 
 每个鱼种在各自目录维护 Blender 工程、GLB 和游动代码。可以分别打开[龙鱼](fish/arowana/preview.html)、[单条蓝扇尾孔雀鱼](fish/blue-guppy/preview.html)和[六条孔雀鱼群](fish/blue-guppy/school-preview.html)的独立预览。[碎花垂耳兔](objects/plush-rabbit/preview.html)可以拖动旋转和缩放。
 
-展厅使用 `index.html`、`src/gallery.css` 和 `assets/gallery/` 中的素材。修改预览源码或模型后，用 Node.js 20.9 或更新版本运行 `npm ci` 和 `npm run build`。构建会将模型贴图和预设背景转换为 WebP，并内嵌到可离线打开的 HTML 中。PNG 贴图使用无损编码并保留透明度，JPEG 背景和底色贴图使用高质量编码。Blender 工程及原始素材仍是编辑和导出的来源。
+展厅使用 `index.html`、`src/gallery.css` 和 `assets/gallery/` 中的素材。修改预览源码或模型后，用 Node.js 20.9 或更新版本运行 `npm ci` 和 `npm run build`。构建同时生成网页版和水族箱离线单文件。网页版从 `assets/player/` 加载所需的 GLB 和背景。同种鱼在整缸和独立预览中共用一个资源，贴图以 WebP 存在 GLB 内。PNG 贴图使用无损编码并保留透明度，JPEG 背景和底色贴图使用高质量编码。Blender 工程及原始素材仍是编辑和导出的来源。
 
 ## 背景素材
 

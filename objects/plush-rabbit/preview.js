@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
-import { takeEmbeddedModel } from '../../src/embedded-data.js';
+import { readModel } from '../../src/model-data.js';
 import { createContactShadow, createLinenFloor, createStudioEnvironment, STUDIO_WINDOW_POSITION } from './studio.js';
 import { addPlushVolume } from './plush-volume.js';
 
@@ -26,7 +26,7 @@ async function openModel() {
   stage.prepend(renderer.domElement);
 
   const decoder = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
-  const { scene: model } = await decoder.parseAsync(takeEmbeddedModel(), '');
+  const { scene: model } = await decoder.parseAsync(await readModel(), '');
   model.scale.setScalar(10);
   model.updateMatrixWorld(true);
   const bounds = new THREE.Box3().setFromObject(model, true);
