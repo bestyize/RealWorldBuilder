@@ -155,17 +155,6 @@ section { scroll-margin-top: 26px; }
 .entry-light { color: #1f362b; background: #e5edd6; }
 .entry-light:hover { background: #fbf9e7; }
 .entry-light:focus-visible { outline-color: #e5edd6; }
-.offline-download {
-  display: block;
-  width: fit-content;
-  margin-top: 13px;
-  color: #d7e4d9;
-  font-size: 13px;
-  text-decoration: underline;
-  text-underline-offset: 4px;
-}
-.offline-download:hover { color: #fff; }
-.offline-download:focus-visible { outline-color: #e5edd6; }
 
 .fish-section { margin-top: clamp(43px, 5vw, 70px); }
 .section-heading {

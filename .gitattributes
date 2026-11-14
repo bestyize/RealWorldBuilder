@@ -1,5 +1,3 @@
 /aquarium.html whitespace=-blank-at-eol,-space-before-tab
-/aquarium-offline.html whitespace=-blank-at-eol,-space-before-tab
-/assets/player/*.js whitespace=-blank-at-eol,-space-before-tab
 /fish/*/preview.html whitespace=-blank-at-eol,-space-before-tab
 /objects/plush-rabbit/preview.html whitespace=-blank-at-eol,-space-before-tab

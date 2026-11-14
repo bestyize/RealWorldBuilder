@@ -1,14 +1,11 @@
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
-import { createHash } from 'node:crypto';
-import path from 'node:path';
+import { readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { build } from 'esbuild';
 import { arowana } from './fish/arowana/index.js';
 import { blueGuppy } from './fish/blue-guppy/index.js';
-import { webpImage, webpModel } from './scripts/webp-assets.mjs';
+import { webpDataUrl, webpModel } from './scripts/webp-assets.mjs';
 
-const file = name => new URL(name, import.meta.url);
-const assetDirectory = 'assets/player';
+const file = (path) => new URL(path, import.meta.url);
 const presets = [
   { id: 'living-room', label: '山水客厅', filename: 'aquarium.jpg', waterEffect: 1 },
   { id: 'blackwater', label: '雨林黑水', filename: 'blackwater.jpg', waterEffect: 0.4 },
@@ -17,130 +14,67 @@ const presets = [
   { id: 'black', label: '纯黑', filename: 'black.jpg', waterEffect: 0 },
   { id: 'transparent', label: '透明', waterEffect: 0 },
 ];
-
-await mkdir(file(assetDirectory), { recursive: true });
-
-async function publishAsset(name, extension, bytes) {
-  const digest = createHash('sha256').update(bytes).digest('hex').slice(0, 12);
-  const destination = `${assetDirectory}/${name}.${digest}.${extension}`;
-  await writeFile(file(destination), bytes);
-  return destination;
-}
-
-function relativeAsset(page, destination) {
-  return path.posix.relative(path.posix.dirname(page), destination);
-}
-
-async function bundleScript(entry) {
-  const bundle = await build({
+function bundleScript(entry) {
+  return build({
     entryPoints: [fileURLToPath(file(entry))],
     bundle: true,
     format: 'iife',
     minify: true,
     legalComments: 'inline',
     write: false,
-  });
-  return bundle.outputFiles[0].text;
+  }).then(bundle => bundle.outputFiles[0].text.replace(/<\/script/gi, '<\\/script'));
 }
 
-const [aquariumTemplate, previewTemplate, backgrounds, aquascape, fishModels] = await Promise.all([
-  readFile(file('src/viewer-template.html'), 'utf8'),
-  readFile(file('src/fish-preview-template.html'), 'utf8'),
+const [aquariumScript, aquariumTemplate, previewTemplate, arowanaModel, guppyModel, aquascape, backgrounds] = await Promise.all([
+  bundleScript('./src/viewer.js'),
+  readFile(file('./src/viewer-template.html'), 'utf8'),
+  readFile(file('./src/fish-preview-template.html'), 'utf8'),
+  webpModel(file(arowana.modelFile)),
+  webpModel(file(blueGuppy.modelFile)),
+  webpDataUrl(file('./assets/rocky-shallows.png')),
   Promise.all(presets.map(async ({ filename, ...preset }) => {
     if (!filename) return preset;
-    const source = file(`assets/${filename}`);
-    const [image, thumbnail] = await Promise.all([
-      webpImage(source, { quality: 94 }),
-      webpImage(source, { width: 240, quality: 82 }),
-    ]);
-    const asset = await publishAsset(preset.id, 'webp', image);
-    return { ...preset, image, asset, thumbnail: webpUrl(thumbnail) };
+    const imageUrl = await webpDataUrl(file(`./assets/${filename}`), { quality: 94 });
+    return { ...preset, imageUrl };
   })),
-  webpImage(file('assets/rocky-shallows.png')),
-  Promise.all([arowana, blueGuppy].map(async ({ id, modelFile }) => {
-    const bytes = await webpModel(file(modelFile));
-    const url = await publishAsset(id, 'glb', bytes);
-    return [`model-data-${id}`, { url, bytes }];
-  })).then(Object.fromEntries),
 ]);
 
-function webpUrl(bytes) {
-  return 'data:image/webp;base64,' + bytes.toString('base64');
-}
-
-function renderPlayer({ page, template, script, models, data, offline = false }) {
-  const modelTags = Object.entries(models).map(([id, model]) => {
-    if (offline) {
-      return `<script id="${id}" type="application/octet-stream">${model.bytes.toString('base64')}</script>`;
-    }
-    return `<script id="${id}" type="application/octet-stream" data-url="${relativeAsset(page, model.url)}"></script>`;
-  }).join('\n  ');
+const embeddedBackgrounds = JSON.stringify(backgrounds).replace(/</g, '\\u003c');
+function embedPlayer(template, script, models) {
+  const modelTags = Object.entries(models).map(([id, model]) =>
+    `<script id="${id}" type="application/octet-stream">${model.toString('base64')}</script>`
+  ).join('\n  ');
   return template
-    .replace('__BODY_ATTRIBUTES__', offline ? ' data-offline' : '')
-    .replace('__AQUARIUM_ASSETS__', () => JSON.stringify(data).replace(/</g, '\\u003c'))
+    .replace('__BACKGROUND_PRESETS__', () => embeddedBackgrounds)
     .replace('__MODEL_DATA__', () => modelTags)
-    .replace('__PLAYER_SCRIPT__', () => script);
+    .replace('__BUNDLE_JS__', () => script);
 }
 
-async function writeAquarium() {
-  const page = 'aquarium.html';
-  const [script, foreground] = await Promise.all([
-    bundleScript('src/viewer.js'),
-    publishAsset('rocky-shallows', 'webp', aquascape),
-  ]);
-  const scriptUrl = await publishAsset('aquarium', 'js', script);
-  function data(offline) {
-    const presets = backgrounds.map(({ image, asset, ...preset }) => ({
-      ...preset,
-      imageUrl: asset && (offline ? webpUrl(image) : relativeAsset(page, asset)),
-    }));
-    return {
-      backgrounds: presets,
-      aquascapeUrl: offline ? webpUrl(aquascape) : relativeAsset(page, foreground),
-    };
-  }
-  await Promise.all([
-    writeFile(file(page), renderPlayer({
-      page, template: aquariumTemplate, models: fishModels, data: data(false),
-      script: `<script defer src="${relativeAsset(page, scriptUrl)}"></script>`,
-    })),
-    writeFile(file('aquarium-offline.html'), renderPlayer({
-      page, template: aquariumTemplate, models: fishModels, data: data(true), offline: true,
-      script: `<script>${script.replace(/<\/script/gi, '<\\/script')}</script>`,
-    })),
-  ]);
-}
-
-async function writePreview(page, template, entry, model) {
-  const script = await bundleScript(entry + '.js');
-  const asset = await publishAsset(entry.replaceAll('/', '-'), 'js', script);
-  const html = renderPlayer({
-    page, template, models: { 'model-data': model },
-    script: `<script defer src="${relativeAsset(page, asset)}"></script>`,
-  });
-  await writeFile(file(page), html);
-}
-
-async function writeFishPreview(species, title, name = 'preview') {
-  const entry = `fish/${species.id}/${name}`;
-  const template = previewTemplate.replaceAll('__FISH_NAME__', title);
-  await writePreview(entry + '.html', template, entry, fishModels[`model-data-${species.id}`]);
+async function writePreview(species, name, model, entry = 'preview') {
+  const directory = `./fish/${species.id}`;
+  const script = await bundleScript(`${directory}/${entry}.js`);
+  const template = previewTemplate.replaceAll('__FISH_NAME__', name);
+  await writeFile(file(`${directory}/${entry}.html`), embedPlayer(template, script, { 'model-data': model }));
 }
 
 async function writeRabbitPreview() {
-  const directory = 'objects/plush-rabbit';
-  const [template, bytes] = await Promise.all([
+  const directory = './objects/plush-rabbit';
+  const [template, script, model] = await Promise.all([
     readFile(file(`${directory}/preview-template.html`), 'utf8'),
+    bundleScript(`${directory}/preview.js`),
     webpModel(file(`${directory}/plush-rabbit.glb`)),
   ]);
-  const url = await publishAsset('plush-rabbit', 'glb', bytes);
-  await writePreview(`${directory}/preview.html`, template, `${directory}/preview`, { url, bytes });
+  await writeFile(file(`${directory}/preview.html`), embedPlayer(template, script, { 'model-data': model }));
 }
 
 await Promise.all([
-  writeAquarium(),
-  writeFishPreview(arowana, '龙鱼'),
-  writeFishPreview(blueGuppy, '蓝扇尾孔雀鱼'),
-  writeFishPreview(blueGuppy, '孔雀鱼群', 'school-preview'),
+  writeFile(file('./aquarium.html'), embedPlayer(aquariumTemplate.replace('__AQUASCAPE_URL__', () => aquascape), aquariumScript, {
+    [`model-data-${arowana.id}`]: arowanaModel,
+    [`model-data-${blueGuppy.id}`]: guppyModel,
+  })),
+  writePreview(arowana, '龙鱼', arowanaModel),
+  writePreview(blueGuppy, '蓝扇尾孔雀鱼', guppyModel),
+  writePreview(blueGuppy, '孔雀鱼群', guppyModel, 'school-preview'),
   writeRabbitPreview(),
 ]);
+

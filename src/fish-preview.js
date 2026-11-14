@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { loadFish } from '../fish/load-fish.js';
-import { readModel } from './model-data.js';
+import { takeEmbeddedModel } from './embedded-data.js';
 import { createTankEnvironment } from './environment.js';
 import { addSceneLights } from './lighting.js';
 
@@ -12,7 +12,7 @@ export async function startFishPreview(species, route, { cameraDistance = 9.4, c
   const timeLabel = document.querySelector('#preview-time-label');
 
   try {
-    const createFish = await loadFish(species, await readModel());
+    const createFish = await loadFish(species, takeEmbeddedModel());
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.NeutralToneMapping;
@@ -108,7 +108,7 @@ export async function startFishPreview(species, route, { cameraDistance = 9.4, c
     playButton.disabled = scrubber.disabled = false;
     queueFrame();
   } catch (error) {
-    status.textContent = '预览加载失败。请刷新重试，并确认浏览器支持 WebGL 2。';
+    status.textContent = '无法打开预览，请使用支持 WebGL 2 的浏览器。';
     console.error(error);
   }
 }

@@ -85,7 +85,6 @@
     body[data-presentation="true"] .controls,
     body[data-presentation="true"] .settings-toggle,
     body[data-presentation="true"] .gallery-link { visibility: hidden; }
-    body[data-offline] .gallery-link { display: none; }
     .controls button {
       display: grid;
       place-items: center;
@@ -329,9 +328,9 @@
     .custom-choice img { align-self: center; }
     .custom-choice .background-choice-name { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
     .background-filename { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .background-note, .panel-status { margin: 8px 0 0; color: #a5bacb; font-size: 12px; line-height: 1.55; }
-    .panel-status:empty { margin: 0; }
-    .panel-status[data-error="true"] { color: #ffcb9c; }
+    .background-note, .background-status { margin: 8px 0 0; color: #a5bacb; font-size: 12px; line-height: 1.55; }
+    .background-status:empty { margin: 0; }
+    .background-status[data-error="true"] { color: #ffcb9c; }
     .lighting-fields fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
     .lighting-fields fieldset + fieldset { margin-top: 15px; border-top: 1px solid #23313e; }
     .lighting-fields h2 {
@@ -423,11 +422,11 @@
     @media (prefers-reduced-motion: reduce) { .controls { transition: none; } }
   </style>
 </head>
-<body__BODY_ATTRIBUTES__>
+<body>
   <main class="workspace" id="workspace">
     <section class="aquarium-view" aria-label="水族箱">
       <div class="tank" id="tank">
-        <img class="aquascape-layer" id="rocky-shallows" alt="" hidden>
+        <img class="aquascape-layer" id="rocky-shallows" src="__AQUASCAPE_URL__" alt="" hidden>
         <div class="status" id="status" role="status">正在打开水族箱…</div>
         <div class="controls" id="controls" hidden>
           <button id="playback" type="button" aria-label="暂停" title="暂停（空格）">
@@ -473,7 +472,6 @@
             <legend>造景</legend>
             <label class="display-option"><input type="checkbox" id="display-aquascape">砂石水草</label>
           </fieldset>
-          <p class="panel-status" id="display-status" role="status"></p>
         </div>
       </div>
       <div class="panel-section" id="background-section" role="tabpanel" aria-labelledby="background-tab" hidden>
@@ -492,7 +490,7 @@
             <input id="background-file" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" hidden>
             <button class="panel-action" id="background-browse" type="button" aria-describedby="background-note">选择图片</button>
             <p class="background-note" id="background-note">JPG、PNG 或 WebP。图片会居中裁切以填满画面。</p>
-            <p class="panel-status" id="background-status" role="status"></p>
+            <p class="background-status" id="background-status" role="status"></p>
           </div>
         </div>
       </div>
@@ -540,7 +538,7 @@
     </aside>
   </main>
   __MODEL_DATA__
-  <script id="aquarium-assets" type="application/json">__AQUARIUM_ASSETS__</script>
-  __PLAYER_SCRIPT__
+  <script id="background-presets" type="application/json">__BACKGROUND_PRESETS__</script>
+  <script>__BUNDLE_JS__</script>
 </body>
 </html>

@@ -5,11 +5,11 @@ const FRAME_ASPECT = 16 / 9;
 const MAX_WIDTH = 2560;
 const loader = new TextureLoader();
 
-function loadBackground(background) {
+export function loadBackground(background) {
   return background.imageUrl ? loader.loadAsync(background.imageUrl) : null;
 }
 
-export async function installBackgrounds(presets, apply, initialId) {
+export function installBackgrounds(presets, apply, initialPreset) {
   const choices = document.querySelector('#background-choices');
   const overlayLink = document.querySelector('#background-overlay');
   const customChoice = document.querySelector('#background-custom');
@@ -17,7 +17,7 @@ export async function installBackgrounds(presets, apply, initialId) {
   const browse = document.querySelector('#background-browse');
   const status = document.querySelector('#background-status');
   const saved = readSavedBackground();
-  let current;
+  let current = initialPreset ?? presets[0];
   let custom;
   let request = 0;
 
@@ -27,9 +27,9 @@ export async function installBackgrounds(presets, apply, initialId) {
     button.type = 'button';
     button.className = 'background-choice';
     let preview;
-    if (preset.thumbnail) {
+    if (preset.imageUrl) {
       preview = new Image();
-      preview.src = preset.thumbnail;
+      preview.src = preset.imageUrl;
       preview.alt = '';
       preview.decoding = 'async';
     } else {
@@ -113,19 +113,10 @@ export async function installBackgrounds(presets, apply, initialId) {
   if (typeof saved.custom?.name === 'string' && /^data:image\/(jpeg|webp);base64,/.test(saved.custom.imageUrl)) {
     showCustom({ id: 'custom', name: saved.custom.name, imageUrl: saved.custom.imageUrl, waterEffect: 0 });
   }
-  const restored = saved.selected === 'custom' ? custom : presets.find(preset => preset.id === saved.selected);
-  current = (initialId ? presets.find(preset => preset.id === initialId) : restored) ?? presets[0];
-  let texture;
-  try {
-    texture = await loadBackground(current);
-  } catch (error) {
-    if (current === presets[0]) throw error;
-    current = presets[0];
-    texture = await loadBackground(current);
-    showStatus('所选背景加载失败，已切换到山水客厅。', true);
-  }
-  apply(texture, current);
   updateSelection();
+  if (initialPreset) return;
+  const restored = saved.selected === 'custom' ? custom : presets.find(preset => preset.id === saved.selected);
+  return restored && restored !== current ? select(restored) : undefined;
 }
 
 function readSavedBackground() {
