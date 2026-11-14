@@ -2,7 +2,9 @@
 
 ![龙鱼在山水客厅水族箱中游动](./docs/aquarium.gif)
 
-[观看 45 秒 macOS 桌面水族箱演示（有声 MP4）](./docs/aquarium-demo.mp4)
+### 45 秒 macOS 桌面水族箱演示
+
+https://github.com/user-attachments/assets/33c96b1b-59b5-4082-9f8c-38a51df450fa
 
 实时 3D 展厅。可以观赏一条龙鱼和六条不同花色的孔雀鱼共游，也可以单独看鱼或打开碎花垂耳兔的 3D 预览。
 
