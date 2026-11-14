@@ -4,7 +4,7 @@ import { takeEmbeddedModel } from './embedded-data.js';
 import { createTankEnvironment } from './environment.js';
 import { addSceneLights } from './lighting.js';
 
-export async function startFishPreview(species, route, { cameraDistance = 9.4 } = {}) {
+export async function startFishPreview(species, route, { cameraDistance = 9.4, createSubjects } = {}) {
   const stage = document.querySelector('#preview-stage');
   const status = document.querySelector('#preview-status');
   const playButton = document.querySelector('#preview-play');
@@ -23,7 +23,7 @@ export async function startFishPreview(species, route, { cameraDistance = 9.4 } 
     scene.environment = createTankEnvironment(renderer);
     addSceneLights(scene);
 
-    const fish = createFish(route);
+    const fish = createSubjects ? createSubjects(createFish) : createFish(route);
     fish.object.traverse(mesh => {
       if (mesh.isSkinnedMesh) mesh.frustumCulled = false;
     });

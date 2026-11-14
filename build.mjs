@@ -45,16 +45,17 @@ function embedPlayer(template, script, model) {
     .replace('__BUNDLE_JS__', () => script);
 }
 
-async function writePreview(species, name, model) {
+async function writePreview(species, name, model, entry = 'preview') {
   const directory = `./fish/${species.id}`;
-  const script = await bundleScript(`${directory}/preview.js`);
-  const html = embedPlayer(previewTemplate.replaceAll('__FISH_NAME__', name), script, model);
-  await writeFile(file(`${directory}/preview.html`), html);
+  const script = await bundleScript(`${directory}/${entry}.js`);
+  const template = previewTemplate.replaceAll('__FISH_NAME__', name);
+  await writeFile(file(`${directory}/${entry}.html`), embedPlayer(template, script, model));
 }
 
 await Promise.all([
   writeFile(file('./aquarium.html'), embedPlayer(aquariumTemplate, aquariumScript, arowanaModel)),
   writePreview(arowana, '龙鱼', arowanaModel),
   writePreview(blueGuppy, '蓝扇尾孔雀鱼', guppyModel),
+  writePreview(blueGuppy, '孔雀鱼群', guppyModel, 'school-preview'),
 ]);
 

@@ -28,36 +28,43 @@ function pectoralPhase(angle, beats) {
   return beats * angle + .46 * Math.sin(2 * angle + .38);
 }
 
-function buildTiming(route, scale) {
+function buildTiming(route, scale, phaseOffset, trackDuration) {
   let duration = 0;
   let cycles = 0;
   const table = [];
   const turnDistance = .38 * scale;
   const position = new Vector3();
   const tangent = new Vector3();
-  for (const { distance, curvature } of route.samples) {
+  const fullParameter = route.samples.at(-1).parameter;
+  for (const { distance, curvature, parameter } of route.samples) {
     const angle = TAU * distance / route.length;
-    const phrase = .5 + .5 * Math.sin(4 * angle + .38 + .52 * Math.sin(3 * angle - .2));
+    const phrase = .5 + .5 * Math.sin(4 * angle + .38 + phaseOffset + .52 * Math.sin(3 * angle - .2));
     const effort = .07 + .93 * phrase ** 1.8;
     const behind = route.sample(distance - turnDistance, position, tangent);
     const ahead = route.sample(distance + turnDistance, position, tangent);
     const turn = steering(scale * (.53 * curvature + .20 * behind + .27 * ahead));
     const speed = .61 + .53 * effort - .17 * Math.abs(turn);
-    const cadence = 1.06 + 1.55 * effort + .16 * Math.abs(turn);
+    const cadence = (1.06 + 1.55 * effort + .16 * Math.abs(turn)) * (1 + .11 * Math.sin(phaseOffset));
     const previous = table.at(-1);
     if (previous) {
-      const dt = 2 * (distance - previous.distance) / (previous.speed + speed);
-      duration += dt;
+      // A recorded track already supplies the pace of the group. Its
+      // waypoint spacing describes where each fish was at regular times.
+      const nextTime = trackDuration === undefined
+        ? duration + 2 * (distance - previous.distance) / (previous.speed + speed)
+        : trackDuration * (parameter / fullParameter);
+      const dt = nextTime - duration;
       cycles += .5 * dt * (cadence + previous.cadence);
+      duration = nextTime;
     }
     table.push({ distance, time: duration, cycles, speed, cadence, effort, turn });
   }
   return { table, duration, cycles };
 }
 
-export function createSwimmer(object, route) {
+export function createSwimmer(object, route, { phase = 0, trackDuration } = {}) {
+  const phaseOffset = TAU * phase;
   const scale = Math.abs(object.scale.x);
-  const { table, duration, cycles } = buildTiming(route, scale);
+  const { table, duration, cycles } = buildTiming(route, scale, phaseOffset, trackDuration);
   const startTime = table[route.startIndex].time;
   const beatScale = Math.max(1, Math.round(cycles)) / cycles;
   const finBeats = Math.max(1, Math.round(duration * 3.35));
@@ -124,7 +131,7 @@ export function createSwimmer(object, route) {
     const u = (wrapped - a.time) / (b.time - a.time);
     state.distance = lerp(a.distance, b.distance, u);
     state.effort = lerp(a.effort, b.effort, u);
-    state.phase = TAU * beatScale * lerp(a.cycles, b.cycles, u);
+    state.phase = TAU * beatScale * lerp(a.cycles, b.cycles, u) + phaseOffset;
     state.angle = TAU * wrapped / duration;
     state.turn = lerp(a.turn, b.turn, u);
   }
@@ -210,7 +217,7 @@ export function createSwimmer(object, route) {
     const { angle, turn } = head;
     const bend = turningBend(time, turn);
     caudalFin?.(timeSeconds);
-    const finPhase = pectoralPhase(angle, finBeats);
+    const finPhase = pectoralPhase(angle, finBeats) + phaseOffset;
     for (const fin of pectorals) {
       const stroke = finPhase + fin.phase;
       const trim = (.33 + .60 * (1 - effort)) * (1 + .28 * fin.side * bend);
@@ -222,7 +229,7 @@ export function createSwimmer(object, route) {
     for (const fin of membranes) {
       const finTime = time - fin.lag;
       sample(finTime, delayed);
-      const beat = fin.pectoral ? pectoralPhase(delayed.angle, finBeats) + fin.offset
+      const beat = fin.pectoral ? pectoralPhase(delayed.angle, finBeats) + fin.offset + phaseOffset
         : delayed.phase - fin.offset;
       const flowTurn = .20 * delayed.turn + 1.15 * turningBend(finTime, delayed.turn);
       const load = fin.pectoral ? .28 + .62 * (1 - delayed.effort) : .32 + .55 * delayed.effort;

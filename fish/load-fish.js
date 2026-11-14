@@ -4,10 +4,11 @@ import { clone } from 'three/addons/utils/SkeletonUtils.js';
 export async function loadFish(species, bytes) {
   const { scene } = await new GLTFLoader().parseAsync(bytes, '');
 
-  return function createInstance(route) {
-    // Instances share geometry and textures. Each one has its own bones.
+  return function createInstance(route, { scale = 1, ...motion } = {}) {
+    // Share immutable assets. Each resident owns its skeletal pose.
     const object = clone(scene);
     object.name = species.id;
-    return { object, ...species.createSwimmer(object, route) };
+    object.scale.multiplyScalar(scale);
+    return { object, ...species.createSwimmer(object, route, motion) };
   };
 }

@@ -14,7 +14,7 @@ export function lowerIndex(table, key, value) {
   return first;
 }
 
-export function createSwimRoute(waypoints, startWaypoint = 0) {
+export function createSwimRoute(waypoints, startWaypoint = 0, { samplesPerWaypoint = SAMPLES_PER_WAYPOINT } = {}) {
   const points = waypoints.map(([x, y, z]) => new Vector3(x, y, z));
 
   function evaluateCurve(parameter, position, tangent) {
@@ -44,7 +44,7 @@ export function createSwimRoute(waypoints, startWaypoint = 0) {
     return turn;
   }
 
-  const count = points.length * SAMPLES_PER_WAYPOINT;
+  const count = points.length * samplesPerWaypoint;
   const point = new Vector3();
   const tangent = new Vector3();
   const previous = new Vector3();
@@ -69,5 +69,5 @@ export function createSwimRoute(waypoints, startWaypoint = 0) {
     return evaluateCurve(lerp(a.parameter, b.parameter, u), position, tangent);
   }
 
-  return { length, samples, sample, startIndex: Math.round(startWaypoint * SAMPLES_PER_WAYPOINT) };
+  return { length, samples, sample, startIndex: Math.round(startWaypoint * samplesPerWaypoint) };
 }
