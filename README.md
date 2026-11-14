@@ -20,7 +20,9 @@
 
 预设以山水客厅为初始背景。自定义图按原比例居中裁切成 16∶9，画面最长边保留至 2560 像素。浏览器允许本地存储时，同一地址重新打开会恢复所选背景和最近一张自定义图。
 
-修改源码或素材后，在本目录运行 `npm ci` 和 `npm run build`，生成内嵌素材的 `aquarium.html`。`assets/arowana.blend` 是可编辑的龙鱼模型，网页加载 `assets/arowana.glb` 的内嵌副本。
+`fish/arowana/` 收录龙鱼的 Blender 工程、带贴图和动画的 GLB、骨骼游动代码，以及[独立预览](fish/arowana/preview.html)。独立预览和水族箱使用同一个 GLB，分别提供各自的游动路线。
+
+修改源码或素材后，在仓库根目录运行 `npm ci` 和 `npm run build`，生成可离线运行的 `aquarium.html` 和 `fish/arowana/preview.html`。
 
 ## 背景素材
 

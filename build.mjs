@@ -1,6 +1,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { build } from 'esbuild';
+import { arowana } from './fish/arowana/index.js';
 
 const file = (path) => new URL(path, import.meta.url);
 const presets = [
@@ -11,17 +12,23 @@ const presets = [
   { id: 'black', label: '纯黑', filename: 'black.jpg', waterEffect: 0 },
   { id: 'transparent', label: '透明', waterEffect: 0 },
 ];
-const [bundle, template, model, backgrounds] = await Promise.all([
-  build({
-    entryPoints: [fileURLToPath(file('./src/viewer.js'))],
+function bundleScript(entry) {
+  return build({
+    entryPoints: [fileURLToPath(file(entry))],
     bundle: true,
     format: 'iife',
     minify: true,
     legalComments: 'inline',
     write: false,
-  }),
+  }).then(bundle => bundle.outputFiles[0].text.replace(/<\/script/gi, '<\\/script'));
+}
+
+const [aquariumScript, previewScript, aquariumTemplate, previewTemplate, model, backgrounds] = await Promise.all([
+  bundleScript('./src/viewer.js'),
+  bundleScript('./fish/arowana/preview.js'),
   readFile(file('./src/viewer-template.html'), 'utf8'),
-  readFile(file('./assets/arowana.glb')),
+  readFile(file('./fish/arowana/preview-template.html'), 'utf8'),
+  readFile(file(arowana.modelFile)),
   Promise.all(presets.map(async ({ filename, ...preset }) => {
     if (!filename) return preset;
     const asset = await readFile(file(`./assets/${filename}`));
@@ -29,9 +36,16 @@ const [bundle, template, model, backgrounds] = await Promise.all([
   })),
 ]);
 
-const html = template
-  .replace('__MODEL_BASE64__', () => model.toString('base64'))
-  .replace('__BACKGROUND_PRESETS__', () => JSON.stringify(backgrounds).replace(/</g, '\\u003c'))
-  .replace('__BUNDLE_JS__', () => bundle.outputFiles[0].text.replace(/<\/script/gi, '<\\/script'));
-await writeFile(file('./aquarium.html'), html);
+const modelBase64 = model.toString('base64');
+const embeddedBackgrounds = JSON.stringify(backgrounds).replace(/</g, '\\u003c');
+function embedPlayer(template, script) {
+  return template
+    .replace('__BACKGROUND_PRESETS__', () => embeddedBackgrounds)
+    .replace('__MODEL_BASE64__', () => modelBase64)
+    .replace('__BUNDLE_JS__', () => script);
+}
+await Promise.all([
+  writeFile(file('./aquarium.html'), embedPlayer(aquariumTemplate, aquariumScript)),
+  writeFile(file('./fish/arowana/preview.html'), embedPlayer(previewTemplate, previewScript)),
+]);
 

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080d14">
+  <title>龙鱼 · 独立预览</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font: 15px/1.5 Inter, system-ui, sans-serif;
+      color: #eaf2fa;
+      background: #080d14;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    main {
+      width: min(94%, 1160px);
+      width: min(94%, 1160px, max(620px, calc((100dvh - 166px) * 16 / 9)));
+      margin: 0 auto;
+      padding: clamp(16px, 3vw, 26px) 0;
+    }
+    header { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+    h1 { margin: 0; font-size: clamp(21px, 3vw, 30px); line-height: 1.15; font-weight: 610; }
+    a { color: #9dd4f5; text-underline-offset: 4px; }
+    .stage {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+      border: 1px solid #29394a;
+      border-radius: 12px;
+      background: radial-gradient(ellipse at 50% 40%, #172a3b, #0b1420 64%, #070e17);
+    }
+    canvas, .status { display: block; position: absolute; inset: 0; width: 100%; height: 100%; }
+    .status { display: grid; place-content: center; padding: 16px; text-align: center; }
+    [hidden] { display: none; }
+    .transport { display: flex; align-items: center; gap: 14px; margin-top: 15px; }
+    button {
+      min-width: 72px;
+      padding: 8px 14px;
+      border: 1px solid #334f65;
+      border-radius: 7px;
+      background: #172a3a;
+      color: inherit;
+      font: inherit;
+      cursor: pointer;
+    }
+    button:disabled { opacity: .58; cursor: default; }
+    button:not(:disabled):hover { background: #20394d; }
+    input { min-width: 0; flex: 1; accent-color: #8cc8ef; cursor: pointer; }
+    output { color: #aac0d2; font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    :focus-visible { outline: 2px solid #9ed5f8; outline-offset: 4px; }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>龙鱼</h1>
+      <a href="../../aquarium.html">打开水族箱</a>
+    </header>
+    <div class="stage" id="preview-stage">
+      <div class="status" id="preview-status" role="status">正在加载龙鱼…</div>
+    </div>
+    <div class="transport">
+      <button id="preview-play" type="button" disabled>暂停</button>
+      <input id="preview-time" aria-label="播放进度" type="range" min="0" max="1" value="0" step="any" disabled>
+      <output id="preview-time-label" for="preview-time" aria-live="off"></output>
+    </div>
+  </main>
+  <script id="model-data" type="application/octet-stream">__MODEL_BASE64__</script>
+  <script>__BUNDLE_JS__</script>
+</body>
+</html>

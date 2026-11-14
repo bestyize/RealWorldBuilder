@@ -12,6 +12,18 @@ const formatValue = {
   warmth: value => value === 0 ? '原色' : `${value < 0 ? '冷' : '暖'} ${Math.abs(value)}`,
 };
 
+export function addSceneLights(scene) {
+  const key = new DirectionalLight(0xf5f9ff, MAIN_POWER);
+  key.position.set(-2.2, 4.8, 3.6);
+  const rim = new DirectionalLight(0xd5e6ff, RIM_POWER);
+  rim.position.set(2.1, 3.5, -4.3);
+  const fill = new DirectionalLight(0xe9f6ff, FILL_POWER);
+  fill.position.set(2.0, -0.85, 4.7);
+  scene.add(key, rim, fill);
+  scene.environmentIntensity = ENVIRONMENT_POWER;
+  return { key, rim, fill };
+}
+
 export function installLighting(scene, redraw) {
   const panel = document.querySelector('#lighting-section');
   const reset = document.querySelector('#lighting-reset');
@@ -20,18 +32,11 @@ export function installLighting(scene, redraw) {
     output: field.querySelector('output'),
   }));
 
-  const key = new DirectionalLight(0xf5f9ff, MAIN_POWER);
-  key.position.set(-2.2, 4.8, 3.6);
+  const { key, rim, fill } = addSceneLights(scene);
   const originalAim = new Spherical().setFromVector3(key.position);
   const originalColor = key.color.clone();
   const coolColor = new Color(0x9dc5ff);
   const warmColor = new Color(0xffc18c);
-
-  const rim = new DirectionalLight(0xd5e6ff, RIM_POWER);
-  rim.position.set(2.1, 3.5, -4.3);
-  const fill = new DirectionalLight(0xe9f6ff, FILL_POWER);
-  fill.position.set(2.0, -0.85, 4.7);
-  scene.add(key, rim, fill);
 
   const readValues = () => Object.fromEntries(fields.map(({ input }) => [input.name, input.valueAsNumber]));
   const defaults = readValues();

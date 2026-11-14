@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { lowerIndex } from '../swim-route.js';
 
 const TAU = 2 * Math.PI;
 const X = new THREE.Vector3(1, 0, 0);
@@ -7,79 +8,16 @@ const JOINTS = [
   'Head', 'Spine_1', 'Spine_2', 'Spine_3', 'Spine_4', 'Peduncle', 'Tail', 'Tail_Tip',
 ];
 
-// A shallow front pass and a higher, deeper return. The wider ends give the
-// arowana room to bank and turn without folding its body back on itself.
-const WAYPOINTS = [
-  [-2.17, .21, .78], [-1.38, .18, .98], [-.40, .15, 1.06],
-  [ .65, .17, .97], [1.62, .22, .88], [2.43, .26, .70],
-  [2.90, .26, .23], [3.02, .24, -.50], [2.72, .23, -1.20],
-  [2.10, .25, -1.53], [1.09, .29, -1.62], [.12, .37, -1.68],
-  [-.84, .44, -1.52], [-1.77, .48, -1.44], [-2.44, .45, -1.17],
-  [-2.93, .37, -.64], [-3.02, .28, .11], [-2.75, .25, .61],
-].map(([x, y, z]) => new THREE.Vector3(x, y, z));
-
 const wrap = THREE.MathUtils.euclideanModulo;
 const lerp = THREE.MathUtils.lerp;
 const mix = THREE.MathUtils.smoothstep;
 
-function evaluateCurve(parameter, position, tangent) {
-  const segment = Math.floor(parameter);
-  const u = parameter - segment;
-  const v = 1 - u;
-  const n = WAYPOINTS.length;
-  const a = WAYPOINTS[wrap(segment - 1, n)];
-  const b = WAYPOINTS[wrap(segment, n)];
-  const c = WAYPOINTS[wrap(segment + 1, n)];
-  const d = WAYPOINTS[wrap(segment + 2, n)];
-  const u2 = u * u;
-  const u3 = u2 * u;
-  position.copy(a).multiplyScalar(v ** 3 / 6)
-    .addScaledVector(b, (3 * u3 - 6 * u2 + 4) / 6)
-    .addScaledVector(c, (-3 * u3 + 3 * u2 + 3 * u + 1) / 6)
-    .addScaledVector(d, u3 / 6);
-  tangent.copy(a).multiplyScalar(-v * v / 2)
-    .addScaledVector(b, (3 * u2 - 4 * u) / 2)
-    .addScaledVector(c, (-3 * u2 + 2 * u + 1) / 2)
-    .addScaledVector(d, u2 / 2);
-  const dx2 = v * a.x + (3 * u - 2) * b.x + (1 - 3 * u) * c.x + u * d.x;
-  const dz2 = v * a.z + (3 * u - 2) * b.z + (1 - 3 * u) * c.z + u * d.z;
-  const turn = (tangent.z * dx2 - tangent.x * dz2) /
-    (tangent.x * tangent.x + tangent.z * tangent.z) ** 1.5;
-  tangent.normalize();
-  return turn;
-}
-
-function lowerIndex(table, key, value) {
-  let first = 0;
-  let last = table.length - 1;
-  while (last - first > 1) {
-    const mid = (first + last) >>> 1;
-    if (table[mid][key] <= value) first = mid;
-    else last = mid;
-  }
-  return first;
-}
-
-function buildRoute() {
-  const count = WAYPOINTS.length * 80;
-  const point = new THREE.Vector3();
-  const tangent = new THREE.Vector3();
-  const previous = new THREE.Vector3();
-  const samples = [];
-  let distance = 0;
-
-  for (let i = 0; i <= count; i++) {
-    const parameter = i * WAYPOINTS.length / count;
-    const curvature = evaluateCurve(parameter, point, tangent);
-    if (i) distance += point.distanceTo(previous);
-    samples.push({ parameter, distance, curvature });
-    previous.copy(point);
-  }
-
+function buildTiming(route) {
   let elapsed = 0;
   let cycles = 0;
-  for (const [i, sample] of samples.entries()) {
-    const angle = TAU * sample.distance / distance;
+  const samples = [];
+  for (const [i, sample] of route.samples.entries()) {
+    const angle = TAU * sample.distance / route.length;
     const turn = mix(Math.abs(sample.curvature), .20, 1.4);
     const effort = .48 + .29 * Math.sin(4 * angle - .75)
       + .15 * Math.sin(7 * angle + .55) + .08 * Math.cos(2 * angle + .8);
@@ -91,25 +29,13 @@ function buildRoute() {
       elapsed += dt;
       cycles += .5 * dt * (prior.cadence + cadence);
     }
-    Object.assign(sample, { time: elapsed, cycles, speed, cadence, effort });
+    samples.push({ ...sample, time: elapsed, cycles, speed, cadence, effort });
   }
 
   return {
-    samples, length: distance, duration: elapsed, cycles,
-    startTime: samples[Math.round(3.61 * 80)].time,
+    samples, duration: elapsed, cycles,
+    startTime: samples[route.startIndex].time,
   };
-}
-
-const route = buildRoute();
-const wholeCycles = Math.round(route.cycles);
-
-function readDistance(distance, position, tangent) {
-  const s = wrap(distance, route.length);
-  const i = lowerIndex(route.samples, 'distance', s);
-  const a = route.samples[i];
-  const b = route.samples[i + 1];
-  const u = (s - a.distance) / (b.distance - a.distance);
-  return evaluateCurve(lerp(a.parameter, b.parameter, u), position, tangent);
 }
 
 function bindTransform(node, rootInverse) {
@@ -133,9 +59,11 @@ function bindFin(scene, name, side, type, rootInverse) {
 
 /**
  * Animate a glTF rig with +X toward the nose, +Y up and +Z toward the front
- * of the aquarium. Give the returned update method an absolute time in seconds.
+ * of the aquarium. The caller provides the route and drives update in seconds.
  */
-export function createSwimmer(scene) {
+export function createSwimmer(scene, route) {
+  const { samples, duration, cycles, startTime } = buildTiming(route);
+  const wholeCycles = Math.round(cycles);
   scene.updateWorldMatrix(true, true);
   const rootInverse = scene.matrixWorld.clone().invert();
   const joints = JOINTS.map((name) => {
@@ -185,17 +113,17 @@ export function createSwimmer(scene) {
   };
 
   function update(timeSeconds) {
-    const t = wrap(timeSeconds + route.startTime, route.duration);
-    const index = lowerIndex(route.samples, 'time', t);
-    const a = route.samples[index];
-    const b = route.samples[index + 1];
+    const t = wrap(timeSeconds + startTime, duration);
+    const index = lowerIndex(samples, 'time', t);
+    const a = samples[index];
+    const b = samples[index + 1];
     const u = (t - a.time) / (b.time - a.time);
     const distance = lerp(a.distance, b.distance, u);
     const effort = lerp(a.effort, b.effort, u);
-    const progress = t / route.duration;
-    const phase = TAU * wholeCycles * lerp(a.cycles, b.cycles, u) / route.cycles;
-    const finPhase = phase * Math.round(route.duration * 1.21) / wholeCycles;
-    const breath = TAU * (Math.round(route.duration * 1.36) * progress +
+    const progress = t / duration;
+    const phase = TAU * wholeCycles * lerp(a.cycles, b.cycles, u) / cycles;
+    const finPhase = phase * Math.round(duration * 1.21) / wholeCycles;
+    const breath = TAU * (Math.round(duration * 1.36) * progress +
       .10 * Math.sin(4 * TAU * progress));
 
     // The head leads along the route. Each following cross-section samples
@@ -203,7 +131,7 @@ export function createSwimmer(scene) {
     for (let i = 0; i < points.length; i++) {
       const along = distances[i] / length;
       const point = points[i];
-      const curve = readDistance(distance - distances[i], point, tangent);
+      const curve = route.sample(distance - distances[i], point, tangent);
       curveTurns[i] = curve;
       if (i === 0) headTangent.copy(tangent);
       lateral.crossVectors(tangent, Y).normalize();
@@ -272,5 +200,5 @@ export function createSwimmer(scene) {
   }
 
   update(0);
-  return { update, getMotion: () => motion, duration: route.duration };
+  return { update, getMotion: () => motion, duration };
 }
