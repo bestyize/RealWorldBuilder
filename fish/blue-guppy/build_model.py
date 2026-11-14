@@ -189,6 +189,46 @@ def body_mesh(mat):
     return mesh("Scales and gill plates", vertices, faces, uv, mat, wrap_v=True)
 
 
+def smoothstep(lo, hi, value):
+    u = max(0, min(1, (value - lo) / (hi - lo)))
+    return u * u * (3 - 2 * u)
+
+
+def add_fin_flex(obj, samples, root, tip_flex, axis, *, fan=False):
+    obj.shape_key_add(name="Basis")
+    bend = obj.shape_key_add(name="Flex")
+    wave_a = obj.shape_key_add(name="WaveA")
+    wave_b = obj.shape_key_add(name="WaveB")
+    gather = obj.shape_key_add(name="Gather") if fan else None
+    for shape in (bend, wave_a, wave_b):
+        shape.slider_min = -1
+        shape.slider_max = 1
+
+    for i, (radius, across, free) in enumerate(samples):
+        base = obj.data.vertices[i].co
+        span = free * radius ** 1.8
+        # The two wave shapes are a quarter cycle apart. Combining them moves
+        # the crease out along the rays while the root stays in place.
+        phase = math.tau * (.67 * radius - .15 * (across - .5))
+        lobe = 1 + .19 * (2 * across - 1)
+        displacement = axis * (tip_flex * span)
+        bend.data[i].co = base + displacement * lobe
+        wave_a.data[i].co = base + displacement * (.60 * math.cos(phase))
+        wave_b.data[i].co = base + displacement * (.60 * math.sin(phase))
+        if gather:
+            offset = base - root
+            # Tension draws the outer rays inward without moving the peduncle.
+            gather.data[i].co = base + Vector((-.050 * offset.x, 0, -.105 * offset.z)) * span
+
+
+def membrane_clearance(maps, x, z):
+    if maps == "tail":
+        return 1 - smoothstep(469, 621, x)
+    top, bottom, _ = sample_profile(BODY, x)
+    edge = top - z if maps == "dorsal" else z - bottom
+    return smoothstep(1, 48 if maps == "dorsal" else 29, edge)
+
+
 def fin_mesh(name, maps, root, outline, mat, *, side=0, layers=16, cup=.035):
     # Include the measured outline knots, and smooth the curves between them.
     edge = [(0, *outline[0])]
@@ -206,6 +246,7 @@ def fin_mesh(name, maps, root, outline, mat, *, side=0, layers=16, cup=.035):
 
     vertices = [position(root[0], side, root[1])]
     uv = [fin_uv(*root)]
+    samples = [(0, .5, 0)]
     faces = []
     for row in range(1, layers + 1):
         radius = row / layers
@@ -217,13 +258,17 @@ def fin_mesh(name, maps, root, outline, mat, *, side=0, layers=16, cup=.035):
             camber = cup * (math.sin(arc * 2.7 * math.pi) + ripple) * radius**1.65
             vertices.append(position(x, side + camber, z))
             uv.append(fin_uv(x, z))
+            samples.append((radius, arc, membrane_clearance(maps, x, z)))
     for j in range(row_length - 1):
         faces.append((0, j + 1, j + 2))
     for row in range(layers - 1):
         for j in range(row_length - 1):
             a = 1 + row * row_length + j
             faces.append((a, a + row_length, a + row_length + 1, a + 1))
-    return mesh(name, vertices, faces, uv, mat)
+    obj = mesh(name, vertices, faces, uv, mat)
+    tip_flex = {"tail": .29, "dorsal": .117, "anal": .079, "ventral": .088}[maps]
+    add_fin_flex(obj, samples, Vector(vertices[0]), tip_flex, Vector((0, 1, 0)), fan=maps == "tail")
+    return obj
 
 
 def pectoral_root(side):
@@ -233,6 +278,7 @@ def pectoral_root(side):
 
 def pectoral_mesh(side, mat):
     vertices, uv, faces = [], [], []
+    samples = []
     root = pectoral_root(side)
     length_segments, ray_segments = 18, 16
     for i in range(length_segments + 1):
@@ -246,12 +292,15 @@ def pectoral_mesh(side, mat):
             z = -.067 * u + across * taper
             vertices.append(root + Vector((x, y, z)))
             uv.append((u, 1 - v))
+            samples.append((u, v, 1))
     for i in range(length_segments):
         for j in range(ray_segments):
             a = i * (ray_segments + 1) + j
             b = a + ray_segments + 1
             faces.append((a, b, b + 1, a + 1))
-    return mesh("Pectoral " + ("L" if side < 0 else "R"), vertices, faces, uv, mat)
+    obj = mesh("Pectoral membrane " + ("L" if side < 0 else "R"), vertices, faces, uv, mat)
+    add_fin_flex(obj, samples, root, .082, Vector((0, side * .28, .96)))
+    return obj
 
 
 def eye_mesh(side, mat):
@@ -415,6 +464,7 @@ def build():
     bpy.ops.export_scene.gltf(
         filepath=str(ROOT / "blue-guppy.glb"), export_format="GLB", use_selection=True,
         export_texcoords=True, export_normals=True, export_tangents=True,
+        export_morph=True, export_morph_normal=True, export_morph_tangent=True,
         export_animations=False, export_yup=True, export_armature_object_remove=True,
     )
 
