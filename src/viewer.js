@@ -23,8 +23,8 @@ const playbackButton = document.querySelector('#playback');
 const fullscreenButton = document.querySelector('#fullscreen');
 const overlay = location.hash === '#overlay';
 const scenePresets = new Map([
-  ['living-room', { background: 'living-room', aquascape: false }],
-  ['planted', { background: 'black', aquascape: true }],
+  ['living-room', { background: 'living-room' }],
+  ['planted', { background: 'black', display: { fish: 'mixed', aquascape: true } }],
 ]);
 const entryScene = scenePresets.get(new URLSearchParams(location.search).get('scene'));
 const cameraDistance = 11;
@@ -199,7 +199,7 @@ async function start() {
     applyDisplay({ fish: 'arowana', aquascape: false });
   } else {
     await installBackgrounds(backgrounds, applyBackground, entryScene ? initialBackground : undefined);
-    installDisplay(applyDisplay, entryScene ? { fish: 'mixed', aquascape: entryScene.aquascape } : undefined);
+    installDisplay(applyDisplay, entryScene ? (entryScene.display ?? {}) : undefined);
     closeSettings = installSettings();
   }
 

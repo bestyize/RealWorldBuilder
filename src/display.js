@@ -6,18 +6,17 @@ export function installDisplay(applyDisplay, initialDisplay) {
   const arowanaField = panel.querySelector('#display-arowana');
   const species = Array.from(arowanaField.querySelectorAll('input[name="arowana-species"]'));
   const aquascape = panel.querySelector('#display-aquascape');
-  let saved;
+  let restored;
   try {
-    saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    restored = initialDisplay ?? JSON.parse(localStorage.getItem(STORAGE_KEY));
   } catch {
     // Use the default selection when browser storage is unavailable.
   }
-  const restored = { ...saved, ...initialDisplay };
-  const choice = choices.find(input => input.value === restored.fish);
-  const dragon = species.find(input => input.value === restored.arowanaSpecies);
+  const choice = choices.find(input => input.value === restored?.fish);
+  const dragon = species.find(input => input.value === restored?.arowanaSpecies);
   if (choice) choice.checked = true;
   if (dragon) dragon.checked = true;
-  aquascape.checked = restored.aquascape === true;
+  if (typeof restored?.aquascape === 'boolean') aquascape.checked = restored.aquascape;
 
   function update() {
     const fish = choices.find(input => input.checked).value;

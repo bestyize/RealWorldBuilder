@@ -22,6 +22,7 @@
     .workspace {
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-rows: minmax(0, 1fr);
       width: 100%;
       height: 100%;
       height: 100dvh;
@@ -182,14 +183,19 @@
     .settings-panel {
       --accent: #8fdae8;
       --track: #263646;
+      --panel-inset: clamp(12px, 2vmin, 22px);
       display: flex;
       flex-direction: column;
-      align-self: stretch;
+      align-self: center;
       min-height: 0;
+      max-height: calc(100% - 2 * var(--panel-inset));
       width: 320px;
-      border-left: 1px solid #293846;
+      margin-inline-end: max(var(--panel-inset), var(--safe-right, 0px));
+      overflow: hidden;
+      border: 1px solid #293846;
+      border-radius: 12px;
       background: #0b141e;
-      box-shadow: -8px 0 30px #03070b40;
+      box-shadow: 0 12px 32px #03070b66;
     }
     .settings-header, .lighting-footer { flex: none; padding: 16px 21px; }
     .settings-header {
@@ -419,11 +425,16 @@
         grid-template-columns: 1fr;
         grid-template-rows: min(56.25vw, 39dvh) minmax(0, 1fr);
       }
-      .settings-panel { width: 100%; border-left: 0; border-top: 1px solid #293846; }
+      .settings-panel {
+        align-self: start;
+        justify-self: center;
+        width: min(380px, calc(100% - 2 * var(--panel-inset)));
+        margin: var(--panel-inset) 0 0;
+      }
       .settings-header, .lighting-footer { padding-top: 9px; padding-bottom: 9px; }
     }
     @media (max-height: 490px) and (orientation: landscape) {
-      .settings-panel { width: min(286px, 45vw); padding-right: env(safe-area-inset-right, 0px); }
+      .settings-panel { width: min(286px, 45vw); }
       .settings-header, .lighting-footer { padding-top: 8px; padding-bottom: 8px; }
       .settings-tabs { margin-top: 8px; }
     }
@@ -516,8 +527,8 @@
           <fieldset>
             <legend>鱼</legend>
             <div class="display-options">
-              <label class="display-option"><input type="radio" name="fish-display" value="mixed" checked>同缸</label>
-              <label class="display-option"><input type="radio" name="fish-display" value="arowana">单条龙鱼</label>
+              <label class="display-option"><input type="radio" name="fish-display" value="mixed">同缸</label>
+              <label class="display-option"><input type="radio" name="fish-display" value="arowana" checked>单条龙鱼</label>
               <label class="display-option"><input type="radio" name="fish-display" value="guppy">单条孔雀鱼</label>
               <label class="display-option"><input type="radio" name="fish-display" value="school">孔雀鱼群</label>
             </div>
@@ -525,13 +536,13 @@
           <fieldset id="display-arowana">
             <legend>龙鱼品种</legend>
             <div class="display-options">
-              <label class="display-option"><input type="radio" name="arowana-species" value="arowana" checked>蓝色龙鱼</label>
-              <label class="display-option"><input type="radio" name="arowana-species" value="vermilion-arowana">朱红龙鱼</label>
+              <label class="display-option"><input type="radio" name="arowana-species" value="arowana">蓝色龙鱼</label>
+              <label class="display-option"><input type="radio" name="arowana-species" value="vermilion-arowana" checked>朱红龙鱼</label>
             </div>
           </fieldset>
           <fieldset>
             <legend>造景</legend>
-            <label class="display-option"><input type="checkbox" id="display-aquascape">砂石水草</label>
+            <label class="display-option"><input type="checkbox" id="display-aquascape" checked>砂石水草</label>
           </fieldset>
         </div>
       </div>
