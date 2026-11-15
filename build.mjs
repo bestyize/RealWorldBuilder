@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { build } from 'esbuild';
 import { arowana } from './fish/arowana/index.js';
 import { blueGuppy } from './fish/blue-guppy/index.js';
+import { vermilionArowana } from './fish/vermilion-arowana/index.js';
 import { webpDataUrl, webpModel } from './scripts/webp-assets.mjs';
 
 const file = (path) => new URL(path, import.meta.url);
@@ -25,12 +26,13 @@ function bundleScript(entry) {
   }).then(bundle => bundle.outputFiles[0].text.replace(/<\/script/gi, '<\\/script'));
 }
 
-const [aquariumScript, aquariumTemplate, previewTemplate, arowanaModel, guppyModel, aquascape, backgrounds] = await Promise.all([
+const [aquariumScript, aquariumTemplate, previewTemplate, arowanaModel, guppyModel, vermilionModel, aquascape, backgrounds] = await Promise.all([
   bundleScript('./src/viewer.js'),
   readFile(file('./src/viewer-template.html'), 'utf8'),
   readFile(file('./src/fish-preview-template.html'), 'utf8'),
   webpModel(file(arowana.modelFile)),
   webpModel(file(blueGuppy.modelFile)),
+  webpModel(file(vermilionArowana.modelFile)),
   webpDataUrl(file('./assets/rocky-shallows.png')),
   Promise.all(presets.map(async ({ filename, ...preset }) => {
     if (!filename) return preset;
@@ -70,11 +72,13 @@ async function writeRabbitPreview() {
 await Promise.all([
   writeFile(file('./aquarium.html'), embedPlayer(aquariumTemplate.replace('__AQUASCAPE_URL__', () => aquascape), aquariumScript, {
     [`model-data-${arowana.id}`]: arowanaModel,
+    [`model-data-${vermilionArowana.id}`]: vermilionModel,
     [`model-data-${blueGuppy.id}`]: guppyModel,
   })),
   writePreview(arowana, '龙鱼', arowanaModel),
   writePreview(blueGuppy, '蓝扇尾孔雀鱼', guppyModel),
   writePreview(blueGuppy, '孔雀鱼群', guppyModel, 'school-preview'),
+  writePreview(vermilionArowana, '朱红龙鱼', vermilionModel),
   writeRabbitPreview(),
 ]);
 

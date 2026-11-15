@@ -31,7 +31,9 @@ function installCameraDrag(canvas, rotate) {
   });
 }
 
-export async function startFishPreview(species, route, { cameraDistance = 9.4, createSubjects } = {}) {
+export async function startFishPreview(species, route, {
+  cameraDistance = 9.4, maxRenderSize = 1600, createSubjects, configureCamera, configureLighting,
+} = {}) {
   const stage = document.querySelector('#preview-stage');
   const status = document.querySelector('#preview-status');
   const resetView = document.querySelector('#preview-reset-view');
@@ -51,7 +53,8 @@ export async function startFishPreview(species, route, { cameraDistance = 9.4, c
 
     const scene = new THREE.Scene();
     scene.environment = createTankEnvironment(renderer);
-    addSceneLights(scene);
+    const lights = addSceneLights(scene);
+    configureLighting?.(lights, scene);
 
     const fish = createSubjects ? createSubjects(createFish) : createFish(route);
     fish.object.traverse(mesh => {
@@ -73,11 +76,19 @@ export async function startFishPreview(species, route, { cameraDistance = 9.4, c
     let contextLost = false;
     scrubber.max = String(duration);
 
+    const render = () => {
+      if (!contextLost) renderer.render(scene, camera);
+    };
+
     function updateView() {
       camera.position.setFromSpherical(orbit).add(target);
       camera.lookAt(target);
-      if (!playing && !contextLost) renderer.render(scene, camera);
+      if (!playing) render();
     }
+
+    updateView();
+    stage.prepend(canvas);
+    const cameraControls = configureCamera?.(camera, canvas, fish, render);
 
     function rotate(horizontal, vertical) {
       orbit.theta -= horizontal;
@@ -87,7 +98,8 @@ export async function startFishPreview(species, route, { cameraDistance = 9.4, c
 
     function draw() {
       fish.update(time);
-      renderer.render(scene, camera);
+      cameraControls?.update();
+      render();
       scrubber.value = String(time);
       timeLabel.value = `${time.toFixed(1)} / ${duration.toFixed(1)} 秒`;
     }
@@ -124,28 +136,31 @@ export async function startFishPreview(species, route, { cameraDistance = 9.4, c
       const { clientWidth: width, clientHeight: height } = stage;
       if (contextLost || !width || !height) return;
       fitSwimCamera(camera, width, height, cameraFov);
-      renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2, 1600 / Math.max(width, height)));
+      renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2, maxRenderSize / Math.max(width, height)));
       renderer.setSize(width, height, false);
       draw();
     };
 
     playButton.addEventListener('click', () => setPlaying(!playing));
     scrubber.addEventListener('input', () => setPlaying(false, scrubber.valueAsNumber));
-    resetView.addEventListener('click', () => {
+    const resetOrbit = () => {
       orbit.set(cameraDistance, front, 0);
       updateView();
-    });
-    installCameraDrag(canvas, rotate);
-    const keyRotation = new Map([
-      ['ArrowLeft', [-.12, 0]], ['ArrowRight', [.12, 0]],
-      ['ArrowUp', [0, -.12]], ['ArrowDown', [0, .12]],
-    ]);
-    canvas.addEventListener('keydown', event => {
-      const step = keyRotation.get(event.key);
-      if (!step || event.altKey || event.ctrlKey || event.metaKey) return;
-      event.preventDefault();
-      rotate(...step);
-    });
+    };
+    resetView.addEventListener('click', cameraControls?.reset ?? resetOrbit);
+    if (!cameraControls) {
+      installCameraDrag(canvas, rotate);
+      const keyRotation = new Map([
+        ['ArrowLeft', [-.12, 0]], ['ArrowRight', [.12, 0]],
+        ['ArrowUp', [0, -.12]], ['ArrowDown', [0, .12]],
+      ]);
+      canvas.addEventListener('keydown', event => {
+        const step = keyRotation.get(event.key);
+        if (!step || event.altKey || event.ctrlKey || event.metaKey) return;
+        event.preventDefault();
+        rotate(...step);
+      });
+    }
     document.addEventListener('visibilitychange', () => {
       cancelAnimationFrame(frame);
       frame = 0;
@@ -163,8 +178,6 @@ export async function startFishPreview(species, route, { cameraDistance = 9.4, c
       status.textContent = '图形连接已中断，请重新打开页面。';
     });
 
-    updateView();
-    stage.prepend(canvas);
     new ResizeObserver(resize).observe(stage);
     resize();
     status.hidden = true;

@@ -10,7 +10,7 @@ https://github.com/user-attachments/assets/458e246b-0db0-42d4-ad5e-4866ff1ede2e
 
 [打开 GitHub Pages](https://bestyize.github.io/RealWorldBuilder/)
 
-打开 [index.html](index.html) 浏览展厅，或直接打开 [aquarium.html](aquarium.html) 离线观赏。从展厅进入水族箱时，默认使用「山水客厅」，显示龙鱼和孔雀鱼同缸，砂石水草处于关闭状态。直接打开水族箱会恢复这个浏览器上次的选择。点击右上角「设置」可切换单条龙鱼、单条孔雀鱼、孔雀鱼群或同缸，也可以独立开关砂石水草造景。
+打开 [index.html](index.html) 浏览展厅，或直接打开 [aquarium.html](aquarium.html) 离线观赏。从展厅进入水族箱时，默认使用「山水客厅」，显示龙鱼和孔雀鱼同缸，砂石水草处于关闭状态。直接打开水族箱会恢复这个浏览器上次的选择。点击右上角「设置」可切换单条龙鱼、单条孔雀鱼、孔雀鱼群或同缸，也可以独立开关砂石水草造景。在「同缸」或「单条龙鱼」模式下，可以通过「龙鱼品种」切换蓝色龙鱼和朱红龙鱼。
 
 「鱼类观察」的三个预览打开即铺满视窗。用鼠标或手指拖动画面可旋转视角，点击「重置视角」可回到正面。手机竖持时，画面和控件会一起旋转到横向。点击「全屏」可在浏览器支持时收起地址栏并锁定横屏。水族箱在触屏设备上也可点击「全屏」切到横向布局。
 
@@ -30,7 +30,7 @@ https://github.com/user-attachments/assets/458e246b-0db0-42d4-ad5e-4866ff1ede2e
 
 预设以山水客厅为初始背景。自定义图按原比例居中裁切成 16∶9，画面最长边保留至 2560 像素。浏览器允许本地存储时，同一地址重新打开会恢复所选背景和最近一张自定义图。
 
-每个鱼种在各自目录维护 Blender 工程、GLB 和游动代码。可以分别打开[龙鱼](fish/arowana/preview.html)、[单条蓝扇尾孔雀鱼](fish/blue-guppy/preview.html)和[六条孔雀鱼群](fish/blue-guppy/school-preview.html)的独立预览。[碎花垂耳兔](objects/plush-rabbit/preview.html)可以拖动旋转和缩放。
+每个鱼种在各自目录维护 Blender 工程、GLB 和游动代码。可以分别打开[蓝色龙鱼](fish/arowana/preview.html)、[朱红龙鱼](fish/vermilion-arowana/preview.html)、[单条蓝扇尾孔雀鱼](fish/blue-guppy/preview.html)和[六条孔雀鱼群](fish/blue-guppy/school-preview.html)的独立预览。[碎花垂耳兔](objects/plush-rabbit/preview.html)可以拖动旋转和缩放。
 
 展厅使用 `index.html`、`src/gallery.css` 和 `assets/gallery/` 中的素材。修改预览源码或模型后，用 Node.js 20.9 或更新版本运行 `npm ci` 和 `npm run build`。构建会将模型贴图和预设背景转换为 WebP，并内嵌到可离线打开的 HTML 中。PNG 贴图使用无损编码并保留透明度，JPEG 背景和底色贴图使用高质量编码。Blender 工程及原始素材仍是编辑和导出的来源。
 

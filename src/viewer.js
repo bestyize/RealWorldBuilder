@@ -4,6 +4,7 @@ import { blueGuppy } from '../fish/blue-guppy/index.js';
 import { createGuppySchool } from '../fish/blue-guppy/school.js';
 import { soloGuppyRoute } from '../fish/blue-guppy/solo-route.js';
 import { loadFish } from '../fish/load-fish.js';
+import { vermilionArowana } from '../fish/vermilion-arowana/index.js';
 import { installBackgrounds, loadBackground } from './backgrounds.js';
 import { cruiseRoute } from './cruise-route.js';
 import { installDisplay } from './display.js';
@@ -109,8 +110,9 @@ async function start() {
   const backgrounds = JSON.parse(takeEmbeddedData('#background-presets'));
   const backgroundId = overlay ? 'transparent' : (entryScene?.background ?? backgrounds[0].id);
   const initialBackground = backgrounds.find(background => background.id === backgroundId);
-  const [createArowana, createGuppy, backdrop] = await Promise.all([
+  const [createArowana, createVermilion, createGuppy, backdrop] = await Promise.all([
     loadFish(arowana, takeSpeciesModel(arowana.id)),
+    overlay ? null : loadFish(vermilionArowana, takeSpeciesModel(vermilionArowana.id)),
     overlay ? null : loadFish(blueGuppy, takeSpeciesModel(blueGuppy.id)),
     loadBackground(initialBackground),
   ]);
@@ -123,8 +125,11 @@ async function start() {
   scene.add(backdropMesh, bubbles);
   scene.environment = createTankEnvironment(renderer);
 
-  const dragon = createArowana(cruiseRoute);
-  const residents = [dragon];
+  const dragons = new Map([[arowana.id, createArowana(cruiseRoute)]]);
+  if (createVermilion) {
+    dragons.set(vermilionArowana.id, createVermilion(cruiseRoute, { scale: .9, duration: 32 }));
+  }
+  const residents = [...dragons.values()];
   let solo;
   let school;
   if (createGuppy) {
@@ -150,9 +155,10 @@ async function start() {
   };
   installLighting(scene, redraw);
 
-  function applyDisplay({ fish, aquascape }) {
+  function applyDisplay({ fish, aquascape, arowanaSpecies = arowana.id }) {
     const mixed = fish === 'mixed';
-    dragon.object.visible = mixed || fish === 'arowana';
+    const showDragon = mixed || fish === 'arowana';
+    for (const [id, dragon] of dragons) dragon.object.visible = showDragon && id === arowanaSpecies;
     if (solo) solo.object.visible = fish === 'guppy';
     if (school) {
       school.object.visible = mixed || fish === 'school';
