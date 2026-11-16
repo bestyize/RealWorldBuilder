@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { createTankEnvironment } from '../environment.js';
 import { takeEmbeddedModel } from '../embedded-data.js';
+import { installBackground } from './background.js';
 
 const $ = id => document.getElementById(id);
 
@@ -34,7 +35,7 @@ export async function openAsset(asset, adapter){
     const rim=new THREE.DirectionalLight(0xe2eeff,.88);rim.position.set(2,4.2,-4.1);
     const fill=new THREE.DirectionalLight(0xf2fbff,.60);fill.position.set(3.2,.5,4.8);
     scene.add(key,fill,rim,new THREE.HemisphereLight(0xf9f6e5,0xa4a79a,.64));
-    if(location.hash==='#overlay')$('pack-ui').hidden=true;
+    installBackground(asset.backgrounds);
     const subject=await adapter.create(takeEmbeddedModel(),{renderer,asset});
     scene.add(subject.object);
     const hasAnimation=Number.isFinite(subject.duration)&&subject.duration>0&&typeof subject.update==='function';

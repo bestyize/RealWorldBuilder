@@ -10,6 +10,6 @@
     "readme": "README.md"
   },
   "gameNotes": "静态。GLB 使用 EXT_meshopt_compression；预览内置解码并保留实时短绒，没有布台、接触阴影或摄影布景。",
-  "previewBytes": 12829950,
+  "previewBytes": 13208117,
   "embeddedGlbBytes": 9097972
 }

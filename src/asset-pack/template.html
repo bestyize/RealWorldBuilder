@@ -6,7 +6,9 @@
 :root{font:14px/1.45 system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color-scheme:light;background:transparent}
 html,body{margin:0;width:100%;height:100%;background:transparent;overflow:hidden}*{box-sizing:border-box}
 [hidden]{display:none!important}
-#stage{position:fixed;inset:0;background:transparent}
+#stage{position:fixed;inset:0;background:transparent center / cover no-repeat}
+#stage[data-background=black]{background-color:#000}#stage[data-background=white]{background-color:#fff}
+#stage[data-background=planted]{background-color:#283e31}#stage[data-background=blackwater]{background-color:#25180d}#stage[data-background=moon]{background-color:#202b3e}
 canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab;outline:none}canvas:active{cursor:grabbing}canvas:focus-visible{outline:2px solid #b49766;outline-offset:-2px}
 #pack-ui{position:fixed;right:max(14px,env(safe-area-inset-right));top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:9px;z-index:1;}
 button,select{font:inherit;color:inherit}button{cursor:pointer}
@@ -17,6 +19,7 @@ button,select{font:inherit;color:inherit}button{cursor:pointer}
 .row button,.row select{padding:6px 10px;min-height:35px;background:#fffaf1;border:1px solid #a5a497;border-radius:6px;max-width:100%}
 fieldset{border:none;padding:0;margin:10px 0 0}legend{padding:0;font-size:12px;color:#555b50}
 input[type=range]{width:100%;accent-color:#746345}
+#pack-background{flex:1}#pack-background-message{margin:6px 0 0;font-size:12px;color:#70452e}
 #transport{padding:0}output{font-size:12px;color:#505448;white-space:nowrap}
 button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid #795d22;outline-offset:2px}
 #status{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#f5f0e6;color:#282920;border:1px solid #adab9e;border-radius:8px;padding:9px 14px;max-width:90%;width:max-content}
@@ -27,6 +30,15 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
   <section id="panel" aria-label="模型管理" hidden>
     <h1>%%NAME%%</h1>
     <div class="row"><button id="pack-reset" type="button">复位</button><button id="pack-near" type="button">近看</button><button id="pack-fullscreen" type="button" hidden>全屏</button></div>
+    <fieldset><legend>背景</legend><div class="row">
+      <select id="pack-background" aria-label="背景">
+        <option value="transparent">透明</option><option value="black">纯黑</option><option value="white">纯白</option>
+        <option value="planted">清绿水草缸</option><option value="blackwater">雨林黑水</option><option value="moon">月下湖景</option>
+        <option value="local">本地图片…</option>
+      </select>
+      <button id="pack-background-replace" type="button" hidden>更换图片</button>
+      <input id="pack-background-file" type="file" accept=".jpg,.jpeg,.png,.webp,.avif" hidden>
+    </div><p id="pack-background-message" role="status" hidden></p></fieldset>
     <fieldset id="modes" hidden><legend id="mode-label">展示</legend><select id="pack-mode" aria-label="展示方式"></select></fieldset>
     <fieldset id="transport" hidden><legend>动画</legend><div class="row"><button id="pack-play" type="button">暂停</button><output id="pack-time">0.0 秒</output></div><input type="range" id="pack-seek" min="0" max="1" step=".01" value="0" aria-label="动画进度"></fieldset>
   </section>
