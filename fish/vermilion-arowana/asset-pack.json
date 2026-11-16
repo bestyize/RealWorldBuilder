@@ -1,0 +1,15 @@
+{
+  "id": "vermilion-arowana",
+  "name": "朱红龙鱼",
+  "category": "鱼类",
+  "files": {
+    "preview": "asset-preview.html",
+    "blender": "vermilion-arowana.blend",
+    "game": "vermilion-arowana.glb",
+    "cover": "images/cover.webp",
+    "readme": "README.md"
+  },
+  "gameNotes": "GLB 有骨骼和烘焙动作。独立预览使用原项目游动路线。",
+  "previewBytes": 12380506,
+  "embeddedGlbBytes": 8764848
+}

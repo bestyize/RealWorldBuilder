@@ -1,0 +1,59 @@
+{
+  "asset": "java-fern",
+  "editable_objects": [
+    "River_fern_petiole_00",
+    "River_fern_leaf_00",
+    "River_fern_petiole_01",
+    "River_fern_leaf_01",
+    "River_fern_petiole_02",
+    "River_fern_leaf_02",
+    "River_fern_petiole_03",
+    "River_fern_leaf_03",
+    "River_fern_petiole_04",
+    "River_fern_leaf_04",
+    "River_fern_petiole_05",
+    "River_fern_leaf_05",
+    "River_fern_petiole_06",
+    "River_fern_leaf_06",
+    "River_fern_petiole_07",
+    "River_fern_leaf_07",
+    "River_fern_petiole_08",
+    "River_fern_leaf_08",
+    "River_fern_petiole_09",
+    "River_fern_leaf_09",
+    "River_fern_petiole_10",
+    "River_fern_leaf_10",
+    "River_fern_petiole_11",
+    "River_fern_leaf_11",
+    "River_fern_petiole_12",
+    "River_fern_leaf_12",
+    "River_fern_petiole_13",
+    "River_fern_leaf_13",
+    "River_fern_root_00",
+    "River_fern_root_01",
+    "River_fern_root_02",
+    "River_fern_root_03",
+    "River_fern_root_04",
+    "River_fern_root_05",
+    "River_fern_root_06",
+    "River_fern_root_07",
+    "River_fern_root_08",
+    "River_fern_root_09"
+  ],
+  "triangles": 10068,
+  "bounds_blender": [
+    [
+      -0.710860013961792,
+      -0.8826516270637512,
+      0.004990844987332821
+    ],
+    [
+      0.7612133622169495,
+      0.6910977959632874,
+      1.2447187900543213
+    ]
+  ],
+  "source": "Riverbank V2 approved individual asset",
+  "glb_fidelity": "byte-identical delivered individual",
+  "packed_blend": true
+}

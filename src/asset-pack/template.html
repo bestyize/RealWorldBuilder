@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>%%NAME%% · RealWorldBuilder</title>
+<style>
+:root{font:14px/1.45 system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color-scheme:light;background:transparent}
+html,body{margin:0;width:100%;height:100%;background:transparent;overflow:hidden}*{box-sizing:border-box}
+[hidden]{display:none!important}
+#stage{position:fixed;inset:0;background:transparent}
+canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab;outline:none}canvas:active{cursor:grabbing}canvas:focus-visible{outline:2px solid #b49766;outline-offset:-2px}
+#pack-ui{position:fixed;right:max(14px,env(safe-area-inset-right));top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:9px;z-index:1;}
+button,select{font:inherit;color:inherit}button{cursor:pointer}
+#pack-toggle{display:grid;place-items:center;min-width:43px;height:43px;padding:0 10px;border-radius:12px;border:1px solid #a09b91;background:#f5f0e6;color:#2e3029;box-shadow:0 3px 8px #0002}
+#pack-toggle svg{width:18px;height:18px}
+#panel{color:#252820;background:#f5f0e6;border:1px solid #a6a096;border-radius:12px;padding:13px 14px;width:min(255px,calc(100vw - 82px));max-height:min(72vh,470px);overflow:auto;box-shadow:0 5px 18px #0002}
+#panel h1{font-size:15px;line-height:1.25;margin:0 0 11px}.row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.row button,.row select{padding:6px 10px;min-height:35px;background:#fffaf1;border:1px solid #a5a497;border-radius:6px;max-width:100%}
+fieldset{border:none;padding:0;margin:10px 0 0}legend{padding:0;font-size:12px;color:#555b50}
+input[type=range]{width:100%;accent-color:#746345}
+#transport{padding:0}output{font-size:12px;color:#505448;white-space:nowrap}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid #795d22;outline-offset:2px}
+#status{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#f5f0e6;color:#282920;border:1px solid #adab9e;border-radius:8px;padding:9px 14px;max-width:90%;width:max-content}
+</style></head>
+<body><main id="stage" aria-label="%%NAME%% 三维模型"></main>
+<p id="status" role="status">正在加载三维模型…</p>
+<div id="pack-ui" %%UI_STATE%%>
+  <section id="panel" aria-label="模型管理" hidden>
+    <h1>%%NAME%%</h1>
+    <div class="row"><button id="pack-reset" type="button">复位</button><button id="pack-near" type="button">近看</button><button id="pack-fullscreen" type="button" hidden>全屏</button></div>
+    <fieldset id="modes" hidden><legend id="mode-label">展示</legend><select id="pack-mode" aria-label="展示方式"></select></fieldset>
+    <fieldset id="transport" hidden><legend>动画</legend><div class="row"><button id="pack-play" type="button">暂停</button><output id="pack-time">0.0 秒</output></div><input type="range" id="pack-seek" min="0" max="1" step=".01" value="0" aria-label="动画进度"></fieldset>
+  </section>
+  <button id="pack-toggle" type="button" aria-controls="panel" aria-expanded="false" aria-label="展开管理面板" title="展开管理面板" disabled>
+   <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/><circle cx="8" cy="7" r="2" fill="#f5f0e6"/><circle cx="16" cy="12" r="2" fill="#f5f0e6"/><circle cx="10" cy="17" r="2" fill="#f5f0e6"/></svg>
+  </button>
+</div>
+%%MODEL%%
+<script>%%SCRIPT%%</script>
+</body></html>

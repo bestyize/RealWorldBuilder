@@ -1,0 +1,22 @@
+{
+  "asset": "sand-bed",
+  "editable_objects": [
+    "Sand_Riverbed"
+  ],
+  "triangles": 16560,
+  "bounds_blender": [
+    [
+      -5.402679920196533,
+      -3.164273262023926,
+      -0.16500000655651093
+    ],
+    [
+      5.438082218170166,
+      3.208597421646118,
+      0.3194583058357239
+    ]
+  ],
+  "source": "Riverbank V2 approved individual asset",
+  "glb_fidelity": "byte-identical delivered individual",
+  "packed_blend": true
+}

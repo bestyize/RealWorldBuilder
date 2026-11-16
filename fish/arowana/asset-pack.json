@@ -1,0 +1,15 @@
+{
+  "id": "arowana",
+  "name": "蓝色龙鱼",
+  "category": "鱼类",
+  "files": {
+    "preview": "asset-preview.html",
+    "blender": "arowana.blend",
+    "game": "arowana.glb",
+    "cover": "images/cover.webp",
+    "readme": "README.md"
+  },
+  "gameNotes": "GLB 有骨骼和烘焙动作。独立预览使用原项目游动路线。",
+  "previewBytes": 14769056,
+  "embeddedGlbBytes": 10556268
+}

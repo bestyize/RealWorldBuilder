@@ -1,5 +1,19 @@
 # 碎花垂耳兔
 
+<!-- ASSET-PACK START -->
+## 独立资产包
+
+- [透明离线预览](asset-preview.html)：直接用 Chrome、Edge 或支持 WebGL 2 的 Safari 打开。默认折叠，画面右侧中部按钮展开管理面板。拖动旋转、滚轮或双指缩放；`#overlay` 隐藏面板按钮。
+- [Blender 工程](plush-rabbit.blend)：编辑源模型。贴图由项目文件管理。
+- [游戏模型 GLB](plush-rabbit.glb)：正式导入用此文件，模型与贴图在 GLB 内，不需要将预览 HTML 导进游戏。GLB +Y 向上，Blender +Z 向上；鱼头约定 +X。
+- [模型预览图](images/cover.webp)：实际模型渲染，非生成概念。
+
+静态。GLB 使用 EXT_meshopt_compression；预览内置解码并保留实时短绒，没有布台、接触阴影或摄影布景。
+
+预览 HTML 内嵌本资产和运行脚本，不需要起服务、连网、下载 CDN 或加载其他品种。仓库中重建：`node scripts/build-asset-packs.mjs plush-rabbit`。
+<!-- ASSET-PACK END -->
+
+
 以会话中用内置 ImageGen 生成并选定的[参考图](reference.jpg)为准，制作一只坐姿垂耳布偶。正面保留圆脸、小椭圆眼、棕色刺绣鼻口、浅米色短绒、碎花棉布耳衬和右耳上的蝴蝶结。参考只展示正面，侧面的耳朵厚度、坐姿体积及背面的小尾巴根据布偶结构补足。Blender 里的坐姿高度为 0.30 m，+Z 向上、-Y 为正面，GLB 为 +Y 向上、+Z 为正面。
 
 - [独立预览](preview.html)直接打开实时 3D，可以拖动旋转和缩放，也可以点击「材质近看」后继续转动观察毛向。GLB、贴图和渲染代码均嵌入同一文件。

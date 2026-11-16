@@ -1,5 +1,19 @@
 # Vermilion Arowana · 朱红龙鱼
 
+<!-- ASSET-PACK START -->
+## 独立资产包
+
+- [透明离线预览](asset-preview.html)：直接用 Chrome、Edge 或支持 WebGL 2 的 Safari 打开。默认折叠，画面右侧中部按钮展开管理面板。拖动旋转、滚轮或双指缩放；`#overlay` 隐藏面板按钮。
+- [Blender 工程](vermilion-arowana.blend)：编辑源模型。贴图由项目文件管理。
+- [游戏模型 GLB](vermilion-arowana.glb)：正式导入用此文件，模型与贴图在 GLB 内，不需要将预览 HTML 导进游戏。GLB +Y 向上，Blender +Z 向上；鱼头约定 +X。
+- [模型预览图](images/cover.webp)：实际模型渲染，非生成概念。
+
+GLB 有骨骼和烘焙动作。独立预览使用原项目游动路线。
+
+预览 HTML 内嵌本资产和运行脚本，不需要起服务、连网、下载 CDN 或加载其他品种。仓库中重建：`node scripts/build-asset-packs.mjs vermilion-arowana`。
+<!-- ASSET-PACK END -->
+
+
 这条鱼按用户提供的[侧面照片](reference.jpg)设计。腹侧从带灰的中段过渡到亮青蓝，冷紫黑背鳞带细粉紫鳞缘，鳃盖呈橙金色。尾鳍、背鳍和臀鳍分别按原照的红橙色校准。鳞片保持细薄的叠合边和柔和的缎面反光。
 
 [侧视建模参考](concept.png)是带 Alpha 的 1983 × 793 PNG。[俯视与正面补图](form-study.png)用来估算横截面和成对鳍的角度。照片只展示一侧，另一侧和真实厚度按相对比例推定。Blender 模型以 +X 为头部方向、+Z 向上，GLB 以 +Y 向上。

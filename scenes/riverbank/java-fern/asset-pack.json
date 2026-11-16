@@ -1,0 +1,15 @@
+{
+  "id": "java-fern",
+  "name": "卷窄叶水草",
+  "category": "造景",
+  "files": {
+    "preview": "preview.html",
+    "blender": "model.blend",
+    "game": "model.glb",
+    "cover": "images/cover.webp",
+    "readme": "README.md"
+  },
+  "gameNotes": "静态。独立叶片为实网格，叶脉贴图已内嵌；此为原河岸分件，未经过宽叶 V4 的写实迭代。",
+  "previewBytes": 1133466,
+  "embeddedGlbBytes": 338900
+}

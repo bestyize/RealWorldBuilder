@@ -1,0 +1,15 @@
+{
+  "id": "sterbai-cory",
+  "name": "斯氏鼠鱼 · V2",
+  "category": "鱼类",
+  "files": {
+    "preview": "asset-preview.html",
+    "blender": "sterbai-cory.blend",
+    "game": "sterbai-cory.glb",
+    "cover": "images/cover.webp",
+    "readme": "README.md"
+  },
+  "gameNotes": "GLB 有骨骼，无烘焙泳姿；模型和预览都没有地面，贴底姿态仍通过虚拟高度基准驱动。",
+  "previewBytes": 5213963,
+  "embeddedGlbBytes": 3389924
+}

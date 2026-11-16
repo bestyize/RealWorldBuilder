@@ -1,0 +1,62 @@
+{
+  "asset": "broadleaf-anubias",
+  "editable_objects": [
+    "BroadleafV3_petiole_10",
+    "BroadleafV3_petiole_09",
+    "BroadleafV3_petiole_08",
+    "BroadleafV3_petiole_07",
+    "BroadleafV3_petiole_06",
+    "BroadleafV3_petiole_05",
+    "BroadleafV3_petiole_04",
+    "BroadleafV3_petiole_03",
+    "BroadleafV3_petiole_02",
+    "BroadleafV3_petiole_01",
+    "BroadleafV3_petiole_00",
+    "BroadleafV3_leaf_10_young",
+    "BroadleafV3_leaf_09_young",
+    "BroadleafV3_leaf_08_young",
+    "BroadleafV3_leaf_07_mature",
+    "BroadleafV3_leaf_06_mature",
+    "BroadleafV3_leaf_05_mature",
+    "BroadleafV3_leaf_04_mature",
+    "BroadleafV3_leaf_03_mature",
+    "BroadleafV3_leaf_02_mature",
+    "BroadleafV3_leaf_01_mature",
+    "BroadleafV3_leaf_00_mature",
+    "BroadleafV3_horizontal_rhizome",
+    "BroadleafV3_attached_root_17",
+    "BroadleafV3_attached_root_16",
+    "BroadleafV3_attached_root_15",
+    "BroadleafV3_attached_root_14",
+    "BroadleafV3_attached_root_13",
+    "BroadleafV3_attached_root_12",
+    "BroadleafV3_attached_root_11",
+    "BroadleafV3_attached_root_10",
+    "BroadleafV3_attached_root_09",
+    "BroadleafV3_attached_root_08",
+    "BroadleafV3_attached_root_07",
+    "BroadleafV3_attached_root_06",
+    "BroadleafV3_attached_root_05",
+    "BroadleafV3_attached_root_04",
+    "BroadleafV3_attached_root_03",
+    "BroadleafV3_attached_root_02",
+    "BroadleafV3_attached_root_01",
+    "BroadleafV3_attached_root_00"
+  ],
+  "triangles": 20828,
+  "bounds_blender": [
+    [
+      -0.7663361430168152,
+      -0.5660461187362671,
+      0.005460586864501238
+    ],
+    [
+      0.588665246963501,
+      0.564565122127533,
+      0.7600041031837463
+    ]
+  ],
+  "source": "Broadleaf V4 final delivered model",
+  "glb_fidelity": "byte-identical delivered individual",
+  "packed_blend": true
+}

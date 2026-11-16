@@ -1,0 +1,15 @@
+{
+  "id": "river-pebbles",
+  "name": "河卵石 · 五种变体",
+  "category": "造景",
+  "files": {
+    "preview": "preview.html",
+    "blender": "model.blend",
+    "game": "model.glb",
+    "cover": "images/cover.webp",
+    "readme": "README.md"
+  },
+  "gameNotes": "静态。模型总览和独立变体都可用；包内五种石头只共用一个展示目录。",
+  "previewBytes": 4450214,
+  "embeddedGlbBytes": 2826160
+}

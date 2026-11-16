@@ -1,0 +1,15 @@
+{
+  "id": "plush-rabbit",
+  "name": "碎花垂耳兔",
+  "category": "静物",
+  "files": {
+    "preview": "asset-preview.html",
+    "blender": "plush-rabbit.blend",
+    "game": "plush-rabbit.glb",
+    "cover": "images/cover.webp",
+    "readme": "README.md"
+  },
+  "gameNotes": "静态。GLB 使用 EXT_meshopt_compression；预览内置解码并保留实时短绒，没有布台、接触阴影或摄影布景。",
+  "previewBytes": 12829950,
+  "embeddedGlbBytes": 9097972
+}

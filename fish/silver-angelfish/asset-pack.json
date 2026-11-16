@@ -1,0 +1,15 @@
+{
+  "id": "silver-angelfish",
+  "name": "银身神仙鱼 · V2",
+  "category": "鱼类",
+  "files": {
+    "preview": "asset-preview.html",
+    "blender": "silver-angelfish.blend",
+    "game": "silver-angelfish.glb",
+    "cover": "images/cover.webp",
+    "readme": "README.md"
+  },
+  "gameNotes": "GLB 有骨骼，无烘焙泳姿；预览用实时动作。保留细鳞、区域反光的 V2 贴图。",
+  "previewBytes": 3600798,
+  "embeddedGlbBytes": 2180036
+}

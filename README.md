@@ -1,5 +1,28 @@
 # RealWorldBuilder
 
+## 目录导航
+
+[主水族箱](aquarium.html) · [原展厅](index.html) · [图文资产总览](asset-packs.html) · [资产包格式与重建](docs/asset-packs.md) · [背景素材](#背景素材)
+
+| 分类 | 资产包 | 透明离线预览 |
+|---|---|---|
+| 鱼类 | [蓝色龙鱼](fish/arowana/README.md) | [HTML](fish/arowana/asset-preview.html) |
+| 鱼类 | [朱红龙鱼](fish/vermilion-arowana/README.md) | [HTML](fish/vermilion-arowana/asset-preview.html) |
+| 鱼类 | [蓝扇尾孔雀鱼](fish/blue-guppy/README.md) | [HTML](fish/blue-guppy/asset-preview.html) |
+| 鱼类 | [红白锦鲤 · V6](fish/kohaku-koi/README.md) | [HTML](fish/kohaku-koi/asset-preview.html) |
+| 鱼类 | [银身神仙鱼 · V2](fish/silver-angelfish/README.md) | [HTML](fish/silver-angelfish/asset-preview.html) |
+| 鱼类 | [宝莲灯 · V2](fish/cardinal-tetra/README.md) | [HTML](fish/cardinal-tetra/asset-preview.html) |
+| 鱼类 | [斯氏鼠鱼 · V2](fish/sterbai-cory/README.md) | [HTML](fish/sterbai-cory/asset-preview.html) |
+| 静物 | [碎花垂耳兔](objects/plush-rabbit/README.md) | [HTML](objects/plush-rabbit/asset-preview.html) |
+| 造景 | [暖米色浅砂床 · V2](scenes/riverbank/sand-bed/README.md) | [HTML](scenes/riverbank/sand-bed/preview.html) |
+| 造景 | [河卵石 · 五种变体](scenes/riverbank/river-pebbles/README.md) | [HTML](scenes/riverbank/river-pebbles/preview.html) |
+| 造景 | [茶褐分叉沉木](scenes/riverbank/driftwood/README.md) | [HTML](scenes/riverbank/driftwood/preview.html) |
+| 造景 | [卷窄叶水草](scenes/riverbank/java-fern/README.md) | [HTML](scenes/riverbank/java-fern/preview.html) |
+| 造景 | [细长带叶水草](scenes/riverbank/tape-grass/README.md) | [HTML](scenes/riverbank/tape-grass/preview.html) |
+| 造景 | [宽叶水草 · V4](scenes/riverbank/broadleaf-anubias/README.md) | [HTML](scenes/riverbank/broadleaf-anubias/preview.html) |
+
+资产包链接进入该模型的说明；HTML 下载后可直接离线打开。
+
 ![龙鱼在山水客厅水族箱中游动](./docs/aquarium.gif)
 
 ### 45 秒 macOS 桌面水族箱演示

@@ -1,0 +1,15 @@
+{
+  "id": "blue-guppy",
+  "name": "蓝扇尾孔雀鱼",
+  "category": "鱼类",
+  "files": {
+    "preview": "asset-preview.html",
+    "blender": "blue-guppy.blend",
+    "game": "blue-guppy.glb",
+    "cover": "images/cover.webp",
+    "readme": "README.md"
+  },
+  "gameNotes": "GLB 有骨骼，无烘焙泳姿。单条与六鱼群复用同一份模型，鱼群保留原有花色；实时动作见游动源码。",
+  "previewBytes": 11210573,
+  "embeddedGlbBytes": 7887380
+}

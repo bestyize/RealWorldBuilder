@@ -1,0 +1,15 @@
+{
+  "id": "driftwood",
+  "name": "茶褐分叉沉木",
+  "category": "造景",
+  "files": {
+    "preview": "preview.html",
+    "blender": "model.blend",
+    "game": "model.glb",
+    "cover": "images/cover.webp",
+    "readme": "README.md"
+  },
+  "gameNotes": "静态。只含根木；枝条背侧为重建，不是扫描。",
+  "previewBytes": 2183741,
+  "embeddedGlbBytes": 1126596
+}

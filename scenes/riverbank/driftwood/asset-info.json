@@ -1,0 +1,22 @@
+{
+  "asset": "driftwood",
+  "editable_objects": [
+    "Root_01__RiverDriftwood_Forked"
+  ],
+  "triangles": 15600,
+  "bounds_blender": [
+    [
+      -1.850000023841858,
+      -0.09419205784797668,
+      0.0
+    ],
+    [
+      1.850000023841858,
+      0.138172447681427,
+      1.7473543882369995
+    ]
+  ],
+  "source": "Riverbank V2 approved individual asset",
+  "glb_fidelity": "byte-identical delivered individual",
+  "packed_blend": true
+}

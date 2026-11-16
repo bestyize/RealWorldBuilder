@@ -1,3 +1,8 @@
 /aquarium.html whitespace=-blank-at-eol,-space-before-tab
 /fish/*/preview.html whitespace=-blank-at-eol,-space-before-tab
 /objects/plush-rabbit/preview.html whitespace=-blank-at-eol,-space-before-tab
+
+# Self-contained generated players. Review viewer sources, not minified bundles.
+/fish/*/asset-preview.html linguist-generated=true -diff whitespace=-blank-at-eol,-space-before-tab
+/objects/*/asset-preview.html linguist-generated=true -diff whitespace=-blank-at-eol,-space-before-tab
+/scenes/riverbank/*/preview.html linguist-generated=true -diff whitespace=-blank-at-eol,-space-before-tab
