@@ -1,0 +1,65 @@
+{
+  "asset": "Farm Soil",
+  "author": "Amal Kumar",
+  "license": "CC0",
+  "page": "https://polyhaven.com/a/farm_soil",
+  "license_url": "https://polyhaven.com/license",
+  "maps": [
+    {
+      "map": "diff",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/farm_soil/farm_soil_diff_4k.jpg",
+      "original_size": [
+        4096,
+        4096
+      ],
+      "crop": [
+        1536,
+        1536,
+        2560,
+        2560
+      ]
+    },
+    {
+      "map": "disp",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/farm_soil/farm_soil_disp_4k.jpg",
+      "original_size": [
+        4096,
+        4096
+      ],
+      "crop": [
+        1536,
+        1536,
+        2560,
+        2560
+      ]
+    },
+    {
+      "map": "nor_gl",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/farm_soil/farm_soil_nor_gl_4k.jpg",
+      "original_size": [
+        4096,
+        4096
+      ],
+      "crop": [
+        1536,
+        1536,
+        2560,
+        2560
+      ]
+    },
+    {
+      "map": "rough",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/farm_soil/farm_soil_rough_4k.jpg",
+      "original_size": [
+        4096,
+        4096
+      ],
+      "crop": [
+        1536,
+        1536,
+        2560,
+        2560
+      ]
+    }
+  ]
+}
