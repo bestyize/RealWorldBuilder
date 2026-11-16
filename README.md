@@ -2,26 +2,26 @@
 
 ## 目录导航
 
-[主水族箱](aquarium.html) · [原展厅](index.html) · [图文资产总览](asset-packs.html) · [资产包格式与重建](docs/asset-packs.md) · [背景素材](#背景素材)
+[主水族箱](https://bestyize.github.io/RealWorldBuilder/aquarium.html) · [原展厅](https://bestyize.github.io/RealWorldBuilder/index.html) · [图文资产总览](https://bestyize.github.io/RealWorldBuilder/asset-packs.html) · [资产包格式与重建](docs/asset-packs.md) · [背景素材](#背景素材)
 
-| 分类 | 资产包 | 透明离线预览 |
+| 分类 | 资产包说明 | Pages 在线预览 |
 |---|---|---|
-| 鱼类 | [蓝色龙鱼](fish/arowana/README.md) | [HTML](fish/arowana/asset-preview.html) |
-| 鱼类 | [朱红龙鱼](fish/vermilion-arowana/README.md) | [HTML](fish/vermilion-arowana/asset-preview.html) |
-| 鱼类 | [蓝扇尾孔雀鱼](fish/blue-guppy/README.md) | [HTML](fish/blue-guppy/asset-preview.html) |
-| 鱼类 | [红白锦鲤](fish/kohaku-koi/README.md) | [HTML](fish/kohaku-koi/asset-preview.html) |
-| 鱼类 | [银身神仙鱼](fish/silver-angelfish/README.md) | [HTML](fish/silver-angelfish/asset-preview.html) |
-| 鱼类 | [宝莲灯](fish/cardinal-tetra/README.md) | [HTML](fish/cardinal-tetra/asset-preview.html) |
-| 鱼类 | [斯氏鼠鱼](fish/sterbai-cory/README.md) | [HTML](fish/sterbai-cory/asset-preview.html) |
-| 静物 | [碎花垂耳兔](objects/plush-rabbit/README.md) | [HTML](objects/plush-rabbit/asset-preview.html) |
-| 造景 | [暖米色浅砂床](scenes/riverbank/sand-bed/README.md) | [HTML](scenes/riverbank/sand-bed/preview.html) |
-| 造景 | [河卵石 · 五种变体](scenes/riverbank/river-pebbles/README.md) | [HTML](scenes/riverbank/river-pebbles/preview.html) |
-| 造景 | [茶褐分叉沉木](scenes/riverbank/driftwood/README.md) | [HTML](scenes/riverbank/driftwood/preview.html) |
-| 造景 | [卷窄叶水草](scenes/riverbank/java-fern/README.md) | [HTML](scenes/riverbank/java-fern/preview.html) |
-| 造景 | [细长带叶水草](scenes/riverbank/tape-grass/README.md) | [HTML](scenes/riverbank/tape-grass/preview.html) |
-| 造景 | [宽叶水草](scenes/riverbank/broadleaf-anubias/README.md) | [HTML](scenes/riverbank/broadleaf-anubias/preview.html) |
+| 鱼类 | [蓝色龙鱼](fish/arowana/README.md) | [在线打开](https://bestyize.github.io/RealWorldBuilder/fish/arowana/asset-preview.html) |
+| 鱼类 | [朱红龙鱼](fish/vermilion-arowana/README.md) | [在线打开](https://bestyize.github.io/RealWorldBuilder/fish/vermilion-arowana/asset-preview.html) |
+| 鱼类 | [蓝扇尾孔雀鱼](fish/blue-guppy/README.md) | [在线打开](https://bestyize.github.io/RealWorldBuilder/fish/blue-guppy/asset-preview.html) |
+| 鱼类 | [红白锦鲤](fish/kohaku-koi/README.md) | [在线打开](https://bestyize.github.io/RealWorldBuilder/fish/kohaku-koi/asset-preview.html) |
+| 鱼类 | [银身神仙鱼](fish/silver-angelfish/README.md) | [在线打开](https://bestyize.github.io/RealWorldBuilder/fish/silver-angelfish/asset-preview.html) |
+| 鱼类 | [宝莲灯](fish/cardinal-tetra/README.md) | [在线打开](https://bestyize.github.io/RealWorldBuilder/fish/cardinal-tetra/asset-preview.html) |
+| 鱼类 | [斯氏鼠鱼](fish/sterbai-cory/README.md) | [在线打开](https://bestyize.github.io/RealWorldBuilder/fish/sterbai-cory/asset-preview.html) |
+| 静物 | [碎花垂耳兔](objects/plush-rabbit/README.md) | [在线打开](https://bestyize.github.io/RealWorldBuilder/objects/plush-rabbit/asset-preview.html) |
+| 造景 | [暖米色浅砂床](scenes/riverbank/sand-bed/README.md) | [在线打开](https://bestyize.github.io/RealWorldBuilder/scenes/riverbank/sand-bed/preview.html) |
+| 造景 | [河卵石 · 五种变体](scenes/riverbank/river-pebbles/README.md) | [在线打开](https://bestyize.github.io/RealWorldBuilder/scenes/riverbank/river-pebbles/preview.html) |
+| 造景 | [茶褐分叉沉木](scenes/riverbank/driftwood/README.md) | [在线打开](https://bestyize.github.io/RealWorldBuilder/scenes/riverbank/driftwood/preview.html) |
+| 造景 | [卷窄叶水草](scenes/riverbank/java-fern/README.md) | [在线打开](https://bestyize.github.io/RealWorldBuilder/scenes/riverbank/java-fern/preview.html) |
+| 造景 | [细长带叶水草](scenes/riverbank/tape-grass/README.md) | [在线打开](https://bestyize.github.io/RealWorldBuilder/scenes/riverbank/tape-grass/preview.html) |
+| 造景 | [宽叶水草](scenes/riverbank/broadleaf-anubias/README.md) | [在线打开](https://bestyize.github.io/RealWorldBuilder/scenes/riverbank/broadleaf-anubias/preview.html) |
 
-资产包链接进入该模型的说明；HTML 下载后可直接离线打开。
+在线预览点击即运行，不需要下载。需要离线使用时，进对应的资产包说明下载单文件 HTML。
 
 ![龙鱼在山水客厅水族箱中游动](./docs/aquarium.gif)
 
@@ -33,13 +33,13 @@ https://github.com/user-attachments/assets/458e246b-0db0-42d4-ad5e-4866ff1ede2e
 
 [打开 GitHub Pages](https://bestyize.github.io/RealWorldBuilder/)
 
-打开 [index.html](index.html) 浏览展厅，或直接打开 [aquarium.html](aquarium.html) 离线观赏。首次打开水族箱或从展厅进入时，默认在「山水客厅」中单独展示朱红龙鱼，并开启砂石水草。直接打开水族箱会恢复这个浏览器已保存的选择。点击右上角「设置」可切换单条龙鱼、单条孔雀鱼、孔雀鱼群或同缸，也可以独立开关砂石水草造景。在「同缸」或「单条龙鱼」模式下，可以通过「龙鱼品种」切换蓝色龙鱼和朱红龙鱼。
+可以在线浏览[展厅](https://bestyize.github.io/RealWorldBuilder/index.html)或打开[主水族箱](https://bestyize.github.io/RealWorldBuilder/aquarium.html)。也可以下载仓库中的 `aquarium.html` 离线观赏。首次打开水族箱或从展厅进入时，默认在「山水客厅」中单独展示朱红龙鱼，并开启砂石水草。直接打开水族箱会恢复这个浏览器已保存的选择。点击右上角「设置」可切换单条龙鱼、单条孔雀鱼、孔雀鱼群或同缸，也可以独立开关砂石水草造景。在「同缸」或「单条龙鱼」模式下，可以通过「龙鱼品种」切换蓝色龙鱼和朱红龙鱼。
 
 「鱼类观察」的三个预览打开即铺满视窗。用鼠标或手指拖动画面可旋转视角，点击「重置视角」可回到正面。手机竖持时，画面和控件会一起旋转到横向。点击「全屏」可在浏览器支持时收起地址栏并锁定横屏。水族箱在触屏设备上也可点击「全屏」切到横向布局。
 
 「背景」页可以切换六套预设，或选择本机的 JPG、PNG、WebP 图片。「灯光」页可以调节水族箱的灯光和反射。按 D、B 或 L 可以直接打开对应页面。
 
-在「背景」里选「透明」，可以在透明底上显示当前选中的鱼和造景。点击「打开龙鱼透明播放页」可进入 `aquarium.html#overlay`，单独叠加龙鱼，保留鳍和轮廓的透明度。
+在「背景」里选「透明」，可以在透明底上显示当前选中的鱼和造景。点击「打开龙鱼透明播放页」可进入[透明播放页](https://bestyize.github.io/RealWorldBuilder/aquarium.html#overlay)，单独叠加龙鱼，保留鳍和轮廓的透明度。
 
 把播放页用作 OBS 浏览器源时，可在仓库目录运行 `python3 -m http.server 8000 --bind 127.0.0.1`，再填入 `http://127.0.0.1:8000/aquarium.html#overlay`。嵌入网页时，把 iframe 放到画面图层上方。
 
@@ -53,7 +53,7 @@ https://github.com/user-attachments/assets/458e246b-0db0-42d4-ad5e-4866ff1ede2e
 
 预设以山水客厅为初始背景。自定义图按原比例居中裁切成 16∶9，画面最长边保留至 2560 像素。浏览器允许本地存储时，同一地址重新打开会恢复所选背景和最近一张自定义图。
 
-每个鱼种在各自目录维护 Blender 工程、GLB 和游动代码。可以分别打开[蓝色龙鱼](fish/arowana/preview.html)、[朱红龙鱼](fish/vermilion-arowana/preview.html)、[单条蓝扇尾孔雀鱼](fish/blue-guppy/preview.html)和[六条孔雀鱼群](fish/blue-guppy/school-preview.html)的独立预览。[碎花垂耳兔](objects/plush-rabbit/preview.html)可以拖动旋转和缩放。
+每个鱼种在各自目录维护 Blender 工程、GLB 和游动代码。可以分别打开[蓝色龙鱼](https://bestyize.github.io/RealWorldBuilder/fish/arowana/preview.html)、[朱红龙鱼](https://bestyize.github.io/RealWorldBuilder/fish/vermilion-arowana/preview.html)、[单条蓝扇尾孔雀鱼](https://bestyize.github.io/RealWorldBuilder/fish/blue-guppy/preview.html)和[六条孔雀鱼群](https://bestyize.github.io/RealWorldBuilder/fish/blue-guppy/school-preview.html)的独立预览。[碎花垂耳兔](https://bestyize.github.io/RealWorldBuilder/objects/plush-rabbit/preview.html)可以拖动旋转和缩放。
 
 展厅使用 `index.html`、`src/gallery.css` 和 `assets/gallery/` 中的素材。修改预览源码或模型后，用 Node.js 20.9 或更新版本运行 `npm ci` 和 `npm run build`。构建会将模型贴图和预设背景转换为 WebP，并内嵌到可离线打开的 HTML 中。PNG 贴图使用无损编码并保留透明度，JPEG 背景和底色贴图使用高质量编码。Blender 工程及原始素材仍是编辑和导出的来源。
 

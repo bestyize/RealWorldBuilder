@@ -3,7 +3,8 @@
 <!-- ASSET-PACK START -->
 ## 独立资产包
 
-- [透明离线预览](asset-preview.html)：直接用 Chrome、Edge 或支持 WebGL 2 的 Safari 打开。默认折叠，画面右侧中部按钮展开管理面板。拖动旋转、滚轮或双指缩放；`#overlay` 隐藏面板按钮。
+- [透明在线预览](https://bestyize.github.io/RealWorldBuilder/fish/vermilion-arowana/asset-preview.html)：直接用 Chrome、Edge 或支持 WebGL 2 的 Safari 打开。默认折叠，画面右侧中部按钮展开管理面板。拖动旋转、滚轮或双指缩放；`#overlay` 隐藏面板按钮。
+- [离线 HTML 文件](asset-preview.html)：在 GitHub 点击「Download raw file」，保存后用浏览器打开。
 - [Blender 工程](vermilion-arowana.blend)：编辑源模型。贴图由项目文件管理。
 - [游戏模型 GLB](vermilion-arowana.glb)：正式导入用此文件，模型与贴图在 GLB 内，不需要将预览 HTML 导进游戏。GLB +Y 向上，Blender +Z 向上；鱼头约定 +X。
 - [模型预览图](images/cover.webp)：实际模型渲染，非生成概念。
@@ -18,7 +19,7 @@ GLB 有骨骼和烘焙动作。独立预览使用原项目游动路线。
 
 [侧视建模参考](concept.png)是带 Alpha 的 1983 × 793 PNG。[俯视与正面补图](form-study.png)用来估算横截面和成对鳍的角度。照片只展示一侧，另一侧和真实厚度按相对比例推定。Blender 模型以 +X 为头部方向、+Z 向上，GLB 以 +Y 向上。
 
-- [独立游动预览](preview.html)内嵌模型和渲染代码，可以离线打开。约 29 秒游完一圈，支持暂停、拖动进度、旋转和缩放。在[水族箱](../../aquarium.html)里使用 90% 的模型比例，32 秒一圈。直游时躯干接近水平，掉头时鱼头先入弯，躯干和尾鳍依次跟进。
+- [独立游动预览](https://bestyize.github.io/RealWorldBuilder/fish/vermilion-arowana/preview.html)内嵌模型和渲染代码，可以离线打开。约 29 秒游完一圈，支持暂停、拖动进度、旋转和缩放。在[水族箱](https://bestyize.github.io/RealWorldBuilder/aquarium.html)里使用 90% 的模型比例，32 秒一圈。直游时躯干接近水平，掉头时鱼头先入弯，躯干和尾鳍依次跟进。
 - [Blender 工程](vermilion-arowana.blend)和[带贴图的 GLB](vermilion-arowana.glb)包含 12 个网格、11 根骨骼和一个原地摆尾循环。鱼身的底色、法线和粗糙度与鳍膜的纹理分开烘焙，方便继续调整鳞面质感。
 - [原照与新版实时对照](side-comparison.webp)和[当前预览截图](preview-still.png)可用来核对配色和亮度。鱼身按原照的背线、腹线和鳃盖位置烘焙。中间调和柔和的鳞面反光让暗处的鳞纹更清楚。鳍膜在鳍条之间略微透光，尾鳍保留原照的红橙色。独立预览和 Blender 均用宽范围补光照亮鱼体侧面。
 - [背鳍与鳞片近景对照](detail-comparison.webp)使用相同的视角、灯光和动作时刻。背鳍根部的颜色与透明度沿鱼背渐变。鱼身底色和法线使用 4096 × 2048 贴图，从原照提取细薄的鳞缘，鳞面保持平滑的色调。

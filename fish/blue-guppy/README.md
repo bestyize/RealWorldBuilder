@@ -3,7 +3,8 @@
 <!-- ASSET-PACK START -->
 ## 独立资产包
 
-- [透明离线预览](asset-preview.html)：直接用 Chrome、Edge 或支持 WebGL 2 的 Safari 打开。默认折叠，画面右侧中部按钮展开管理面板。拖动旋转、滚轮或双指缩放；`#overlay` 隐藏面板按钮。
+- [透明在线预览](https://bestyize.github.io/RealWorldBuilder/fish/blue-guppy/asset-preview.html)：直接用 Chrome、Edge 或支持 WebGL 2 的 Safari 打开。默认折叠，画面右侧中部按钮展开管理面板。拖动旋转、滚轮或双指缩放；`#overlay` 隐藏面板按钮。
+- [离线 HTML 文件](asset-preview.html)：在 GitHub 点击「Download raw file」，保存后用浏览器打开。
 - [Blender 工程](blue-guppy.blend)：编辑源模型。贴图由项目文件管理。
 - [游戏模型 GLB](blue-guppy.glb)：正式导入用此文件，模型与贴图在 GLB 内，不需要将预览 HTML 导进游戏。GLB +Y 向上，Blender +Z 向上；鱼头约定 +X。
 - [模型预览图](images/cover.webp)：实际模型渲染，非生成概念。
@@ -16,7 +17,7 @@ GLB 有骨骼，无烘焙泳姿。单条与六鱼群复用同一份模型，鱼�
 
 以用户提供的蓝色扇尾孔雀鱼侧视图为形态和配色参考，保留青蓝细鳞、银亮的眼圈、透蓝的放射状鳍条和深靛色尾缘。用户只提供了一个角度，因此背腹横截面和另一侧的鳞片排布按侧视轮廓推定。左右保留独立的眼球与胸鳍。
 
-[独立游动预览](preview.html)支持暂停和拖动进度。[Blender 源文件](blue-guppy.blend)和[游戏模型](blue-guppy.glb)都内嵌了贴图。鱼头朝 +X，Blender 中 +Z 向上，GLB 中 +Y 向上。中立姿态下吻端至尾柄约 1.7 模型单位，整鱼约 3.04 单位。放入水族箱时由场景确定比例和游动路线。
+[独立游动预览](https://bestyize.github.io/RealWorldBuilder/fish/blue-guppy/preview.html)支持暂停和拖动进度。[Blender 源文件](blue-guppy.blend)和[游戏模型](blue-guppy.glb)都内嵌了贴图。鱼头朝 +X，Blender 中 +Z 向上，GLB 中 +Y 向上。中立姿态下吻端至尾柄约 1.7 模型单位，整鱼约 3.04 单位。放入水族箱时由场景确定比例和游动路线。
 
 ## 贴图
 
@@ -46,11 +47,11 @@ npm run build
 
 GLB 包含 24,424 个三角面、10 根骨骼（8 根体轴骨和 2 根胸鳍骨）和 19 张内嵌贴图，通过 glTF Validator 校验（0 错误、0 警告）。本轮重绑保留原网格与贴图。在桌面 Chromium 检查独立预览与鱼群的离线播放、暂停、拖动和循环接缝。
 
-鱼体几何和贴图可共享，每条孔雀鱼的尾鳍表面独立更新。[水族箱](../../aquarium.html)复用同一鱼群，在龙鱼路线下方安排游动空间。单鱼和鱼群仍可各自预览。
+鱼体几何和贴图可共享，每条孔雀鱼的尾鳍表面独立更新。[水族箱](https://bestyize.github.io/RealWorldBuilder/aquarium.html)复用同一鱼群，在龙鱼路线下方安排游动空间。单鱼和鱼群仍可各自预览。
 
 ## 鱼群预览
 
-[打开六条孔雀鱼](school-preview.html)。鱼群中有蓝扇尾、红尾、黄黑豹纹和银白四种花色。它们共用 GLB 和贴图，转向、摆尾和推进时机各自独立。鱼群的引导路线提供大致方向，邻鱼影响转向与间距。每条鱼沿途的加速来自自己的拨水力度。约 43 秒的循环保留模拟轨迹，支持暂停和拖动查看交会与转弯。[孔雀鱼群游中距离与朝向的研究](https://pmc.ncbi.nlm.nih.gov/articles/PMC11110457/)
+[打开六条孔雀鱼](https://bestyize.github.io/RealWorldBuilder/fish/blue-guppy/school-preview.html)。鱼群中有蓝扇尾、红尾、黄黑豹纹和银白四种花色。它们共用 GLB 和贴图，转向、摆尾和推进时机各自独立。鱼群的引导路线提供大致方向，邻鱼影响转向与间距。每条鱼沿途的加速来自自己的拨水力度。约 43 秒的循环保留模拟轨迹，支持暂停和拖动查看交会与转弯。[孔雀鱼群游中距离与朝向的研究](https://pmc.ncbi.nlm.nih.gov/articles/PMC11110457/)
 
 ## 游动与鳍膜
 
