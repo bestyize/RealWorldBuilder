@@ -1,0 +1,48 @@
+{
+  "blend_reopened": true,
+  "images_packed": true,
+  "source_mesh_count": 8,
+  "glb_reimported": true,
+  "glb_mesh_count": 8,
+  "glb_triangles": 54366,
+  "finite_vertices": true,
+  "bounds_blender_after_import": [
+    [
+      -0.049447234719991684,
+      -0.04320614039897919,
+      0.0002239160385215655
+    ],
+    [
+      0.04613042622804642,
+      0.047556620091199875,
+      0.14450088143348694
+    ]
+  ],
+  "variant_nodes": [],
+  "glb_bytes": 3946060,
+  "blend_bytes": 3194085,
+  "cover_mode": "RGBA",
+  "cover_alpha_extrema": [
+    0,
+    255
+  ],
+  "cover_bbox": [
+    213,
+    104,
+    767,
+    996
+  ],
+  "all_game_textures_embedded": true,
+  "material_double_sided": true,
+  "visual_review": [
+    "reference-facing cover",
+    "side",
+    "rear",
+    "top",
+    "re-imported GLB render"
+  ],
+  "notes": [
+    "Plant remains an original interpretation of approved generated concept, not photographic reconstruction.",
+    "All stem / petiole joins overlap at shared botanical nodes."
+  ]
+}

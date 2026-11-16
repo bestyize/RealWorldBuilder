@@ -1,0 +1,41 @@
+{
+  "species": "field-poppy",
+  "dimensions_m": [
+    0.17270484566688538,
+    0.1384517401456833,
+    0.4981641471385956
+  ],
+  "origin": "ground centre, Blender Z up, glTF Y up",
+  "vertices": 45570,
+  "triangles": 81708,
+  "mesh_objects": 11,
+  "source_seed": 7031,
+  "reimport_dimensions_m": [
+    0.17270483821630478,
+    0.1384517438709736,
+    0.4981641471385956
+  ],
+  "reimport_meshes": 11,
+  "reimport_materials": 8,
+  "reimport_dimension_max_error_m": 7.450580596923828e-09,
+  "cover_alpha_extrema": [
+    0,
+    255
+  ],
+  "cover_alpha_nonzero_bbox": [
+    267,
+    113,
+    500,
+    767
+  ],
+  "blend_bytes": 1639607,
+  "glb_bytes": 2127992,
+  "reopened_blend_dimensions_m": [
+    0.17270483821630478,
+    0.1384517438709736,
+    0.4981641471385956
+  ],
+  "blend_missing_external_images": [],
+  "reopened_blend_dimension_error_m": 7.450580596923828e-09,
+  "root_z_min_m": 0.0
+}

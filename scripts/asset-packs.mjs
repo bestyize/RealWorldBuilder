@@ -1,3 +1,5 @@
+import { meadowAssets } from './meadow-assets.mjs';
+
 // Single catalogue. Source originals retain their established paths.
 const fish=(id,name,adapter,notes)=>({id,name,adapter,category:'鱼类',dir:`fish/${id}`,blend:`${id}.blend`,model:`${id}.glb`,preview:'asset-preview.html',notes});
 const scene=(id,name,notes,extra={})=>({id,name,category:'造景',dir:`scenes/riverbank/${id}`,blend:'model.blend',model:'model.glb',preview:'preview.html',notes,...extra});
@@ -16,4 +18,5 @@ export const assets=[
  scene('java-fern','卷窄叶水草','静态。独立叶片为实网格，叶脉贴图已内嵌；此为原河岸分件。'),
  scene('tape-grass','细长带叶水草','静态。独立叶片为实网格，叶脉贴图已内嵌；此为原河岸分件。'),
  scene('broadleaf-anubias','宽叶水草','静态。包含修整后的叶面和叶茎接点。GLB 保持不透明。'),
+ ...meadowAssets,
 ];

@@ -1,0 +1,48 @@
+{
+  "asset": "fine-fescue",
+  "dimensions_m": [
+    0.3862535357475281,
+    0.41512060165405273,
+    0.4410194456577301
+  ],
+  "bounds_min": [
+    -0.19034017622470856,
+    -0.17792285978794098,
+    0.0
+  ],
+  "bounds_max": [
+    0.1959133744239807,
+    0.23719774186611176,
+    0.4410194456577301
+  ],
+  "triangles": 23420,
+  "mesh_objects": 9,
+  "materials": 7,
+  "source_verified": true,
+  "blend_reopened": true,
+  "imported_mesh_objects": 9,
+  "imported_triangles": 23420,
+  "reimport_dimensions_m": [
+    0.38625355064868927,
+    0.41512060165405273,
+    0.4410194456577301
+  ],
+  "glb_visual_reimport_checked": true,
+  "cover_alpha_range": [
+    0,
+    255
+  ],
+  "cover_alpha_bbox": [
+    110,
+    97,
+    877,
+    917
+  ],
+  "glb_bytes": 662956,
+  "blend_bytes": 399482,
+  "lod": {
+    "triangles": 6390,
+    "purpose": "Optional distance mesh; primary model remains full detail",
+    "decimation_ratio": 0.27
+  }
+}

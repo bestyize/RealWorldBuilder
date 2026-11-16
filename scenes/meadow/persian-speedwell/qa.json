@@ -1,0 +1,41 @@
+{
+  "species": "persian-speedwell",
+  "dimensions_m": [
+    0.12725591659545898,
+    0.0785038024187088,
+    0.0955759584903717
+  ],
+  "origin": "ground centre, Blender Z up, glTF Y up",
+  "vertices": 10692,
+  "triangles": 18924,
+  "mesh_objects": 9,
+  "source_seed": 7031,
+  "reimport_dimensions_m": [
+    0.12725592404603958,
+    0.0785037986934185,
+    0.0955759584903717
+  ],
+  "reimport_meshes": 9,
+  "reimport_materials": 7,
+  "reimport_dimension_max_error_m": 7.450580596923828e-09,
+  "cover_alpha_extrema": [
+    0,
+    255
+  ],
+  "cover_alpha_nonzero_bbox": [
+    93,
+    236,
+    674,
+    664
+  ],
+  "blend_bytes": 634721,
+  "glb_bytes": 573392,
+  "reopened_blend_dimensions_m": [
+    0.12725592404603958,
+    0.0785037986934185,
+    0.0955759584903717
+  ],
+  "blend_missing_external_images": [],
+  "reopened_blend_dimension_error_m": 7.450580596923828e-09,
+  "root_z_min_m": 0.0
+}

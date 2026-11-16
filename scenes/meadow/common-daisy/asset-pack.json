@@ -1,0 +1,16 @@
+{
+  "id": "common-daisy",
+  "name": "雏菊",
+  "category": "陆地",
+  "group": "草地花",
+  "files": {
+    "preview": "preview.html",
+    "blender": "model.blend",
+    "game": "model.glb",
+    "cover": "images/cover.webp",
+    "readme": "README.md"
+  },
+  "gameNotes": "小花盘、短花梗与根生叶丛，适合放在较矮草地。",
+  "previewBytes": 5506893,
+  "embeddedGlbBytes": 3324600
+}

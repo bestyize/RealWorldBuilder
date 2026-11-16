@@ -1,0 +1,16 @@
+{
+  "id": "bermuda-grass",
+  "name": "狗牙根",
+  "category": "陆地",
+  "group": "草类",
+  "files": {
+    "preview": "preview.html",
+    "blender": "model.blend",
+    "game": "model.glb",
+    "cover": "images/cover.webp",
+    "readme": "README.md"
+  },
+  "gameNotes": "匍匐茎与细叶组成低矮底层草片。适合旋转、疏密变化后重复铺设。",
+  "previewBytes": 3111253,
+  "embeddedGlbBytes": 1527856
+}

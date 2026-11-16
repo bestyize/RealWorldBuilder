@@ -1,0 +1,16 @@
+{
+  "id": "citrus-swallowtail",
+  "name": "柑橘凤蝶",
+  "category": "陆地",
+  "group": "昆虫",
+  "files": {
+    "preview": "preview.html",
+    "blender": "model.blend",
+    "game": "model.glb",
+    "cover": "images/cover.webp",
+    "readme": "README.md"
+  },
+  "gameNotes": "单独建模的前后翅、触角与身体。GLB 保留可重用的翅动；单体预览慢放，方便近看翅根。",
+  "previewBytes": 4049302,
+  "embeddedGlbBytes": 2231360
+}

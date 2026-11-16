@@ -9,6 +9,7 @@
 | 类别 | 独立目录 |
 |---|---|
 | 鱼 | `fish/arowana`、`fish/vermilion-arowana`、`fish/blue-guppy`、`fish/kohaku-koi`、`fish/silver-angelfish`、`fish/cardinal-tetra`、`fish/sterbai-cory` |
+| 陆地 | `scenes/meadow/<asset-id>/`，含三种草、五种小花、栎树及凤蝶 |
 | 静物 | `objects/plush-rabbit` |
 | 造景 | `scenes/riverbank/{sand-bed,river-pebbles,driftwood,java-fern,tape-grass,broadleaf-anubias}` |
 

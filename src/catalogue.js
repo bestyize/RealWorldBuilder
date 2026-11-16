@@ -7,7 +7,8 @@
   const clear=document.getElementById('search-clear');
   const normalize=text=>text.normalize('NFKC').toLowerCase().replace(/[\s_-]+/g,'');
   const matchers=cards.map(card=>normalize(card.dataset.search));
-  let category='all';
+  const linkedCategory=new URLSearchParams(location.search).get('category');
+  let category=filters.some(b=>b.dataset.filter===linkedCategory)?linkedCategory:'all';
   function update(){
     const query=normalize(search.value), active=category!=='all'||!!query;
     let shown=0;

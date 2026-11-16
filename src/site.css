@@ -58,7 +58,7 @@ button,input{font:inherit;color:inherit}
 .footer{display:flex;justify-content:space-between;gap:20px;align-items:center;border-top:1px solid var(--line);font-size:13px;color:var(--sub);padding-block:20px 26px}
 .catalogue-head{padding:37px 0 28px;border-top:1px solid var(--line)}
 .catalogue-title{font-size:clamp(43px,7vw,76px);line-height:1.1;letter-spacing:-.065em;margin:7px 0 9px}
-.catalogue-head p:last-child{margin:0;color:var(--sub);max-width:46em}
+.catalogue-head p:not(.eyebrow){margin:0;color:var(--sub);max-width:46em}
 .tools{display:flex;justify-content:space-between;align-items:center;gap:10px 20px;padding:13px 0;border-block:1px solid var(--line)}
 .filters{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
 .filters button,.count-reset,.search-clear{min-height:40px;border:1px solid var(--line);background:transparent;border-radius:6px;cursor:pointer;padding:5px 10px;font-size:13px}
@@ -105,3 +105,14 @@ button,input{font:inherit;color:inherit}
 }
 @media(max-width:359px){.masthead{align-items:flex-start;flex-direction:column}.hero h1{font-size:48px}.section-head{align-items:flex-start;flex-direction:column}.filters button{padding-inline:7px}}
 @media(prefers-reduced-motion:reduce){.plate img{transition:none}}
+
+.land-plate{background:radial-gradient(ellipse at 45% 43%,#f2efdd,#dadfc8)}
+.meadow-library-link{display:inline-block;margin-top:10px}
+
+.meadow-entry{display:grid;grid-template-columns:minmax(260px,.72fr) minmax(0,1.28fr);margin-top:31px;border:1px solid var(--line);border-radius:11px;overflow:hidden;background:#e9eadf;align-items:stretch}
+.meadow-entry-copy{padding:32px clamp(21px,4vw,54px);align-self:center}
+.meadow-entry h2{font:650 clamp(30px,4vw,50px)/1.18 var(--serif);letter-spacing:-.055em;margin:7px 0 9px}
+.meadow-entry-copy p:not(.eyebrow){margin:0 0 13px;color:var(--sub);max-width:23em}
+.meadow-entry-art{display:block;background:#b8c29b;min-height:230px}
+.meadow-entry-art img{display:block;width:100%;height:100%;object-fit:cover;max-height:350px}
+@media(max-width:620px){.meadow-entry{grid-template-columns:1fr;margin-top:19px}.meadow-entry-copy{padding:19px}.meadow-entry-art{min-height:168px}.meadow-entry-art img{max-height:244px}}

@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "build": "node build.mjs",
-    "build:assets": "node scripts/build-asset-packs.mjs --index"
+    "build:assets": "node scripts/build-asset-packs.mjs --index",
+    "build:meadow": "node scripts/build-meadow.mjs"
   },
   "dependencies": {
     "three": "0.187.0"

@@ -1,0 +1,16 @@
+{
+  "id": "green-foxtail",
+  "name": "狗尾草",
+  "category": "陆地",
+  "group": "草类",
+  "files": {
+    "preview": "preview.html",
+    "blender": "model.blend",
+    "game": "model.glb",
+    "cover": "images/cover.webp",
+    "readme": "README.md"
+  },
+  "gameNotes": "细秆托起有芒刺的圆柱形穗，适合零星放在草丛边缘。",
+  "previewBytes": 1959965,
+  "embeddedGlbBytes": 664392
+}

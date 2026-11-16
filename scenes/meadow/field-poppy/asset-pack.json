@@ -1,0 +1,16 @@
+{
+  "id": "field-poppy",
+  "name": "虞美人",
+  "category": "陆地",
+  "group": "草地花",
+  "files": {
+    "preview": "preview.html",
+    "blender": "model.blend",
+    "game": "model.glb",
+    "cover": "images/cover.webp",
+    "readme": "README.md"
+  },
+  "gameNotes": "纤细花梗、下垂花苞与起伏的薄红花瓣。草甸里只少量成簇使用。",
+  "previewBytes": 3805899,
+  "embeddedGlbBytes": 2048844
+}

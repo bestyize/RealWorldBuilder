@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f2e8">
+  <meta name="description" content="用可独立复用的 3D 草木、小花和凤蝶搭成一片开阔的草甸。">
+  <title>疏花草甸 · RealWorldBuilder</title>
+  <link rel="stylesheet" href="./src/site.css">
+  <link rel="stylesheet" href="./src/meadow/meadow.css">
+  <script defer src="./scenes/meadow/viewer.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">跳到内容</a>
+  <header class="masthead shell">
+    <a class="brand" href="./index.html" aria-label="RealWorldBuilder 展厅首页"><span class="brand-mark" aria-hidden="true"></span>RealWorldBuilder</a>
+    <nav aria-label="主导航"><a href="./index.html">展厅</a><a href="./asset-packs.html">资产库</a><a href="./aquarium.html">水族箱</a></nav>
+  </header>
+  <main class="shell" id="main">
+    <section class="meadow-head">
+      <p class="eyebrow">REALWORLDBUILDER / LIVE 3D</p>
+      <h1 class="catalogue-title">疏花草甸</h1>
+      <p>矮草铺底，路边留几簇小花。换到近景，可以看花、草叶和掠过的凤蝶。</p>
+    </section>
+    <div class="meadow-frame">
+      <div id="meadow-stage"></div>
+      <p id="meadow-status" role="status">正在加载三维草甸…</p>
+      <div id="meadow-controls" aria-label="草甸视角与播放" hidden>
+        <button type="button" data-meadow-view="overview" aria-pressed="true">草甸全景</button>
+        <button type="button" data-meadow-view="detail" aria-pressed="false">近看小花</button>
+        <button type="button" id="meadow-motion" aria-pressed="true">暂停凤蝶</button>
+      </div>
+    </div>
+    <p class="meadow-hint">拖动旋转，滚轮或双指缩放。<a class="text-link" href="./asset-packs.html?category=land">查看并下载独立资产 <span class="diagonal-arrow" aria-hidden="true"></span></a></p>
+  </main>
+  <footer class="footer shell"><span>RealWorldBuilder <span aria-hidden="true">·</span> 疏花草甸</span><a href="https://github.com/bestyize/RealWorldBuilder">GitHub <span class="diagonal-arrow" aria-hidden="true"></span></a></footer>
+</body>
+</html>

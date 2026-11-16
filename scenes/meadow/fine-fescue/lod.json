@@ -1,0 +1,5 @@
+{
+  "triangles": 6390,
+  "purpose": "Optional distance mesh; primary model remains full detail",
+  "decimation_ratio": 0.27
+}

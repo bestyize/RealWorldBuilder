@@ -1,0 +1,48 @@
+{
+  "asset": "green-foxtail",
+  "dimensions_m": [
+    0.309152215719223,
+    0.3958396315574646,
+    0.649507462978363
+  ],
+  "bounds_min": [
+    -0.16040873527526855,
+    -0.18717685341835022,
+    0.0
+  ],
+  "bounds_max": [
+    0.14874348044395447,
+    0.20866276323795319,
+    0.649507462978363
+  ],
+  "triangles": 19780,
+  "mesh_objects": 11,
+  "materials": 7,
+  "source_verified": true,
+  "blend_reopened": true,
+  "imported_mesh_objects": 11,
+  "imported_triangles": 19780,
+  "reimport_dimensions_m": [
+    0.309152215719223,
+    0.3958396166563034,
+    0.649507462978363
+  ],
+  "glb_visual_reimport_checked": true,
+  "cover_alpha_range": [
+    0,
+    255
+  ],
+  "cover_alpha_bbox": [
+    319,
+    86,
+    682,
+    911
+  ],
+  "glb_bytes": 664512,
+  "blend_bytes": 419928,
+  "lod": {
+    "triangles": 5423,
+    "purpose": "Optional distance mesh; primary model remains full detail",
+    "decimation_ratio": 0.27
+  }
+}

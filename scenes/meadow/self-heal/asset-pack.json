@@ -1,0 +1,16 @@
+{
+  "id": "self-heal",
+  "name": "夏枯草",
+  "category": "陆地",
+  "group": "草地花",
+  "files": {
+    "preview": "preview.html",
+    "blender": "model.blend",
+    "game": "model.glb",
+    "cover": "images/cover.webp",
+    "readme": "README.md"
+  },
+  "gameNotes": "短花穗上的紫色小花和层叠苞片，用于近处的局部色点。",
+  "previewBytes": 4404633,
+  "embeddedGlbBytes": 2497896
+}

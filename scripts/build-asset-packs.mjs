@@ -32,8 +32,8 @@ async function render(a){
   if(!await check(origin))throw new Error(`${a.id}: missing ${a.model}`);
   if(!await check(resolve(path,a.blend)))throw new Error(`${a.id}: missing ${a.blend}`);
   const adapter=a.adapter??'staticAdapter';
-  const moduleName=adapter==='staticAdapter'?'static-adapter':adapter==='rabbitAdapter'?'rabbit-adapter':'fish-adapters';
-  const runtime={id:a.id,name:a.name,variants:a.variants,modeLabel:a.modeLabel,backgrounds};
+  const moduleName=adapter==='staticAdapter'?'static-adapter':adapter==='rabbitAdapter'?'rabbit-adapter':adapter==='terrestrialAdapter'?'terrestrial-adapter':'fish-adapters';
+  const runtime={id:a.id,name:a.name,variants:a.variants,modeLabel:a.modeLabel??(a.id==='white-clover'?'叶形':a.id==='citrus-swallowtail'?'角度':undefined),backgrounds};
   const entry=`import {openAsset} from "./src/asset-pack/viewer.js"; import {${adapter}} from "./src/asset-pack/${moduleName}.js"; openAsset(${JSON.stringify(runtime)},${adapter});`;
   const [asset,code]=await Promise.all([
     webpModel(pathToFileURL(origin)),
@@ -63,19 +63,19 @@ ${a.notes}
   const legacy=keep?keep.split('\n'):[`# ${a.name}`];
   legacy.splice(1,0,'',entryDocs,'');
   await writeFile(filename,legacy.join('\n').replace(/\s+$/,'')+'\n');
-  const info={id:a.id,name:a.name,category:a.category,files:{preview:a.preview,blender:a.blend,game:a.model,cover:'images/cover.webp',readme:'README.md'},gameNotes:a.notes,previewBytes:Buffer.byteLength(html),embeddedGlbBytes:asset.length};
+  const info={id:a.id,name:a.name,category:a.category,...(a.group?{group:a.group}:{}),files:{preview:a.preview,blender:a.blend,game:a.model,cover:'images/cover.webp',readme:'README.md'},gameNotes:a.notes,previewBytes:Buffer.byteLength(html),embeddedGlbBytes:asset.length};
   await writeFile(resolve(path,'asset-pack.json'),JSON.stringify(info,null,2)+'\n');
   console.log(a.id,html.length,`${a.dir}/${a.preview}`);
 }
 async function catalogue(){
-  const classes={'鱼类':'fish','造景':'scene','静物':'object'};
-  const categories=['鱼类','造景','静物'];
+  const classes={'鱼类':'fish','造景':'scene','静物':'object','陆地':'land'};
+  const categories=['鱼类','造景','静物','陆地'];
   const cards=await Promise.all(assets.map(async(a,i)=>{
     const cover=`${a.dir}/images/cover.webp`, preview=`${a.dir}/${a.preview}`;
     if(!await check(file(preview)))throw new Error('Build missing asset before making catalogue: '+a.id);
     if(!await check(file(cover)))throw new Error('Missing catalogue cover: '+a.id);
-    const n=String(i+1).padStart(2,'0'), label=esc(a.name), cat=esc(a.category);
-    return `<article class="card" data-category="${classes[a.category]}" data-search="${esc([a.name,a.id,a.category].join(' '))}">
+    const n=String(i+1).padStart(2,'0'), label=esc(a.name), cat=esc(a.group??a.category);
+    return `<article class="card" data-category="${classes[a.category]}" data-search="${esc([a.name,a.id,a.category,a.group,a.aliases].filter(Boolean).join(' '))}">
         <a class="plate ${classes[a.category]}-plate" href="${preview}" aria-label="打开${label} 3D 预览">
           <img src="${cover}" alt="" loading="lazy" decoding="async"><span class="plate-index">${n} / ${cat}</span><span class="plate-arrow" aria-hidden="true"></span>
         </a>

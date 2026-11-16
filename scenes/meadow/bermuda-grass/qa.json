@@ -1,0 +1,48 @@
+{
+  "asset": "bermuda-grass",
+  "dimensions_m": [
+    0.5729158520698547,
+    0.5231025218963623,
+    0.08010789752006531
+  ],
+  "bounds_min": [
+    -0.2979488968849182,
+    -0.2660287618637085,
+    0.0
+  ],
+  "bounds_max": [
+    0.2749669551849365,
+    0.2570737302303314,
+    0.08010789752006531
+  ],
+  "triangles": 53776,
+  "mesh_objects": 9,
+  "materials": 7,
+  "source_verified": true,
+  "blend_reopened": true,
+  "imported_mesh_objects": 9,
+  "imported_triangles": 53776,
+  "reimport_dimensions_m": [
+    0.5729158520698547,
+    0.5231024920940399,
+    0.08010789752006531
+  ],
+  "glb_visual_reimport_checked": true,
+  "cover_alpha_range": [
+    0,
+    255
+  ],
+  "cover_alpha_bbox": [
+    105,
+    367,
+    915,
+    659
+  ],
+  "glb_bytes": 1527936,
+  "blend_bytes": 799304,
+  "lod": {
+    "triangles": 14511,
+    "purpose": "Optional distance mesh; primary model remains full detail",
+    "decimation_ratio": 0.27
+  }
+}

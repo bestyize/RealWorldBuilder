@@ -6,3 +6,6 @@
 /fish/*/asset-preview.html linguist-generated=true -diff whitespace=-blank-at-eol,-space-before-tab
 /objects/*/asset-preview.html linguist-generated=true -diff whitespace=-blank-at-eol,-space-before-tab
 /scenes/riverbank/*/preview.html linguist-generated=true -diff whitespace=-blank-at-eol,-space-before-tab
+
+/scenes/meadow/*/preview.html linguist-generated=true -diff whitespace=-blank-at-eol,-space-before-tab
+/scenes/meadow/viewer.js linguist-generated=true -diff whitespace=-blank-at-eol,-space-before-tab

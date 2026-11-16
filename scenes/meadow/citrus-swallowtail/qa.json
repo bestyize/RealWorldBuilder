@@ -1,0 +1,34 @@
+{
+  "source": "approved generated dual-view concept; not a real photograph",
+  "span_m": 0.08,
+  "meshes": 50,
+  "vertices": 17149,
+  "triangles": 32602,
+  "animation": "FlightLoop",
+  "duration_seconds": 0.2,
+  "fps": 120,
+  "frames": [
+    1,
+    25
+  ],
+  "wings": [
+    "ForeWing_L",
+    "HindWing_L",
+    "ForeWing_R",
+    "HindWing_R"
+  ],
+  "origin": "thorax",
+  "axes": "Blender Z up, head +Y; glTF Y up",
+  "inferred": "underside pattern/relief, leg articulation and physical scale",
+  "actual_span_m": 0.07918700576,
+  "export_clip_time_range": [
+    0,
+    0.2
+  ],
+  "endpoint_quaternion_check": "passed",
+  "cover_alpha_range": [
+    0,
+    255
+  ],
+  "model_glb_sha256": "a5ec63bce7f8f646fb89bb80938e65b59d6997857a268c4353f555006afa68b5"
+}

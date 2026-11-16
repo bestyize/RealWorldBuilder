@@ -1,0 +1,33 @@
+{
+  "species": "common-daisy",
+  "dimensions_m": [
+    0.0955776609480381,
+    0.09076276049017906,
+    0.14427696539496537
+  ],
+  "bounds_blender": [
+    [
+      -0.049447234719991684,
+      -0.04320614039897919,
+      0.0002239160385215655
+    ],
+    [
+      0.04613042622804642,
+      0.047556620091199875,
+      0.14450088143348694
+    ]
+  ],
+  "triangles": 54366,
+  "vertices": 38487,
+  "objects": [
+    "Basal spoon-leaf rosette",
+    "Leafless flower scapes",
+    "Flower receptacles",
+    "Green involucre",
+    "White ray florets",
+    "Pink backed young rays",
+    "Golden tubular disc florets",
+    "Sparse scape pubescence"
+  ],
+  "materials": 9
+}

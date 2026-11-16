@@ -1,0 +1,16 @@
+{
+  "id": "white-clover",
+  "name": "白车轴草",
+  "category": "陆地",
+  "group": "草地花",
+  "files": {
+    "preview": "preview.html",
+    "blender": "model.blend",
+    "game": "model.glb",
+    "cover": "images/cover.webp",
+    "readme": "README.md"
+  },
+  "gameNotes": "低矮白色花团。管理面板可对比普通三出叶和四叶变体；场景里四叶不是默认状态。",
+  "previewBytes": 8629456,
+  "embeddedGlbBytes": 5666480
+}

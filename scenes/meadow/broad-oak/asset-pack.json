@@ -1,0 +1,16 @@
+{
+  "id": "broad-oak",
+  "name": "宽冠栎树",
+  "category": "陆地",
+  "group": "树木",
+  "files": {
+    "preview": "preview.html",
+    "blender": "model.blend",
+    "game": "model.glb",
+    "cover": "images/cover.webp",
+    "readme": "README.md"
+  },
+  "gameNotes": "低处分叉、展开的主枝和疏密相间的树冠，是草甸中远处的构图锚点。",
+  "previewBytes": 9073560,
+  "embeddedGlbBytes": 5999580
+}

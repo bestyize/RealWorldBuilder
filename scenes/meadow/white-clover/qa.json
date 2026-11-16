@@ -1,0 +1,35 @@
+{
+  "species": "white-clover",
+  "dimensions_m": [
+    0.20353525131940842,
+    0.10919377952814102,
+    0.14257110888138413
+  ],
+  "bounds_blender": [
+    [
+      -0.0960073173046112,
+      -0.05959983915090561,
+      0.0004660314880311489
+    ],
+    [
+      0.10752793401479721,
+      0.04959394037723541,
+      0.14303714036941528
+    ]
+  ],
+  "triangles": 147248,
+  "vertices": 94038,
+  "objects": [
+    "Creeping stolon",
+    "Leaf petioles",
+    "Papery stipules",
+    "Trifoliate foliage",
+    "CloverLeafThree",
+    "CloverLeafFour",
+    "Flower peduncles",
+    "Flower receptacles",
+    "White pea-shaped florets",
+    "Green calyx"
+  ],
+  "materials": 9
+}

@@ -1,0 +1,16 @@
+{
+  "id": "persian-speedwell",
+  "name": "阿拉伯婆婆纳",
+  "category": "陆地",
+  "group": "草地花",
+  "files": {
+    "preview": "preview.html",
+    "blender": "model.blend",
+    "game": "model.glb",
+    "cover": "images/cover.webp",
+    "readme": "README.md"
+  },
+  "gameNotes": "贴地细枝和带细纹的小蓝花，用作路边的低矮点缀。",
+  "previewBytes": 1763706,
+  "embeddedGlbBytes": 517160
+}

@@ -1,0 +1,16 @@
+{
+  "id": "fine-fescue",
+  "name": "细叶羊茅",
+  "category": "陆地",
+  "group": "草类",
+  "files": {
+    "preview": "preview.html",
+    "blender": "model.blend",
+    "game": "model.glb",
+    "cover": "images/cover.webp",
+    "readme": "README.md"
+  },
+  "gameNotes": "细长弧形叶成丛，用于草毯与高草之间。",
+  "previewBytes": 1957914,
+  "embeddedGlbBytes": 662844
+}

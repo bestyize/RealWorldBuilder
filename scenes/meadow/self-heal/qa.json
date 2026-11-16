@@ -1,0 +1,41 @@
+{
+  "species": "self-heal",
+  "dimensions_m": [
+    0.15124687552452087,
+    0.1149657666683197,
+    0.23597835004329681
+  ],
+  "origin": "ground centre, Blender Z up, glTF Y up",
+  "vertices": 56307,
+  "triangles": 99954,
+  "mesh_objects": 8,
+  "source_seed": 7031,
+  "reimport_dimensions_m": [
+    0.15124686807394028,
+    0.11496577039361,
+    0.23597835004329681
+  ],
+  "reimport_meshes": 8,
+  "reimport_materials": 6,
+  "reimport_dimension_max_error_m": 7.450580596923828e-09,
+  "cover_alpha_extrema": [
+    0,
+    255
+  ],
+  "cover_alpha_nonzero_bbox": [
+    170,
+    117,
+    599,
+    773
+  ],
+  "blend_bytes": 1889345,
+  "glb_bytes": 2597228,
+  "reopened_blend_dimensions_m": [
+    0.15124686807394028,
+    0.11496577039361,
+    0.23597835004329681
+  ],
+  "blend_missing_external_images": [],
+  "reopened_blend_dimension_error_m": 7.450580596923828e-09,
+  "root_z_min_m": 0.0
+}
