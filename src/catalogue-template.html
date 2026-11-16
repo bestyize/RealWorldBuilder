@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f2e8">
+  <meta name="description" content="按分类查找 RealWorldBuilder 的独立 3D 资产。打开在线预览，或查看 Blender、游戏 GLB 和离线 HTML。">
+  <title>独立 3D 资产库 · RealWorldBuilder</title>
+  <link rel="stylesheet" href="./src/site.css">
+  <script defer src="./src/catalogue.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">跳到内容</a>
+  <header class="masthead shell">
+    <a class="brand" href="./index.html" aria-label="RealWorldBuilder 展厅首页"><span class="brand-mark" aria-hidden="true"></span>RealWorldBuilder</a>
+    <nav aria-label="主导航"><a href="./index.html">展厅</a><a href="./asset-packs.html" aria-current="page">资产库</a><a href="./aquarium.html">水族箱</a></nav>
+  </header>
+  <main class="shell" id="main">
+    <section class="catalogue-head" aria-labelledby="catalogue-title">
+      <p class="eyebrow">THE COLLECTION</p>
+      <h1 class="catalogue-title" id="catalogue-title">独立 3D 资产库</h1>
+      <p>鱼类、造景与静物。打开 3D 预览直接看模型；到资产说明获取 Blender、GLB 或离线 HTML。</p>
+    </section>
+    <div class="tools" id="catalogue-tools" hidden>
+      <div class="filters" role="group" aria-label="资产分类">
+        %%FILTERS%%
+      </div>
+      <div class="search" role="search">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><path d="m13 13 4 4" stroke-linecap="round"/></svg>
+        <input id="asset-query" type="search" placeholder="搜模型，如「锦鲤」" aria-label="搜索资产" autocomplete="off">
+        <button class="search-clear" id="search-clear" type="button" aria-label="清除搜索" hidden>×</button>
+      </div>
+    </div>
+    <p class="results" id="result-count" aria-live="polite" aria-atomic="true">共 %%COUNT%% 件资产</p>
+    <div class="empty" id="empty-results" hidden>
+      <h2>没有找到匹配的资产</h2>
+      <p>试试其他关键词，或返回全部资产。</p>
+      <button class="count-reset" id="reset-filters" type="button">查看全部资产</button>
+    </div>
+    <section class="cards catalogue-grid" id="asset-grid" aria-label="模型列表">
+      %%CARDS%%
+    </section>
+  </main>
+  <footer class="footer shell"><span>RealWorldBuilder <span aria-hidden="true">·</span> 独立 3D 资产</span><a href="%%DOCS%%README.md#目录导航">GitHub 目录 <span class="diagonal-arrow" aria-hidden="true"></span></a></footer>
+</body>
+</html>

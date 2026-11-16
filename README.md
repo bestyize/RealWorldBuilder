@@ -2,7 +2,7 @@
 
 ## 目录导航
 
-[主水族箱](https://bestyize.github.io/RealWorldBuilder/aquarium.html) · [原展厅](https://bestyize.github.io/RealWorldBuilder/index.html) · [图文资产总览](https://bestyize.github.io/RealWorldBuilder/asset-packs.html) · [资产包格式与重建](docs/asset-packs.md) · [背景素材](#背景素材)
+[主水族箱](https://bestyize.github.io/RealWorldBuilder/aquarium.html) · [在线展厅](https://bestyize.github.io/RealWorldBuilder/index.html) · [图文资产总览](https://bestyize.github.io/RealWorldBuilder/asset-packs.html) · [资产包格式与重建](docs/asset-packs.md) · [背景素材](#背景素材)
 
 | 分类 | 资产包说明 | Pages 在线预览 |
 |---|---|---|
@@ -35,7 +35,7 @@ https://github.com/user-attachments/assets/458e246b-0db0-42d4-ad5e-4866ff1ede2e
 
 可以在线浏览[展厅](https://bestyize.github.io/RealWorldBuilder/index.html)或打开[主水族箱](https://bestyize.github.io/RealWorldBuilder/aquarium.html)。也可以下载仓库中的 `aquarium.html` 离线观赏。首次打开水族箱或从展厅进入时，默认在「山水客厅」中单独展示朱红龙鱼，并开启砂石水草。直接打开水族箱会恢复这个浏览器已保存的选择。点击右上角「设置」可切换单条龙鱼、单条孔雀鱼、孔雀鱼群或同缸，也可以独立开关砂石水草造景。在「同缸」或「单条龙鱼」模式下，可以通过「龙鱼品种」切换蓝色龙鱼和朱红龙鱼。
 
-「鱼类观察」的三个预览打开即铺满视窗。用鼠标或手指拖动画面可旋转视角，点击「重置视角」可回到正面。手机竖持时，画面和控件会一起旋转到横向。点击「全屏」可在浏览器支持时收起地址栏并锁定横屏。水族箱在触屏设备上也可点击「全屏」切到横向布局。
+经典鱼类预览打开即铺满视窗。用鼠标或手指拖动画面可旋转视角，点击「重置视角」可回到正面。手机竖持时，画面和控件会一起旋转到横向。点击「全屏」可在浏览器支持时收起地址栏并锁定横屏。水族箱在触屏设备上也可点击「全屏」切到横向布局。
 
 「背景」页可以切换六套预设，或选择本机的 JPG、PNG、WebP 图片。「灯光」页可以调节水族箱的灯光和反射。按 D、B 或 L 可以直接打开对应页面。
 
@@ -55,7 +55,7 @@ https://github.com/user-attachments/assets/458e246b-0db0-42d4-ad5e-4866ff1ede2e
 
 每个鱼种在各自目录维护 Blender 工程、GLB 和游动代码。可以分别打开[蓝色龙鱼](https://bestyize.github.io/RealWorldBuilder/fish/arowana/preview.html)、[朱红龙鱼](https://bestyize.github.io/RealWorldBuilder/fish/vermilion-arowana/preview.html)、[单条蓝扇尾孔雀鱼](https://bestyize.github.io/RealWorldBuilder/fish/blue-guppy/preview.html)和[六条孔雀鱼群](https://bestyize.github.io/RealWorldBuilder/fish/blue-guppy/school-preview.html)的独立预览。[碎花垂耳兔](https://bestyize.github.io/RealWorldBuilder/objects/plush-rabbit/preview.html)可以拖动旋转和缩放。
 
-展厅使用 `index.html`、`src/gallery.css` 和 `assets/gallery/` 中的素材。修改预览源码或模型后，用 Node.js 20.9 或更新版本运行 `npm ci` 和 `npm run build`。构建会将模型贴图和预设背景转换为 WebP，并内嵌到可离线打开的 HTML 中。PNG 贴图使用无损编码并保留透明度，JPEG 背景和底色贴图使用高质量编码。Blender 工程及原始素材仍是编辑和导出的来源。
+展厅与资产库使用 `index.html`、`asset-packs.html`、`src/site.css` 和各资产包的封面。修改预览源码或模型后，用 Node.js 20.9 或更新版本运行 `npm ci` 和 `npm run build`。构建会将模型贴图和预设背景转换为 WebP，并内嵌到可离线打开的 HTML 中。PNG 贴图使用无损编码并保留透明度，JPEG 背景和底色贴图使用高质量编码。Blender 工程及原始素材仍是编辑和导出的来源。
 
 ## 背景素材
 

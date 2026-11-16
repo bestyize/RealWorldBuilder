@@ -1,6 +1,6 @@
 # 独立 3D 资产包
 
-[打开独立资产目录](https://bestyize.github.io/RealWorldBuilder/asset-packs.html)。这里另开入口，不改现有展厅和主鱼缸。
+[打开独立资产目录](https://bestyize.github.io/RealWorldBuilder/asset-packs.html)。可以按类别或名称查找资产。展厅也有入口，主水族箱与各独立预览互不影响。
 
 每个包只维护自己的 Blender、游戏 GLB、实际模型渲染封面、说明与可离线打开的纯模型 HTML。现有鱼与兔子的原文件名、原展厅入口不改名；独立预览使用新增的 `asset-preview.html`。新造景部件使用 `model.blend`、`model.glb` 和 `preview.html`。
 

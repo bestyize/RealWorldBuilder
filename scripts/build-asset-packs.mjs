@@ -68,16 +68,24 @@ ${a.notes}
   console.log(a.id,html.length,`${a.dir}/${a.preview}`);
 }
 async function catalogue(){
-  const cards=await Promise.all(assets.map(async a=>{
-    const art=await check(file(`${a.dir}/images/cover.webp`))?`<img src="${a.dir}/images/cover.webp" alt="" loading="lazy">`:'';
-    const exists=await check(file(`${a.dir}/${a.preview}`));
-    if(!exists)throw new Error('Build missing asset before making catalogue: '+a.id);
-    return `<article>${art}<div><small>${a.category}</small><h2>${esc(a.name)}</h2><a href="${a.dir}/${a.preview}">独立预览</a><a href="${repoDocs}${a.dir}/README.md">资产说明</a></div></article>`;
+  const classes={'鱼类':'fish','造景':'scene','静物':'object'};
+  const categories=['鱼类','造景','静物'];
+  const cards=await Promise.all(assets.map(async(a,i)=>{
+    const cover=`${a.dir}/images/cover.webp`, preview=`${a.dir}/${a.preview}`;
+    if(!await check(file(preview)))throw new Error('Build missing asset before making catalogue: '+a.id);
+    if(!await check(file(cover)))throw new Error('Missing catalogue cover: '+a.id);
+    const n=String(i+1).padStart(2,'0'), label=esc(a.name), cat=esc(a.category);
+    return `<article class="card" data-category="${classes[a.category]}" data-search="${esc([a.name,a.id,a.category].join(' '))}">
+        <a class="plate ${classes[a.category]}-plate" href="${preview}" aria-label="打开${label} 3D 预览">
+          <img src="${cover}" alt="" loading="lazy" decoding="async"><span class="plate-index">${n} / ${cat}</span><span class="plate-arrow" aria-hidden="true"></span>
+        </a>
+        <div class="card-info"><h3>${label}</h3><div class="card-links"><a href="${preview}" aria-label="${label} 3D 预览">3D 预览</a><a href="${repoDocs}${a.dir}/README.md" aria-label="${label} 资产说明">资产说明</a></div></div>
+      </article>`;
   }));
-  await writeFile(file('asset-packs.html'),`<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RealWorldBuilder 资产包</title><style>
-*{box-sizing:border-box}body{margin:auto;max-width:1160px;padding:24px 20px;color:#252921;background:#f3efe5;font:15px/1.55 system-ui,-apple-system,"PingFang SC",sans-serif}
-h1{font:600 clamp(31px,5vw,54px)/1.18 "Songti SC",Georgia,serif;margin:6px 0 13px}p{color:#4c5448;margin:0 0 23px}main{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:13px}article{min-height:115px;background:#fffbf1;border:1px solid #cbc7b7;border-radius:10px;overflow:hidden}article div{padding:12px}img{aspect-ratio:1.65;width:100%;object-fit:contain;background:#e6e4d8;display:block}small{color:#626a59}h2{font-size:17px;margin:1px 0 7px}a{color:#314739;margin-right:15px}
-</style></head><body><div><a href="index.html">返回微观展厅</a><a href="aquarium.html">打开主水族箱</a><a href="${repoDocs}README.md#目录导航">GitHub 目录</a></div><h1>独立 3D 资产包</h1><p>各包只加载自己的模型，不会把其他资产塞进同一个 HTML。</p><main>${cards.join('\n')}</main></body></html>\n`);
+  const filter=(key,label,n)=>`<button type="button" data-filter="${key}" aria-pressed="${key==='all'}">${label} <span>${n}</span></button>`;
+  const filters=[filter('all','全部',assets.length),...categories.map(cat=>filter(classes[cat],cat,assets.filter(asset=>asset.category===cat).length))];
+  const html=await readFile(file('src/catalogue-template.html'),'utf8');
+  await writeFile(file('asset-packs.html'),html.replace('%%FILTERS%%',()=>filters.join('\n        ')).replace('%%COUNT%%',String(assets.length)).replace('%%CARDS%%',()=>cards.join('\n      ')).replace('%%DOCS%%',repoDocs));
 }
 if(!args.includes('--index-only')){
   // Two workers limit peak memory with large source Blender-derived textures.

@@ -1,0 +1,107 @@
+@font-face{font-family:Instrument;src:url("../assets/gallery/instrument-serif.woff2") format("woff2");font-display:swap}
+:root{color-scheme:light;--paper:#f5f2e8;--ink:#242a23;--sub:#515a4b;--line:#d9d8c8;--green:#345444;--serif:"Songti SC","Noto Serif CJK SC","STSong","SimSun",Georgia,serif}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-padding-top:24px}
+body{margin:0;color:var(--ink);background:var(--paper);font:15px/1.6 system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+a{color:inherit;text-decoration:none}
+a:hover{text-decoration:underline;text-underline-offset:4px}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid #92602d;outline-offset:4px}
+.skip{position:absolute;top:10px;left:10px;transform:translateY(-150%);z-index:5;background:#fff;padding:10px 14px}.skip:focus{transform:none}
+.shell{width:min(1240px,calc(100% - 88px));margin-inline:auto}
+.masthead{height:85px;display:flex;align-items:center;justify-content:space-between;gap:18px}
+.brand{display:inline-flex;align-items:center;gap:10px;font:400 32px/1 Instrument,Georgia,serif;white-space:nowrap}
+.brand-mark{width:22px;height:22px;flex:none;border:1px solid #537563;border-radius:50%;display:grid;place-items:center;transform:rotate(-36deg)}
+.brand-mark:before{content:"";width:10px;height:15px;border:1px solid #537563;border-radius:75% 0 75% 0}
+.masthead nav{display:flex;gap:28px;align-items:center;font-size:14px;white-space:nowrap}
+.masthead nav a{display:inline-flex;min-height:44px;align-items:center;padding:7px 0;border-bottom:2px solid transparent}
+.masthead nav a[aria-current]{border-bottom-color:var(--green);font-weight:650}
+.eyebrow{margin:0;font-size:11px;font-weight:650;letter-spacing:.17em;color:var(--sub)}
+.hero{min-height:505px;position:relative;isolation:isolate;display:grid;align-items:center;overflow:hidden;border-radius:15px;background:#192520;color:#fff9e8}
+.hero-scene{position:absolute;inset:0;z-index:-2;background:linear-gradient(90deg,#16231f 0%,#16231f 13%,#172620f5 29%,#17262042 68%,#18231e25 100%),url("../assets/blackwater.jpg") center 58% / cover no-repeat}
+.hero-fish{position:absolute;right:2.5%;top:49%;width:min(66%,790px);height:83%;transform:translateY(-50%);object-fit:contain;z-index:-1;filter:drop-shadow(0 13px 14px #09110e95)}
+.hero-copy{padding:48px 0 58px 6.3%;max-width:495px}
+.hero .eyebrow{color:#dad6b9}
+.hero h1,.section-head h2,.catalogue-title,.card-info h3{font-family:var(--serif);font-weight:650}
+.hero h1{font-size:clamp(54px,6.3vw,90px);line-height:1.07;letter-spacing:-.075em;margin:20px 0}
+.hero-description{max-width:305px;margin:0;color:#e5dfc9;font-size:15px;line-height:1.85}
+.actions{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-top:27px}
+.button{display:inline-flex;align-items:center;gap:16px;min-height:43px;justify-content:center;padding:8px 15px;border:1px solid transparent;border-radius:6px;font-size:14px;font-weight:650;line-height:1.35}
+.button-paper{background:#f0e9d5;color:#202f25}
+.button-paper:hover{background:#fff8e7;text-decoration:none}
+.hero-link{font-size:14px;white-space:nowrap}
+.hero-caption{position:absolute;right:24px;bottom:12px;color:#dedaca;background:#141b17b8;border-radius:4px;padding:4px 8px;font-size:11px;margin:0}
+.hero-caption span{letter-spacing:.12em;margin-right:5px;color:#d7b87e}
+.featured{margin:54px 0 62px}
+.section-head{display:flex;justify-content:space-between;gap:16px;align-items:end;margin-bottom:20px}
+.section-head h2{font-size:clamp(27px,3vw,39px);line-height:1.27;margin:5px 0 0;letter-spacing:-.045em}
+.text-link{flex:none;color:var(--green);font-size:14px;font-weight:650}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.card{min-width:0;border:1px solid var(--line);border-radius:11px;overflow:hidden;background:#fbfaf4}
+.plate{position:relative;display:grid;place-items:center;aspect-ratio:1.75;isolation:isolate;overflow:hidden}
+.plate:focus-visible{outline-offset:-4px}
+.fish-plate{background:radial-gradient(ellipse at 45% 43%,#f2ebdb,#ddd9c7)}
+.scene-plate{background:radial-gradient(ellipse at 48% 44%,#e8ecdf,#cfd8c8)}
+.object-plate{background:radial-gradient(ellipse at 50% 46%,#faedda,#e9d9c7)}
+.plate img{position:absolute;inset:7% 8%;width:84%;height:86%;object-fit:contain;transition:transform .22s ease}
+.plate:hover img{transform:scale(1.045)}
+.plate-index,.plate-arrow{position:absolute;z-index:1;color:#334637}
+.plate-index{top:12px;left:12px;font-size:11px;font-weight:650}
+.plate-arrow{right:12px;bottom:12px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:#fffdf2d9;border:1px solid #acae9b;font-size:15px}
+
+.diagonal-arrow,.plate-arrow::before{display:inline-block;width:.88em;height:.88em;vertical-align:-.03em;background:currentColor;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 12.5l9-9m-6 0h6v6' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat}
+.plate-arrow::before{content:""}
+.card-info{padding:14px 16px 16px}
+.card-info h3{margin:0;font-size:24px;line-height:1.4;letter-spacing:-.035em}
+.card-info p{color:var(--sub);font-size:13px;margin:3px 0 0}
+.footer{display:flex;justify-content:space-between;gap:20px;align-items:center;border-top:1px solid var(--line);font-size:13px;color:var(--sub);padding-block:20px 26px}
+.catalogue-head{padding:37px 0 28px;border-top:1px solid var(--line)}
+.catalogue-title{font-size:clamp(43px,7vw,76px);line-height:1.1;letter-spacing:-.065em;margin:7px 0 9px}
+.catalogue-head p:last-child{margin:0;color:var(--sub);max-width:46em}
+.tools{display:flex;justify-content:space-between;align-items:center;gap:10px 20px;padding:13px 0;border-block:1px solid var(--line)}
+.filters{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.filters button,.count-reset,.search-clear{min-height:40px;border:1px solid var(--line);background:transparent;border-radius:6px;cursor:pointer;padding:5px 10px;font-size:13px}
+.filters button[aria-pressed=true]{background:#2d493b;border-color:#2d493b;color:#fffaf0}
+.filters button:not([aria-pressed=true]):hover,.search-clear:hover,.count-reset:hover{background:#eae8db}
+.filters span{margin-left:4px;font-size:11px}
+.search{display:flex;align-items:center;gap:8px;background:#fbfaf4;border:1px solid #b8bba9;border-radius:6px;padding:0 8px 0 11px;min-width:220px;flex:0 1 290px}
+.search:focus-within{outline:2px solid #92602d;outline-offset:2px}
+.search svg{width:16px;height:16px;flex:none;color:#526251}
+.search input{border:0;min-width:0;flex:1;background:none;padding-block:9px;outline:none;font-size:16px}
+.search input::placeholder{color:#62695d;font-size:13px}.search input::-webkit-search-cancel-button{display:none}
+.search-clear{min-height:30px;border-color:transparent;padding:0 6px}
+.results{font-size:13px;color:var(--sub);margin:12px 0}
+.catalogue-grid{margin-bottom:55px}
+.catalogue-grid .card-info{display:flex;align-items:end;justify-content:space-between;gap:6px 12px;flex-wrap:wrap}
+.card-links{display:flex;align-items:center;gap:12px;font-size:13px;color:var(--green);padding-block:3px}
+.card-links a:first-child{font-weight:650}
+.empty{border:1px dashed #a9ad98;border-radius:8px;padding:32px 15px;text-align:center;margin:0 0 44px;color:var(--sub)}
+.empty h2{font-size:21px;color:var(--ink);margin:0}.empty p{margin:5px 0 10px}
+@media(max-width:1040px) and (min-width:621px){.hero-fish{width:54%;right:2%}.hero-description{max-width:245px}}
+@media(max-width:900px){
+ .shell{width:calc(100% - 54px)}
+ .hero{min-height:415px}.hero-copy{padding-left:5%;max-width:345px}.hero h1{font-size:clamp(51px,7.6vw,70px)}
+ .cards{gap:13px}.catalogue-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:620px){
+ .shell{width:calc(100% - 32px)}
+ .masthead{height:auto;min-height:68px;gap:6px;flex-wrap:wrap;padding-block:12px}
+ .brand{font-size:27px;gap:7px}.brand-mark{height:18px;width:18px}.brand-mark:before{width:8px;height:12px}
+ .masthead nav{gap:13px;font-size:12px}.masthead nav a{padding:6px 0}
+ .hero{display:block;min-height:570px;border-radius:10px}
+ .hero-scene{background:linear-gradient(180deg,#16231f 4%,#16231f 38%,#172620d9 52%,#1a221d22 82%),url("../assets/blackwater.jpg") 62% 100% / auto 65% no-repeat}
+ .hero-copy{padding:35px 19px 0}.hero h1{font-size:56px;margin:15px 0}.hero-description{font-size:14px}
+ .hero-fish{width:100%;height:49%;right:0;top:auto;bottom:1px;transform:none}
+ .hero-caption{right:12px;bottom:9px}.actions{margin-top:18px;gap:12px}
+ .featured{margin:34px 0 40px}.section-head{gap:8px}.section-head h2{font-size:24px}.text-link{font-size:12px}
+ .featured-grid{grid-template-columns:1fr}
+ .featured-grid .plate{aspect-ratio:2}
+ .catalogue-head{padding-block:27px 22px}
+ .tools{align-items:stretch;flex-direction:column}.search{flex:auto}
+ .card-info{padding:10px 9px}.card-info h3{font-size:20px}.catalogue-grid{gap:10px;margin-bottom:36px}.catalogue-grid .plate{aspect-ratio:1.5}
+ .plate-index{left:7px;top:6px;font-size:10px}.plate-arrow{right:6px;bottom:6px;width:23px;height:23px;font-size:12px}
+ .catalogue-grid .card-links{font-size:12px;gap:8px}
+}
+@media(max-width:359px){.masthead{align-items:flex-start;flex-direction:column}.hero h1{font-size:48px}.section-head{align-items:flex-start;flex-direction:column}.filters button{padding-inline:7px}}
+@media(prefers-reduced-motion:reduce){.plate img{transition:none}}
