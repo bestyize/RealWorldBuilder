@@ -79,3 +79,27 @@ test('swim drive alternates effort and glide while advancing monotonically', () 
   assert.ok(Math.min(...speeds) > 0);
   assert.ok(Math.max(...speeds) / Math.min(...speeds) > 1.3);
 });
+
+test('the trunk and tail bend inside the turn in either direction', () => {
+  for (const direction of [-1, 1]) {
+    const circle = createSwimRoute(Array.from({ length: 16 }, (_, i) => {
+      const angle = i * Math.PI / 8;
+      return [4 * Math.sin(angle), 0, direction * 4 * Math.cos(angle)];
+    }));
+    const geometry = new BufferGeometry();
+    geometry.setAttribute('position', new Float32BufferAttribute([0, 0, 0, -1.2, 0, 0, -3, 0, 0], 3));
+    const { scene } = fixture(geometry);
+    const fish = createSwimmer(scene, circle);
+    const { array } = scene.getObjectByName('KoiBody').geometry.attributes.position;
+
+    let trunk = 0, tail = 0;
+    for (let frame = 0; frame < 64; frame++) {
+      const motion = fish.update(fish.duration * frame / 64);
+      assert.equal(Math.sign(motion.turn), direction);
+      trunk += -direction * (array[5] - array[2]) / 64;
+      tail += -direction * (array[8] - array[2]) / 64;
+    }
+    assert.ok(trunk > .18, 'the trunk flexes with the route');
+    assert.ok(tail > trunk + .42, 'the tail follows through on the inside of the arc');
+  }
+});

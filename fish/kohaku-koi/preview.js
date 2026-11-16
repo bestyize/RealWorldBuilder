@@ -3,14 +3,9 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { startFishPreview } from '../../src/fish-preview.js';
 import { createSwimRoute } from '../swim-route.js';
 import { kohakuKoi } from './index.js';
+import { kohakuCruisePoints } from './route.js';
 
-const route = createSwimRoute([
-  [0, .02, 1.65], [1.56, .02, 1.65], [2.94, .05, 1.40],
-  [3.65, .10, .62], [3.64, .15, -.60], [2.95, .17, -1.40],
-  [1.55, .17, -1.65], [0, .12, -1.65], [-1.56, .09, -1.65],
-  [-2.95, .06, -1.40], [-3.64, .04, -.62], [-3.64, .02, .61],
-  [-2.95, .02, 1.40], [-1.56, .02, 1.65],
-]);
+const route = createSwimRoute(kohakuCruisePoints);
 
 function configureCamera(camera, canvas, fish, render) {
   const controls = new OrbitControls(camera, canvas);
@@ -69,17 +64,16 @@ function configureCamera(camera, canvas, fish, render) {
 }
 
 function configureLighting({ key, rim, fill }, scene) {
-  // One broad upper key and restrained bounce reveal the pearl body's volume.
-  // Unlike the silver arowana, a koi's white skin must not become a light source.
-  key.color.setHex(0xfff1db);
+  // Soft, neutral reflected light keeps the underside readable during a turn.
+  key.color.setHex(0xfff7ee);
   key.position.set(-2.5, 5.8, 3.6);
   key.intensity = 1.6;
-  fill.color.setHex(0xe5e5dc);
-  fill.position.set(2.8, -.3, 4.8);
-  fill.intensity = .20;
+  fill.color.setHex(0xf2f7ff);
+  fill.position.set(2.8, -1.35, 4.8);
+  fill.intensity = .55;
   rim.color.setHex(0xf3ecdf);
-  rim.intensity = .65;
-  scene.environmentIntensity = .48;
+  rim.intensity = .85;
+  scene.environmentIntensity = .72;
 }
 
 startFishPreview(kohakuKoi, route, {

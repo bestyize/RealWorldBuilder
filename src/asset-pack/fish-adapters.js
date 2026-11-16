@@ -12,6 +12,7 @@ import { blueGuppy } from '../../fish/blue-guppy/index.js';
 import { createGuppySchool } from '../../fish/blue-guppy/school.js';
 import { soloGuppyRoute } from '../../fish/blue-guppy/solo-route.js';
 import { kohakuKoi } from '../../fish/kohaku-koi/index.js';
+import { kohakuCruisePoints } from '../../fish/kohaku-koi/route.js';
 import { silverAngelfish } from '../../fish/silver-angelfish/index.js';
 import { cardinalTetra } from '../../fish/cardinal-tetra/index.js';
 import { route as tetraRoute } from '../../fish/cardinal-tetra/route.js';
@@ -54,7 +55,7 @@ export const arowanaAdapter = /* @__PURE__ */ single(arowana, [
  [-2.78,.08,-.52],[-2.94,.04,.20],
 ], camera(9.4, 3, 25), 3.6);
 export const vermilionArowanaAdapter = /* @__PURE__ */ single(vermilionArowana, cruisePoints, camera(5.95, 2.55, 18, -.11));
-export const kohakuKoiAdapter = /* @__PURE__ */ single(kohakuKoi, cruisePoints, camera(14, 8, 28, -.11));
+export const kohakuKoiAdapter = /* @__PURE__ */ single(kohakuKoi, kohakuCruisePoints, camera(20.5, 8, 28, -.11));
 export const silverAngelfishAdapter = /* @__PURE__ */ single(silverAngelfish, [
  [0,0,.65],[1.1,.04,.65],[1.65,.08,.25],[1.55,.12,-.40],[.6,.10,-.65],
  [-.6,.04,-.65],[-1.55,-.03,-.40],[-1.65,-.04,.25],[-1.1,-.02,.65],

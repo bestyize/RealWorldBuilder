@@ -14,9 +14,9 @@ The generated concept cannot provide hidden-side measurements. The far flank and
 
 ## Rebuild
 
-Run `blender -b --python fish/kohaku-koi/build_koi.py` from the repository root. Blender 4.3.2 was used. Optional `KOI_OUT` overrides the asset output directory, which must also contain `concept-side.png`. No add-ons or network service are required.
+Run `blender -b --python fish/kohaku-koi/build_koi.py` from the repository root. The original model used Blender 4.3.2. This material build used Blender 5.3.0. Optional `KOI_OUT` overrides the asset output directory, which must also contain `concept-side.png`. No add-ons or network service are required.
 
-Outputs: editable `kohaku-koi.blend`, `kohaku-koi.glb`, body base-color/normal PNGs, and oblique/side review renders. The GLB embeds all three images; the Blender source packs all textures. `preview-still.png` uses the reviewed oblique render.
+Outputs: editable `kohaku-koi.blend`, `kohaku-koi.glb`, body base-color/normal PNGs, and oblique/side review renders. The GLB embeds the texture maps. The Blender source packs the maps, including the corrected fin color and its original alpha. `preview-still.png` uses the reviewed oblique render.
 
 ## Coordinate and animation contract
 
@@ -69,3 +69,9 @@ The common-carp side photograph by Kaitlin Kovacs / USGS was visually inspected 
 The dorsal fin now has its own OPAQUE material with alpha 1 and transmission 0, retaining its original texture, geometry and UVs. This intentionally prioritizes depth-writing and removal of opposite-flank ghosting over literal edge transparency. Thinness remains texture/lighting detail; no transparent edge band is claimed. Other fin materials, the V5 mouth/eyes, trunk and swim controller are unchanged. Final animated seam/depth behavior is checked separately in Three.js.
 
 V6 final seam correction: the short existing caudal segment (x < -1.70) smoothly shifts U by up to 0.043 at the old posterior ring. The new wedge then decreases U monotonically to zero. This removes the mirrored tangent direction at the former join without changing geometry or texture-image bytes.
+
+## Color and swimming refinement
+
+The body color lifts the shaded ivory independently of the red markings. The fin map preserves its rays and alpha and supplies an ivory edge color at nearly transparent texels. Scale normals and roughness retain the same pixel values.
+
+The preview now uses wider turns. The head looks along the curve ahead, and the spine and tail follow the route at successive points along the body. The inner paired fins adjust during turns. A stronger push leads into a quieter glide. The shape of the bend and the change in effort are based on [recorded turns](https://pubmed.ncbi.nlm.nih.gov/18055627/) and [burst-and-coast observations](https://pubmed.ncbi.nlm.nih.gov/17562892/).

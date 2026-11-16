@@ -28,7 +28,28 @@ skin=sample(px,np.minimum(py,486))[...,:3];rgb=rgb*(1-mask)+skin*mask
 # Conservative albedo: reduce baked key highlights, lift shaded belly slightly.
 lum=rgb@np.array([.2126,.7152,.0722]);rgb*=((.88+.10*side)*(1-.10*np.clip((lum-.75)/.25,0,1)))[...,None]
 rgba=np.concatenate([np.clip(rgb,0,1),np.ones((H,W,1))],-1).astype('float32')
-im=bpy.data.images.new('Kohaku photo-derived pigment',W,H,alpha=True);im.pixels.foreach_set(rgba.ravel());im.filepath_raw=OUT+'/kohaku-basecolor.png';im.file_format='PNG';im.save()
+
+def lift_baked_shadows(color, amount):
+ red, green, blue = np.moveaxis(color, -1, 0)
+ contrast = (red - np.maximum(green, blue)) / np.maximum(.10, red)
+ pigment = np.clip((contrast - .18) / .34, 0, 1)
+ pigment = pigment * pigment * (3 - 2 * pigment)
+ # Brighten ivory independently of the red markings, retaining scale detail.
+ bright_red = color * (1 + .14 * pigment * (1 - color.max(axis=-1)))[..., None]
+ return np.clip(bright_red + (1 - pigment[..., None]) * amount * (1 - color), 0, 1)
+
+albedo = rgba.copy()
+albedo[..., :3] = lift_baked_shadows(rgba[..., :3], .51)
+im=bpy.data.images.new('Kohaku photo-derived pigment',W,H,alpha=True);im.pixels.foreach_set(albedo.ravel());im.filepath_raw=OUT+'/kohaku-basecolor.png';im.file_format='PNG';im.save()
+
+# Keep the fin rays and alpha. Give near-transparent texels an ivory edge
+# color so the opaque dorsal membrane can sample them without a dark border.
+fin_pixels = photo.copy()
+visible = np.clip(photo[..., 3:4] / .24, 0, 1)
+fin_pixels[..., :3] = lift_baked_shadows(photo[..., :3], .38) * visible + np.array([.82, .80, .76]) * (1 - visible)
+fin_image = bpy.data.images.new('Kohaku fin color', pw, ph, alpha=True)
+fin_image.pixels.foreach_set(fin_pixels[::-1].ravel())
+fin_image.pack()
 
 def mat(name,c,rough=.36,metal=0):
  m=bpy.data.materials.new(name);m.diffuse_color=(*c,1);m.use_nodes=True
@@ -72,7 +93,7 @@ rim=bpy.data.images.new('Koi metallic roughness',W,H,alpha=True);rim.colorspace_
 rt=bodymat.node_tree.nodes.new('ShaderNodeTexImage');rt.image=rim;channels=bodymat.node_tree.nodes.new('ShaderNodeSeparateColor');channels.mode='RGB';bodymat.node_tree.links.new(rt.outputs['Color'],channels.inputs['Color']);bodymat.node_tree.links.new(channels.outputs['Green'],p.inputs['Roughness']);bodymat.node_tree.links.new(channels.outputs['Blue'],p.inputs['Metallic'])
 finmat=mat('Photo derived warm fin membrane',(.6,.6,.55),.48,.0)
 p=finmat.node_tree.nodes.get('Principled BSDF');p.inputs['Transmission Weight'].default_value=.10;p.inputs['Alpha'].default_value=.68
-ft=finmat.node_tree.nodes.new('ShaderNodeTexImage');ft.image=source;finmat.node_tree.links.new(ft.outputs['Color'],p.inputs['Base Color']);alpha_node=finmat.node_tree.nodes.new('ShaderNodeMath');alpha_node.operation='MULTIPLY';alpha_node.inputs[1].default_value=.70;finmat.node_tree.links.new(ft.outputs['Alpha'],alpha_node.inputs[0]);finmat.node_tree.links.new(alpha_node.outputs[0],p.inputs['Alpha'])
+ft=finmat.node_tree.nodes.new('ShaderNodeTexImage');ft.image=fin_image;finmat.node_tree.links.new(ft.outputs['Color'],p.inputs['Base Color']);alpha_node=finmat.node_tree.nodes.new('ShaderNodeMath');alpha_node.operation='MULTIPLY';alpha_node.inputs[1].default_value=.70;finmat.node_tree.links.new(ft.outputs['Alpha'],alpha_node.inputs[0]);finmat.node_tree.links.new(alpha_node.outputs[0],p.inputs['Alpha'])
 finmat.surface_render_method='DITHERED';finmat.use_backface_culling=False
 raymat=mat('Fine ivory fin rays',(.53,.52,.44),.48)
 eye=mat('Glossy black pupils',(.008,.011,.012),.10)
@@ -325,7 +346,7 @@ scene=bpy.context.scene;scene.render.engine='CYCLES';scene.cycles.samples=48;sce
 scene.world.color=(.045,.055,.065)
 def area(name,loc,power,size):
  bpy.ops.object.light_add(type='AREA',location=loc);o=bpy.context.object;o.name=name;o.data.energy=power;o.data.shape='DISK';o.data.size=size;o.rotation_euler=((Vector((0,0,0))-o.location).to_track_quat('-Z','Y').to_euler())
-area('Softbox', (1,-4,6),650,5);area('Rim',(-2,3,4),900,4);area('Fill',(3,3,1),150,3)
+area('Softbox', (1,-4,6),650,5);area('Rim',(-2,3,4),900,4);area('Fill',(2,-4,-2),180,5)
 bpy.ops.object.camera_add(location=(3,-8,4.7));cam=bpy.context.object;cam.rotation_euler=((Vector((-.3,0,0))-cam.location).to_track_quat('-Z','Y').to_euler());cam.data.type='ORTHO';cam.data.ortho_scale=6.8;scene.camera=cam
 scene.view_settings.view_transform='AgX';scene.render.image_settings.file_format='PNG';scene.render.filepath=OUT+'/kohaku-review.png';bpy.ops.wm.save_as_mainfile(filepath=OUT+'/kohaku-koi.blend');bpy.ops.render.render(write_still=True)
 scene.render.filepath=OUT+'/kohaku-side.png';cam.location=(0,-9,1.0);cam.rotation_euler=((Vector((-.3,0,0))-cam.location).to_track_quat('-Z','Y').to_euler());bpy.ops.render.render(write_still=True)

@@ -3,9 +3,10 @@ import { MathUtils, Matrix4, Mesh, Quaternion, Vector3 } from 'three';
 const TAU = Math.PI * 2;
 const UP = new Vector3(0, 1, 0);
 const FORWARD = new Vector3(1, 0, 0);
+const TURN_LIMIT = .82;
 
-/** Absolute-time, deterministic carangiform swimming. Every instance owns its geometry. */
-export function createSwimmer(scene, route, { duration = 38, phaseOffset = 0 } = {}) {
+/** Absolute-time swimming. Every instance owns its deformed geometry. */
+export function createSwimmer(scene, route, { duration = 32, phaseOffset = 0 } = {}) {
   if (!(duration > 0) || !Number.isFinite(duration)) throw new Error('Koi duration must be positive');
   scene.updateWorldMatrix(true, true);
   const inverse = scene.matrixWorld.clone().invert();
@@ -20,21 +21,29 @@ export function createSwimmer(scene, route, { duration = 38, phaseOffset = 0 } =
     mesh.name = source.name;
     source.removeFromParent();
     scene.add(mesh);
-    mesh.position.set(0, 0, 0);
-    mesh.quaternion.identity();
-    mesh.scale.set(1, 1, 1);
-    mesh.geometry = geometry;
     mesh.frustumCulled = false;
+    const pectoral = mesh.name.includes('Pectoral');
+    const finRoot = pectoral ? .40 : mesh.name.includes('Pelvic') ? .24 : 0;
+    let side = 0;
+    if (finRoot) {
+      geometry.computeBoundingBox();
+      side = Math.sign(geometry.boundingBox.min.z + geometry.boundingBox.max.z);
+    }
     return {
-      mesh, position: geometry.attributes.position,
+      position: geometry.attributes.position,
       normal: geometry.attributes.normal,
       rest: geometry.attributes.position.array.slice(),
       restNormal: geometry.attributes.normal?.array.slice(),
-      paired: /Pectoral|Pelvic/.test(mesh.name),
-      side: /_L(?:_|$)/.test(mesh.name) ? 1 : -1,
+      finRoot, side, pectoral,
     };
   });
   const tangent = new Vector3();
+  const forward = new Vector3();
+  const lead = new Vector3();
+  const sectionTangent = new Vector3();
+  const previousTangent = new Vector3();
+  const routePoint = new Vector3();
+  const bodyOffset = new Vector3();
   const lateral = new Vector3();
   const up = new Vector3();
   const matrix = new Matrix4();
@@ -42,40 +51,77 @@ export function createSwimmer(scene, route, { duration = 38, phaseOffset = 0 } =
   const motion = { center: new Vector3(), head: new Vector3(), heading: new Vector3(), turn: 0, speed: 0, phase: 0 };
   const start = route.samples[route.startIndex]?.distance ?? 0;
   // An integral beat count closes both route and tail motion at the loop seam.
-  const beats = Math.max(1, Math.round(duration * .83));
+  const beats = Math.max(1, Math.round(duration * .86));
+  const finBeats = Math.max(1, Math.round(duration * 1.12));
+  const bouts = TAU * 4;
+  const speedVariation = .26;
+  const scale = Math.abs(scene.scale.x);
 
-  // Integrating a centerline preserves longitudinal lengths. Cross-sections
-  // rotate with its tangent, so the tail bends rather than sliding sideways.
+  // Integrate a centerline so the spine keeps its length as it bends.
   const sections = 160;
+  const steeringSections = 8;
   const shoulder = 1.3;
   const spineLength = 4.7;
   const step = spineLength / sections;
+  const centerIndex = shoulder / step;
+  const centerFloor = Math.floor(centerIndex);
+  const centerFraction = centerIndex - centerFloor;
   const centerX = new Float64Array(sections + 1);
   const centerZ = new Float64Array(sections + 1);
   const angles = new Float64Array(sections + 1);
+  const steering = new Float64Array(steeringSections + 1);
 
   function update(seconds) {
     const progress = MathUtils.euclideanModulo(seconds / duration + phaseOffset, 1);
-    const bout = TAU * 3 * progress;
-    const routeProgress = progress + .010 * Math.sin(bout);
-    const effort = .5 + .5 * Math.cos(bout);
-    const phase = TAU * beats * progress + .35 * Math.sin(bout);
-    const turn = route.sample(start + route.length * routeProgress, motion.center, tangent);
-    const bend = -.28 * Math.tanh(turn * .8);
-    const amplitude = .18 + .16 * effort ** 2;
+    const bout = bouts * progress;
+    const routeProgress = progress + speedVariation * Math.sin(bout) / bouts;
+    // The push leads the change in speed. Tail strokes quiet down during the glide.
+    const effort = MathUtils.smoothstep(.5 + .5 * Math.cos(bout + .9), .12, .95);
+    const phase = TAU * beats * routeProgress;
+    const finPhase = TAU * finBeats * progress;
+    const distance = start + route.length * routeProgress;
+    const turn = route.sample(distance, motion.center, tangent);
+    route.sample(distance + shoulder * scale, routePoint, lead);
+    forward.copy(tangent).lerp(lead, .42).normalize();
+
+    // Follow the route at successive stations from the shoulder back to the
+    // tail. The front enters an arc first and the rear releases it last.
+    previousTangent.copy(lead);
+    let bend = 0;
+    for (let i = 1; i <= steeringSections; i++) {
+      const station = shoulder - spineLength * i / steeringSections;
+      route.sample(distance + station * scale, routePoint, sectionTangent);
+      bend += Math.atan2(
+        previousTangent.x * sectionTangent.z - previousTangent.z * sectionTangent.x,
+        previousTangent.x * sectionTangent.x + previousTangent.z * sectionTangent.z,
+      );
+      steering[i] = TURN_LIMIT * Math.tanh(bend / TURN_LIMIT);
+      previousTangent.copy(sectionTangent);
+    }
+
+    const steer = steering[steeringSections] / TURN_LIMIT;
+    const amplitude = (.065 + .37 * effort) * (1 - .26 * Math.abs(steer));
     centerX[0] = shoulder;
     centerZ[0] = 0;
     angles[0] = 0;
     for (let i = 1; i <= sections; i++) {
       const t = i / sections;
-      angles[i] = amplitude * t ** 2.2 * Math.sin(phase - 4.1 * t)
-        + bend * t ** 1.8;
+      const station = t * steeringSections;
+      const lo = Math.min(steeringSections - 1, Math.floor(station));
+      const steerAngle = MathUtils.lerp(steering[lo], steering[lo + 1], station - lo);
+      const tailLag = .42 * MathUtils.smoothstep(t, .72, 1);
+      angles[i] = steerAngle + amplitude * t ** 1.85 * Math.sin(phase - 4.25 * t - tailLag);
       const mid = (angles[i] + angles[i - 1]) * .5;
       centerX[i] = centerX[i - 1] - step * Math.cos(mid);
       centerZ[i] = centerZ[i - 1] - step * Math.sin(mid);
     }
     for (const part of parts) {
-      const { position, normal, rest, restNormal, paired, side } = part;
+      const { position, normal, rest, restNormal, finRoot, side, pectoral } = part;
+      const insideTurn = Math.max(0, -side * steer);
+      const finAngle = finRoot ? (pectoral ? 1 : .55) * (
+        .035 + .17 * (1 - .52 * effort) * Math.sin(finPhase + side * .9) + .16 * insideTurn
+      ) : 0;
+      const finSin = Math.sin(finAngle), finCos = Math.cos(finAngle);
       for (let i = 0; i < rest.length; i += 3) {
         const x = rest[i], y = rest[i + 1], z = rest[i + 2];
         const s = MathUtils.clamp((shoulder - x) / step, 0, sections);
@@ -85,18 +131,16 @@ export function createSwimmer(scene, route, { duration = 38, phaseOffset = 0 } =
         const sn = Math.sin(theta), cs = Math.cos(theta);
         const cx = x >= shoulder ? x : MathUtils.lerp(centerX[lo], centerX[lo + 1], f);
         const cz = MathUtils.lerp(centerZ[lo], centerZ[lo + 1], f);
-        // A quiet asymmetric sculling stroke keeps paired fin roots planted.
-        const finAngle = paired ? side * (.035 + .11 * Math.sin(phase + side * .8)) : 0;
-        const finSpan = Math.max(0, Math.abs(z) - .24);
-        const finY = finSpan * Math.sin(finAngle);
-        const localZ = z - Math.sign(z) * finSpan * (1 - Math.cos(finAngle));
+        // Start the fin stroke outside its attachment to the trunk.
+        const finSpan = finRoot ? Math.max(0, side * z - finRoot) : 0;
+        const localZ = z + side * finSpan * (finCos - 1);
         position.array[i] = cx - sn * localZ;
-        position.array[i + 1] = y + finY;
+        position.array[i + 1] = y + finSpan * finSin;
         position.array[i + 2] = cz + cs * localZ;
         if (normal && restNormal) {
           const nx = restNormal[i], ny = restNormal[i + 1], nz = restNormal[i + 2];
-          const fy = paired ? ny * Math.cos(finAngle) + side * nz * Math.sin(finAngle) : ny;
-          const fz = paired ? nz * Math.cos(finAngle) - side * ny * Math.sin(finAngle) : nz;
+          const fy = finSpan ? ny * finCos + side * nz * finSin : ny;
+          const fz = finSpan ? nz * finCos - side * ny * finSin : nz;
           normal.array[i] = cs * nx - sn * fz;
           normal.array[i + 1] = fy;
           normal.array[i + 2] = sn * nx + cs * fz;
@@ -105,15 +149,19 @@ export function createSwimmer(scene, route, { duration = 38, phaseOffset = 0 } =
       position.needsUpdate = true;
       if (normal) normal.needsUpdate = true;
     }
-    lateral.crossVectors(tangent, UP).normalize();
-    up.crossVectors(lateral, tangent).normalize();
-    scene.quaternion.setFromRotationMatrix(matrix.makeBasis(tangent, up, lateral));
-    scene.quaternion.multiply(roll.setFromAxisAngle(FORWARD, -.065 * Math.tanh(turn)));
-    scene.position.copy(motion.center);
+    lateral.crossVectors(forward, UP).normalize();
+    up.crossVectors(lateral, forward).normalize();
+    scene.quaternion.setFromRotationMatrix(matrix.makeBasis(forward, up, lateral));
+    scene.quaternion.multiply(roll.setFromAxisAngle(FORWARD, -.12 * steer + .012 * effort * Math.sin(phase)));
+    bodyOffset.set(
+      MathUtils.lerp(centerX[centerFloor], centerX[centerFloor + 1], centerFraction), 0,
+      MathUtils.lerp(centerZ[centerFloor], centerZ[centerFloor + 1], centerFraction),
+    ).multiply(scene.scale).applyQuaternion(scene.quaternion);
+    scene.position.copy(motion.center).sub(bodyOffset);
     motion.head.set(2.3, 0, 0).multiply(scene.scale).applyQuaternion(scene.quaternion).add(scene.position);
-    motion.heading.copy(tangent);
+    motion.heading.copy(forward);
     motion.turn = turn;
-    motion.speed = route.length / duration * (1 + .030 * TAU * Math.cos(bout));
+    motion.speed = route.length / duration * (1 + speedVariation * Math.cos(bout));
     motion.phase = phase;
     return motion;
   }
