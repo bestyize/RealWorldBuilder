@@ -1,6 +1,6 @@
 {
   "id": "broadleaf-anubias",
-  "name": "宽叶水草 · V4",
+  "name": "宽叶水草",
   "category": "造景",
   "files": {
     "preview": "preview.html",
@@ -9,7 +9,7 @@
     "cover": "images/cover.webp",
     "readme": "README.md"
   },
-  "gameNotes": "静态。独立包仅使用 V4 的叶面和接点修订版；不从旧对照页带进 V3。GLB 保持不透明。",
-  "previewBytes": 2217409,
+  "gameNotes": "静态。包含修整后的叶面和叶茎接点。GLB 保持不透明。",
+  "previewBytes": 2217383,
   "embeddedGlbBytes": 1151844
 }

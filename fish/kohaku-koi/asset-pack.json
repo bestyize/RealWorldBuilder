@@ -1,6 +1,6 @@
 {
   "id": "kohaku-koi",
-  "name": "红白锦鲤 · V6",
+  "name": "红白锦鲤",
   "category": "鱼类",
   "files": {
     "preview": "asset-preview.html",
@@ -9,7 +9,7 @@
     "cover": "images/cover.webp",
     "readme": "README.md"
   },
-  "gameNotes": "GLB 有骨骼，无烘焙泳姿；预览用项目实时游动，保留 V6 尾根和不透明背鳍。",
-  "previewBytes": 8398453,
+  "gameNotes": "GLB 有骨骼，无烘焙泳姿；预览用项目实时游动，使用修整后的尾根和不透明背鳍。",
+  "previewBytes": 8398427,
   "embeddedGlbBytes": 5778292
 }

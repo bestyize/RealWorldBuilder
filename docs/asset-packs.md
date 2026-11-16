@@ -4,6 +4,8 @@
 
 每个包只维护自己的 Blender、游戏 GLB、实际模型渲染封面、说明与可离线打开的纯模型 HTML。现有鱼与兔子的原文件名、原展厅入口不改名；透明模式使用新增的 `asset-preview.html`。新造景部件使用 `model.blend`、`model.glb` 和 `preview.html`。
 
+资产名、目录和正式交付文件不加版本号；迭代记录保留在 Git 历史和历史素材说明中。
+
 | 类别 | 独立目录 |
 |---|---|
 | 鱼 | `fish/arowana`、`fish/vermilion-arowana`、`fish/blue-guppy`、`fish/kohaku-koi`、`fish/silver-angelfish`、`fish/cardinal-tetra`、`fish/sterbai-cory` |

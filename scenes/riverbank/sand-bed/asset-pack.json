@@ -1,6 +1,6 @@
 {
   "id": "sand-bed",
-  "name": "暖米色浅砂床 · V2",
+  "name": "暖米色浅砂床",
   "category": "造景",
   "files": {
     "preview": "preview.html",
@@ -10,6 +10,6 @@
     "readme": "README.md"
   },
   "gameNotes": "静态。砂本身就是有厚度的模型，不是背景；不含草、石、木根。",
-  "previewBytes": 5024910,
+  "previewBytes": 5024884,
   "embeddedGlbBytes": 3257452
 }

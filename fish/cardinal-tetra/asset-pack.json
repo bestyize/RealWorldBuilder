@@ -1,6 +1,6 @@
 {
   "id": "cardinal-tetra",
-  "name": "宝莲灯 · V2",
+  "name": "宝莲灯",
   "category": "鱼类",
   "files": {
     "preview": "asset-preview.html",
@@ -10,6 +10,6 @@
     "readme": "README.md"
   },
   "gameNotes": "GLB 有骨骼，无烘焙泳姿。单条与 10 鱼群共用一个资产；虹彩用 KHR_materials_iridescence，不支持扩展的引擎使用基础材质。",
-  "previewBytes": 1643998,
+  "previewBytes": 1643972,
   "embeddedGlbBytes": 712460
 }
