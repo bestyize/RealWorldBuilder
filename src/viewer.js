@@ -10,6 +10,7 @@ import { cruiseRoute } from './cruise-route.js';
 import { installDisplay } from './display.js';
 import { takeEmbeddedData, takeSpeciesModel } from './embedded-data.js';
 import { createTankEnvironment } from './environment.js';
+import { createFeeding, installFeedingInput } from './feeding.js';
 import { installFullscreen } from './fullscreen.js';
 import { installLighting } from './lighting.js';
 import { installSettings } from './settings.js';
@@ -21,6 +22,7 @@ const controls = document.querySelector('#controls');
 const aquascapeLayer = document.querySelector('#rocky-shallows');
 const playbackButton = document.querySelector('#playback');
 const fullscreenButton = document.querySelector('#fullscreen');
+const feedingHint = document.querySelector('#feeding-hint');
 const overlay = location.hash === '#overlay';
 const scenePresets = new Map([
   ['living-room', { background: 'living-room' }],
@@ -46,6 +48,7 @@ window.aquarium = {
   ready: null,
   seek(seconds) {
     if (!Number.isFinite(seconds)) return;
+    aquarium?.feeding?.reset();
     playhead = seconds;
     clockAnchor = performance.now();
     draw(playhead);
@@ -68,7 +71,11 @@ window.aquarium = {
   },
   setPresentationMode(enabled = true) {
     document.body.dataset.presentation = String(enabled);
-    if (enabled) closeSettings?.();
+    if (enabled) {
+      closeSettings?.();
+      aquarium?.feeding?.reset();
+      if (!playing) draw(playhead);
+    }
   },
   get duration() {
     return aquarium?.residents[0]?.duration;
@@ -146,8 +153,9 @@ async function start() {
     });
     scene.add(object);
   }
+  const feeding = overlay ? null : createFeeding(scene, syncFeedingHint);
   aquarium = {
-    renderer, scene, camera, residents: [],
+    renderer, scene, camera, feeding, residents: [], swimmers: [],
     sceneImageScale: backdropMesh.material.uniforms.sceneImageScale.value,
   };
   const redraw = () => {
@@ -156,6 +164,7 @@ async function start() {
   installLighting(scene, redraw);
 
   function applyDisplay({ fish, aquascape, arowanaSpecies = arowana.id }) {
+    feeding?.clear();
     const mixed = fish === 'mixed';
     const showDragon = mixed || fish === 'arowana';
     for (const [id, dragon] of dragons) dragon.object.visible = showDragon && id === arowanaSpecies;
@@ -176,6 +185,7 @@ async function start() {
     camera.lookAt(0, cameraHeight, 0);
     aquascapeLayer.hidden = !aquascape;
     aquarium.residents = residents.filter(fish => fish.object.visible);
+    aquarium.swimmers = aquarium.residents.flatMap(fish => fish.members ?? fish);
     redraw();
   }
 
@@ -208,6 +218,13 @@ async function start() {
   resize();
   status.hidden = true;
   controls.hidden = overlay;
+  if (feeding) {
+    installFeedingInput(renderer.domElement, camera, point => {
+      if (!playing || suspended || document.body.dataset.presentation === 'true') return;
+      const time = secondsAt(performance.now());
+      if (feeding.drop(point, time, aquarium.swimmers)) draw(time);
+    });
+  }
   installControls();
   showControls();
   queueFrame();
@@ -242,9 +259,10 @@ function resize() {
 
 function draw(time) {
   if (!aquarium) return;
-  const { renderer, scene, camera, residents } = aquarium;
+  const { renderer, scene, camera, residents, swimmers, feeding } = aquarium;
   motionTime.value = time;
-  for (const fish of residents) fish.update(time);
+  for (const fish of swimmers) fish.update(time, feeding?.swimFor(fish, time));
+  feeding?.update(time);
   const fishPosition = residents[0]?.getMotion?.()?.center;
   if (fishPosition) floorLight.value.set(0.5 + fishPosition.x / 8, 0.5 + fishPosition.z / 6);
   else floorLight.value.set(0.5, 0.5);
@@ -264,6 +282,11 @@ function syncPlaybackButton() {
   playbackButton.dataset.paused = String(!playing);
   playbackButton.setAttribute('aria-label', label);
   playbackButton.title = label + '（空格）';
+  syncFeedingHint(aquarium?.feeding?.active);
+}
+
+function syncFeedingHint(active) {
+  feedingHint.textContent = playing ? (active ? '投喂中' : '点按画面投喂') : '播放后可投喂';
 }
 
 function installControls() {

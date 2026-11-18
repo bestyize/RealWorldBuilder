@@ -10,6 +10,6 @@
     "readme": "README.md"
   },
   "gameNotes": "GLB 有骨骼，无烘焙泳姿。单条与六鱼群复用同一份模型，鱼群保留原有花色；实时动作见游动源码。",
-  "previewBytes": 11588742,
+  "previewBytes": 11600883,
   "embeddedGlbBytes": 7887380
 }

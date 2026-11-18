@@ -110,6 +110,14 @@
     }
     .controls button:hover { background: rgba(201, 226, 252, .14); }
     .controls button:focus-visible { outline: 1px solid #bce0ff; outline-offset: -3px; }
+    .feeding-hint {
+      min-width: 7em;
+      padding: 0 10px;
+      color: #dbe8f2;
+      font-size: 12px;
+      text-align: center;
+      white-space: nowrap;
+    }
     .fullscreen-label { display: none; font-size: 13px; white-space: nowrap; }
     .icon { display: block; position: relative; width: 18px; height: 18px; }
     .pause::before, .pause::after {
@@ -493,6 +501,7 @@
         <img class="aquascape-layer" id="rocky-shallows" src="__AQUASCAPE_URL__" alt="" hidden>
         <div class="status" id="status" role="status">正在打开水族箱…</div>
         <div class="controls" id="controls" hidden>
+          <span class="feeding-hint" id="feeding-hint" role="status">点按画面投喂</span>
           <button id="playback" type="button" aria-label="暂停" title="暂停（空格）">
             <span class="icon pause" aria-hidden="true"></span>
           </button>

@@ -7,6 +7,7 @@ import { Group, Vector3 } from 'three';
 import { loadFish } from '../../fish/load-fish.js';
 import { createSwimRoute } from '../../fish/swim-route.js';
 import { arowana } from '../../fish/arowana/index.js';
+import { createArowanaPreviewRoute, createVermilionPreviewRoute } from '../../fish/arowana/cruise-route.js';
 import { vermilionArowana } from '../../fish/vermilion-arowana/index.js';
 import { blueGuppy } from '../../fish/blue-guppy/index.js';
 import { createGuppySchool } from '../../fish/blue-guppy/school.js';
@@ -33,33 +34,22 @@ function modeName(mode) {
   return mode;
 }
 const schoolingModes = [{ id: 'single', label: '单鱼' }, { id: 'school', label: '鱼群' }];
-const cruisePoints = [
-  [0,.02,1.65],[1.56,.02,1.65],[2.94,.05,1.40],[3.65,.10,.62],
-  [3.64,.15,-.60],[2.95,.17,-1.40],[1.55,.17,-1.65],[0,.12,-1.65],
-  [-1.56,.09,-1.65],[-2.95,.06,-1.40],[-3.64,.04,-.62],[-3.64,.02,.61],
-  [-2.95,.02,1.40],[-1.56,.02,1.65],
-];
-function single(species, points, cameraProfile, start = 0) {
+function single(species, createRoute, cameraProfile) {
   return { id: species.id, camera: cameraProfile,
     async create(buffer, options = {}) {
       const factory = await loadFish(species, bytes(buffer));
-      const fish = factory(createSwimRoute(points, start), options.motion ?? {});
+      const fish = factory(createRoute(), options.motion ?? {});
       return { ...fish, update(time) { checkTime(time); return fish.update(time); } };
     },
   };
 }
-export const arowanaAdapter = /* @__PURE__ */ single(arowana, [
- [-2.65,.03,.75],[-1.85,-.03,1.22],[-.6,-.08,1.38],[.7,-.05,1.37],
- [1.9,.01,1.14],[2.73,.05,.60],[2.89,.08,-.14],[2.52,.15,-.83],
- [1.63,.18,-1.14],[.42,.20,-1.25],[-.88,.17,-1.19],[-2.08,.12,-.95],
- [-2.78,.08,-.52],[-2.94,.04,.20],
-], camera(9.4, 3, 25), 3.6);
-export const vermilionArowanaAdapter = /* @__PURE__ */ single(vermilionArowana, cruisePoints, camera(5.95, 2.55, 18, -.11));
-export const kohakuKoiAdapter = /* @__PURE__ */ single(kohakuKoi, kohakuCruisePoints, camera(20.5, 8, 28, -.11));
-export const silverAngelfishAdapter = /* @__PURE__ */ single(silverAngelfish, [
+export const arowanaAdapter = /* @__PURE__ */ single(arowana, createArowanaPreviewRoute, camera(9.4, 3, 25));
+export const vermilionArowanaAdapter = /* @__PURE__ */ single(vermilionArowana, createVermilionPreviewRoute, camera(5.95, 2.55, 18, -.11));
+export const kohakuKoiAdapter = /* @__PURE__ */ single(kohakuKoi, () => createSwimRoute(kohakuCruisePoints), camera(20.5, 8, 28, -.11));
+export const silverAngelfishAdapter = /* @__PURE__ */ single(silverAngelfish, () => createSwimRoute([
  [0,0,.65],[1.1,.04,.65],[1.65,.08,.25],[1.55,.12,-.40],[.6,.10,-.65],
  [-.6,.04,-.65],[-1.55,-.03,-.40],[-1.65,-.04,.25],[-1.1,-.02,.65],
-], camera(17.5, 7.5, 30, -.405));
+]), camera(17.5, 7.5, 30, -.405));
 export const sterbaiCoryAdapter = {
  id: 'sterbai-cory', camera: camera(13.5, 7, 28, .05),
  async create(buffer, options = {}) {

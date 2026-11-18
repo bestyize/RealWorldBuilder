@@ -1,16 +1,10 @@
 import { HemisphereLight, Vector3 } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { startFishPreview } from '../../src/fish-preview.js';
-import { createSwimRoute } from '../swim-route.js';
+import { createVermilionPreviewRoute } from '../arowana/cruise-route.js';
 import { vermilionArowana } from './index.js';
 
-const route = createSwimRoute([
-  [0, .02, 1.65], [1.56, .02, 1.65], [2.94, .05, 1.40],
-  [3.65, .10, .62], [3.64, .15, -.60], [2.95, .17, -1.40],
-  [1.55, .17, -1.65], [0, .12, -1.65], [-1.56, .09, -1.65],
-  [-2.95, .06, -1.40], [-3.64, .04, -.62], [-3.64, .02, .61],
-  [-2.95, .02, 1.40], [-1.56, .02, 1.65],
-]);
+const route = createVermilionPreviewRoute();
 
 function configureCamera(camera, canvas, fish, render) {
   const controls = new OrbitControls(camera, canvas);

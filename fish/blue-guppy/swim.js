@@ -1,4 +1,5 @@
 import { MathUtils, Matrix4, Quaternion, Vector3 } from 'three';
+import { bindSwimMouth } from '../swim-mouth.js';
 import { createCaudalFin } from './caudal-fin.js';
 import { createCruise, createSwimDrive } from './swim-drive.js';
 
@@ -120,17 +121,23 @@ export function createSwimmer(object, route, { phase = 0, drive: groupDrive } = 
   const head = {};
   const delayed = {};
   const travel = {};
-  function poseBody(time) {
+  const mouth = bindSwimMouth(object, joints[0].bone, .807, -.026, joints[0].position);
+  function poseBody(time, swim) {
     drive.sample(time, head);
     pace(time, travel);
-    const s = travel.distance;
-    route.sample(s, anchor, headTangent);
-    route.sample(s + .25 * scale, scratch, turnEntry);
-    route.sample(s - .50 * scale, scratch, turnExit);
+    const strength = swim?.effort ?? 0;
+    const spineFlex = .70 * (swim?.spineFlex ?? 0);
+    head.effort = lerp(head.effort, .95, strength);
+    const s = swim?.distance ?? travel.distance;
+    const sample = swim?.sample ?? route.sample;
+    sample(s, anchor, headTangent);
+    sample(s + .25 * scale, scratch, turnEntry);
+    sample(s - .50 * scale, scratch, turnExit);
     const turn = Math.tanh(1.9 * yawBetween(turnExit, turnEntry));
     headTangent.lerp(turnEntry, .45).normalize();
-    route.sample(s - 1.09 * scale, scratch, trailTangent);
+    sample(s - 1.09 * scale, scratch, trailTangent);
     const arc = 1.22 * Math.tanh((yawBetween(headTangent, trailTangent) - .32 * turn) / 1.13);
+    const tailSteering = .71 * arc + .29 * Math.tanh(yawBetween(headTangent, trailTangent));
     const angle = TAU * wrap(time, duration) / duration;
     const bank = -.097 * turn + .015 * Math.sin(2 * angle + .2);
 
@@ -139,7 +146,7 @@ export function createSwimmer(object, route, { phase = 0, drive: groupDrive } = 
     for (let i = 0; i < stations.length; i++) {
       const u = stations[i] / length;
       drive.sample(time - .085 * u, delayed);
-      const effort = lerp(head.effort, delayed.effort, .68);
+      const effort = lerp(head.effort, lerp(delayed.effort, .95, strength), .68);
       const envelope = (.019 * u + .157 * u ** 2.08) *
         (.17 + 1.03 * effort + .13 * Math.abs(turn));
       const wave = head.phase - 3.78 * u;
@@ -150,10 +157,13 @@ export function createSwimmer(object, route, { phase = 0, drive: groupDrive } = 
       const u = (stations[i] + stations[i + 1]) / (2 * length);
       // Mix the local tangent history with a broad bend over the whole
       // trunk so a tight patch of route cannot kink a single joint.
-      route.sample(s - stations[i] * scale, scratch, forward);
+      sample(s - stations[i] * scale, scratch, forward);
       const trail = .99 * Math.tanh(yawBetween(headTangent, forward) / .99);
       const along = stations[i] / trunkLength;
-      const steering = i === 0 ? .018 * turn : .29 * trail + .71 * arc * along * (.64 + .36 * along);
+      const headSteering = .018 * turn;
+      const routeSteering = i === 0 ? headSteering : .29 * trail + .71 * arc * along * (.64 + .36 * along);
+      const bodySteering = lerp(headSteering, tailSteering, along * (.58 + .42 * along));
+      const steering = lerp(routeSteering, bodySteering, spineFlex);
       const wave = Math.atan2(offsets[i + 1] - offsets[i], stations[i + 1] - stations[i]);
       const yaw = steering + wave * (1 - .28 * Math.abs(turn));
       forward.copy(headTangent).applyAxisAngle(UP, yaw);
@@ -181,7 +191,7 @@ export function createSwimmer(object, route, { phase = 0, drive: groupDrive } = 
     motion.head.copy(anchor);
     motion.center.copy(object.position);
     motion.heading.copy(FORWARD).applyQuaternion(object.quaternion);
-    motion.speed = travel.speed;
+    motion.speed = swim?.speed ?? travel.speed;
     motion.turn = turn;
     motion.phase = head.phase;
     motion.effort = head.effort;
@@ -201,8 +211,8 @@ export function createSwimmer(object, route, { phase = 0, drive: groupDrive } = 
     return finBeats * angle + .46 * Math.sin(3 * angle + .38) + phaseOffset;
   }
 
-  function update(time) {
-    const effort = poseBody(time);
+  function update(time, swim) {
+    const effort = poseBody(time, swim);
     caudalFin(time);
     const { turn } = motion;
     for (const fin of pectorals) {
@@ -230,5 +240,5 @@ export function createSwimmer(object, route, { phase = 0, drive: groupDrive } = 
   }
 
   update(0);
-  return { update, duration, getMotion: () => motion };
+  return { update, duration, getMotion: () => motion, route, sampleCruise: pace, trail: length * scale, ...mouth };
 }

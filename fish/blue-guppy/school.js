@@ -171,5 +171,5 @@ export function createGuppySchool(createFish, group) {
   function update(time) {
     for (const swimmer of fish) swimmer.update(time);
   }
-  return { object: group, duration: DURATION, update };
+  return { object: group, duration: DURATION, update, members: fish };
 }
