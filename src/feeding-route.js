@@ -15,7 +15,7 @@ function turnAngle(from, to, sign) {
 
 // Join two turning circles with a common tangent in the horizontal plane.
 // Every candidate advances along the fish's heading at a bounded turn radius.
-function arcLeg(from, heading, to, tangent, radius, firstTurn, lastTurn, merging) {
+function arcLeg(from, heading, to, tangent, radius, firstTurn, lastTurn, merging, verticalRampScale) {
   const initial = heading.clone().setY(0).normalize();
   const final = tangent.clone().setY(0).normalize();
   const startCenter = from.clone().setY(0).addScaledVector(
@@ -35,7 +35,8 @@ function arcLeg(from, heading, to, tangent, radius, firstTurn, lastTurn, merging
   const length = lineEnd + lastLength;
   const lineStart = startCenter.clone().addScaledVector(new Vector3(-line.z, 0, line.x),
     firstTurn * radius);
-  const ramp = merging ? Math.min(.42 * length, .85 * radius) : Math.min(.25 * length, .52 * radius);
+  const baseRamp = merging ? Math.min(.42 * length, .85 * radius) : Math.min(.25 * length, .52 * radius);
+  const ramp = Math.min(.46 * length, baseRamp * verticalRampScale);
   const rampEnd = length - ramp;
   const startSlope = heading.y / Math.hypot(heading.x, heading.z);
   const endSlope = tangent.y / Math.hypot(tangent.x, tangent.z);
@@ -114,14 +115,14 @@ function outOfBounds({ x, y, z }) {
     + Math.max(0, z - 1.6, -2.25 - z);
 }
 
-function bestLeg(from, heading, to, tangent, radius, budget, { matrix, scale }, mergeBend) {
+function bestLeg(from, heading, to, tangent, radius, budget, { matrix, scale, verticalRampScale }, mergeBend) {
   const point = new Vector3();
   const direction = new Vector3();
   const gradeLimit = Math.max(.49, Math.abs(heading.y), Math.abs(tangent.y)) + .01;
   let best;
   for (const first of [-1, 1]) {
     for (const last of [-1, 1]) {
-      const leg = arcLeg(from, heading, to, tangent, radius, first, last, mergeBend !== undefined);
+      const leg = arcLeg(from, heading, to, tangent, radius, first, last, mergeBend !== undefined, verticalRampScale);
       if (!leg) continue;
       const length = leg.length * scale;
       if (best && length >= best.score) continue;
@@ -160,7 +161,7 @@ export function planFeedingSwim(fish, food, launch, {
   const { parent } = object;
   parent.updateWorldMatrix(true, false);
   const scale = parent.matrixWorld.getMaxScaleOnAxis();
-  const space = { matrix: parent.matrixWorld, scale };
+  const space = { matrix: parent.matrixWorld, scale, verticalRampScale: fish.verticalRampScale ?? 1 };
   const radius = turnRadius / scale;
   const runIn = Math.min(.36, .25 / scale);
   const runOut = Math.max(.30 / scale, (fish.lead ?? 0) + .10);

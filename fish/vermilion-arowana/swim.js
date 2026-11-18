@@ -6,12 +6,18 @@ import { bindSwimMouth } from '../swim-mouth.js';
 
 const UP = new Vector3(0, 1, 0);
 const FORWARD = new Vector3(1, 0, 0);
+const PITCH_AXIS = new Vector3(0, 0, 1);
 const CYCLE = Math.PI * 2;
 const CRUISE_SPEED = .62;
 const BODY_TRIM = -.064;
 const TURN_REACH = .82;
 const TURN_LIMIT = .89;
+const PITCH_LIMIT = .38;
 const spine = ['Head', 'Shoulder', 'SpineA', 'SpineB', 'Peduncle', 'Tail', 'TailTip'];
+
+function incline(direction) {
+  return Math.atan2(direction.y, Math.hypot(direction.x, direction.z));
+}
 
 function bindBone(object, name, rootRotation) {
   const bone = object.getObjectByName(name);
@@ -46,6 +52,7 @@ export function createSwimmer(object, route, { duration: requestedDuration } = {
     joint.waveSlope = .079 * 2.65 * along ** 1.65;
   }
   const routeTurns = new Float64Array(joints.length);
+  const routePitches = new Float64Array(joints.length);
   const fins = ['Pectoral', 'Pelvic'].flatMap((kind) => ['L', 'R'].map((suffix) => {
     const fin = bindBone(object, `${kind}_${suffix}`, rootRotation);
     const position = object.worldToLocal(fin.bone.getWorldPosition(new Vector3()));
@@ -122,10 +129,11 @@ export function createSwimmer(object, route, { duration: requestedDuration } = {
     const strokeEffort = MathUtils.lerp(.48 + .43 * pace.effort,
       .15 + .98 * (tail?.effort ?? 0), tail?.blend ?? 0) * (1 - .16 * Math.abs(steer));
     const heading = motion.heading;
-    const slope = Math.atan2(heading.y, Math.hypot(heading.x, heading.z));
-    // Trim the model's upturned silhouette while following climbs and dives.
-    const pitch = BODY_TRIM + MathUtils.lerp(.57, .86, swim?.spineFlex ?? 0)
-      * MathUtils.clamp(slope, -.44, .44) + .019 * brake;
+    const slope = incline(heading);
+    const transition = swim?.spineFlex ?? 0;
+    // Follow shallow inclines and ease into the limit during steep dives.
+    const pitchGain = MathUtils.lerp(1.55, .93, transition);
+    const pitch = BODY_TRIM + PITCH_LIMIT * Math.tanh(pitchGain * slope / PITCH_LIMIT) + .019 * brake;
     forward.set(heading.x, 0, heading.z).normalize()
       .multiplyScalar(Math.cos(pitch)).addScaledVector(UP, Math.sin(pitch));
     side.crossVectors(forward, UP).normalize();
@@ -139,18 +147,20 @@ export function createSwimmer(object, route, { duration: requestedDuration } = {
       const yaw = Math.atan2(heading.z * localHeading.x - heading.x * localHeading.z,
         heading.x * localHeading.x + heading.z * localHeading.z);
       routeTurns[i] = TURN_LIMIT * Math.tanh(yaw / TURN_LIMIT);
+      routePitches[i] = .095 * Math.tanh(5.5 * (incline(localHeading) - slope));
     }
 
     // Follow the tangent of one lateral wave. Its displacement grows
     // toward the tail and the head is nearly still during a glide.
-    const spineFlex = .84 * (swim?.spineFlex ?? 0);
+    const spineFlex = .84 * transition;
     for (const [i, joint] of joints.entries()) {
       const bodyTurn = MathUtils.lerp(routeTurns[0], routeTurns.at(-1), joint.turnReach);
       const turn = MathUtils.lerp(routeTurns[i], bodyTurn, spineFlex);
       const wave = phase - joint.waveDelay;
       const heading = turn + bend.angles[i] + Math.atan(strokeEffort * (
         joint.waveSlope * Math.sin(wave) - 4.8 * joint.waveAmplitude * Math.cos(wave)));
-      body.frames[i].setFromAxisAngle(UP, heading);
+      body.frames[i].setFromAxisAngle(UP, heading)
+        .multiply(rotation.setFromAxisAngle(PITCH_AXIS, routePitches[i]));
     }
 
     body.pose();
@@ -178,6 +188,6 @@ export function createSwimmer(object, route, { duration: requestedDuration } = {
   update(0);
   return {
     update, getMotion: () => motion, duration, route, sampleCruise,
-    trail: -lastStation * reach, lead: firstStation * reach, ...mouth,
+    trail: -lastStation * reach, lead: firstStation * reach, verticalRampScale: 1.5, ...mouth,
   };
 }

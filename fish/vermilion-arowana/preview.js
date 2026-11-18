@@ -1,10 +1,11 @@
-import { HemisphereLight, Vector3 } from 'three';
+import { HemisphereLight, MathUtils, Vector3 } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { startFishPreview } from '../../src/fish-preview.js';
 import { createVermilionPreviewRoute } from '../arowana/cruise-route.js';
 import { vermilionArowana } from './index.js';
 
 const route = createVermilionPreviewRoute();
+const FOCUS_HEIGHT = .12;
 
 function configureCamera(camera, canvas, fish, render) {
   const controls = new OrbitControls(camera, canvas);
@@ -20,7 +21,8 @@ function configureCamera(camera, canvas, fish, render) {
 
   function followFish() {
     center.copy(fish.getMotion().center);
-    center.y -= .11;
+    // Keep the fish in view while retaining most of its rise and fall.
+    center.y = MathUtils.lerp(FOCUS_HEIGHT, center.y, .30) - .11;
     camera.position.add(offset.subVectors(center, controls.target));
     controls.target.copy(center);
   }
