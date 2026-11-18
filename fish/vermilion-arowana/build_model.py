@@ -17,15 +17,17 @@ from materials import create_materials
 SCALE = 0.0017
 ORIGIN = (995, 340)
 IMAGE_SIZE = (1983, 793)
+# Side contour measured at the back, belly, and lower jaw of the reference.
 BODY = np.array([
-    (355, 350, 375, 1.5), (378, 323, 404, 5), (399, 301, 421, 10),
-    (406, 291, 426, 12), (447, 290, 436, 27), (480, 284, 444, 39),
-    (520, 247, 466, 51), (580, 176, 514, 64), (650, 134, 558, 79),
-    (740, 108, 593, 93), (800, 101, 600, 100), (900, 101, 593, 104),
-    (975, 100, 568, 105), (1050, 100, 560, 106), (1200, 96, 547, 104),
-    (1370, 98, 530, 100), (1480, 103, 506, 93), (1575, 113, 466, 86),
-    (1660, 129, 436, 75), (1730, 142, 395, 63), (1790, 143, 350, 55),
-    (1830, 143, 302, 44), (1872, 148, 247, 32), (1900, 157, 195, 18),
+    (388, 303, 426, .65), (396, 300, 427, .9), (410, 297, 428, 4.7),
+    (426, 292, 432, 12.3), (449, 290, 436, 23), (480, 279, 455, 39),
+    (520, 234, 498, 51), (580, 172, 559, 64), (650, 131, 606, 79),
+    (740, 102, 652, 93), (800, 96, 663, 100), (900, 97, 658, 104),
+    (944, 97.6, 650, 104.6), (975, 98, 629, 105), (1007, 98.6, 618, 105.5),
+    (1050, 99, 614, 106), (1200, 97, 592, 104), (1294, 98.1, 578, 102),
+    (1370, 100, 562, 100), (1480, 106, 525, 93), (1575, 113, 485, 86),
+    (1660, 124, 453, 75), (1730, 132, 407, 63), (1790, 136, 357, 55),
+    (1830, 138, 309, 44), (1872, 146, 243, 32), (1900, 156, 191, 18),
     (1912, 168, 176, 3.2),
 ])
 BODY_RANGE = tuple(BODY[[0, -1], 0])
@@ -34,24 +36,38 @@ CHAIN = (
     ("Peduncle", 555), ("Tail", 420), ("TailTip", 226),
 )
 DORSAL_RANGE = (444, 787)
-MEDIAN_FINS = (
-    ("Dorsal fin", DORSAL_RANGE, True, [
-        (445, 290), (401, 285), (352, 267), (312, 223), (289, 178),
-        (289, 132), (326, 95), (378, 61), (443, 40), (514, 28),
-        (586, 23), (655, 38), (721, 66), (783, 103),
-    ]),
-    ("Anal fin", (441, 986), False, [
-        (442, 432), (402, 460), (367, 503), (339, 550), (352, 597),
-        (399, 649), (467, 692), (555, 733), (650, 762), (728, 774),
-        (799, 761), (852, 728), (905, 662), (952, 596), (984, 565),
-    ]),
-)
+DORSAL = [
+    (445, 290), (401, 285), (352, 267), (312, 223), (289, 178),
+    (289, 132), (326, 95), (378, 61), (443, 40), (514, 28),
+    (586, 23), (655, 38), (721, 66), (783, 103),
+]
+ANAL_RANGE = (441, 986)
+ANAL_ATLAS = [
+    (442, 432), (402, 460), (367, 503), (339, 550), (352, 597),
+    (399, 649), (467, 692), (555, 733), (650, 762), (728, 774),
+    (799, 761), (852, 728), (905, 662), (952, 596), (984, 565),
+]
 CAUDAL = [
     (420, 292), (357, 274), (284, 228), (213, 195), (151, 177),
     (104, 184), (62, 201), (36, 237), (22, 279), (21, 332),
     (28, 389), (39, 454), (61, 510), (96, 566), (130, 597),
     (172, 622), (219, 621), (270, 606), (310, 588), (354, 553),
     (394, 493), (431, 428),
+]
+# The photo contours use the same projected scale as the body calibration.
+CAUDAL_PROFILE = [
+    (420, 292), (342, 256), (267, 220), (197, 192), (117, 179),
+    (66, 189), (21, 212), (8, 254), (-15, 294), (7, 329),
+    (4, 370), (20, 414), (32, 452), (38, 501), (60, 540),
+    (65, 579), (86, 608), (90, 632), (113, 653), (155, 643),
+    (209, 640), (290, 631), (329, 613), (355, 578), (372, 543),
+    (431, 428),
+]
+ANAL_PROFILE = [
+    (442, 432), (402, 460), (340, 591), (378, 647), (415, 685),
+    (454, 711), (530, 766), (610, 797), (662, 815), (732, 817),
+    (818, 799), (865, 770), (911, 715), (947, 653), (966, 604),
+    (984, 565),
 ]
 PAIRED_FINS = (
     ("Pectoral", "Shoulder", [(1600, 418), (1536, 464), (1451, 516), (1360, 607), (1279, 697), (1211, 738)],
@@ -156,34 +172,94 @@ def make_body(material):
     return mesh("Body", verts, faces, material, uv, wrap_dorsal=True)
 
 
-def sheet(name, root, edge, material, depths):
-    """Loft a soft fin surface and keep its UVs registered to the side reference."""
+def sheet(name, root, edge, material, depths, *, texture_edge=None, projected=True, back_depths=None):
+    """Loft a fin from its attachment out to its rim."""
     rows, columns = depths.shape
-    vertices, uvs = [], []
+    texture_edge = edge if texture_edge is None else texture_edge
+    positions, uvs = [], []
+    chord = np.linspace(0, 1, columns)
     for i in range(rows):
-        for j, t in enumerate(np.linspace(0, 1, columns)):
-            px, py = (1 - t) * root[i] + t * edge[i]
-            vertices.append(position(px, py, depths[i, j]))
-            uvs.append(projected_uv(px, py))
+        for t in chord:
+            positions.append((1 - t) * root[i] + t * edge[i])
+            if projected:
+                uvs.append(projected_uv(*((1 - t) * root[i] + t * texture_edge[i])))
+            else:
+                uvs.append((i / (rows - 1), 1 - t))
     faces = [
         (i * columns + j, (i + 1) * columns + j, (i + 1) * columns + j + 1, i * columns + j + 1)
         for i in range(rows - 1) for j in range(columns - 1)
     ]
+    vertices = [position(px, py, z) for (px, py), z in zip(positions, depths.flat)]
+    if back_depths is not None:
+        offset = len(positions)
+        vertices.extend(position(px, py, z) for (px, py), z in zip(positions, back_depths.flat))
+        uvs *= 2
+        faces += [tuple(offset + index for index in reversed(face)) for face in faces]
     return mesh(name, vertices, faces, material, uvs)
 
 
-def make_median_fins(material):
-    across = np.linspace(0, 1, 59)
+def anal_fin_loft(across):
+    x = np.linspace(*ANAL_RANGE, len(across))
+    belly = body_profile(x)[:, 1]
+    root = np.column_stack((x, belly - 35))
+    atlas_root = np.column_stack((x, belly - 14))
+    # The reshaped anterior belly covers a deeper strip of the source outline.
+    # Resample its rays from inside the painted fin.
+    atlas_y = np.interp(x, [900, 945, 986], [589, 570, 552])
+    t = np.clip((x - 861) / 69, 0, 1)
+    atlas_root[:, 1] += t**2 * (3 - 2 * t) * (atlas_y - atlas_root[:, 1])
+    return root, trace(ANAL_PROFILE, across), atlas_root, trace(ANAL_ATLAS, across)
+
+
+def anal_fin_depths(root, edge):
+    chord = np.linspace(0, 1, 23)[None, :, None]
+    x, y = np.moveaxis((1 - chord) * root[:, None, :] + chord * edge[:, None, :], -1, 0)
+    top, bottom, width = np.moveaxis(body_profile(x), -1, 0)
+    offset = y - bottom
+    radius = 0.5 * (bottom - top)
+    section = np.clip(1 + offset / radius, -1, 1)
+    body_depth = width * np.sqrt(1 - section**2)
+
+    # Start with the belly's width and slope, then thin into the membrane.
+    start, span = -19, 51
+    at_start = 1 + start / radius
+    radial_fraction = 1 - at_start**2
+    depth_at_start = width * np.sqrt(radial_fraction)
+    power = span * at_start / (radius * radial_fraction)
+    taper = depth_at_start * np.clip(1 - (offset - start) / span, 0, 1) ** power
+    attachment = np.clip((x - 441) / 62, 0, 1) * np.clip((985 - x) / 39, 0, 1)
+    attachment = attachment**2 * (3 - 2 * attachment)
+    half_depth = np.maximum(0, np.where(offset < start, body_depth, taper) - 1.25) * attachment
+    across = np.linspace(0, np.pi, len(root))[:, None]
+    exposed = np.clip(offset / 32, 0, 1)
+    bow = 2.5 * np.sin(across) * np.sin(np.pi * chord[..., 0]) * exposed**2 * (3 - 2 * exposed)
+    return bow + half_depth, bow - half_depth
+
+
+def make_median_fins(materials, across, anal_root, anal_edge):
+    material = materials["tail_fins"]
     chord = np.linspace(0, 1, 12)
     bow = np.sin(np.pi * across[:, None]) * np.sin(np.pi * chord[None, :])
-    tail_base = np.column_stack((420 + 10 * across, 307 + 114 * across))
-    parts = [sheet("Caudal fin", tail_base, trace(CAUDAL, across), material, 4 * bow)]
-    for name, bounds, dorsal, outline in MEDIAN_FINS:
-        xs = np.linspace(*bounds, len(across))
-        roots = body_profile(xs)[:, 0 if dorsal else 1]
-        root = np.column_stack((xs, roots + (13 if dorsal else -14)))
-        parts.append(sheet(name, root, trace(outline, across), material, (-2 if dorsal else 2.5) * bow))
-    return parts
+    # The membrane starts inside the peduncle and the tapered skin
+    # continues into it along the same longitudinal skinning frames.
+    tail_x = 444 + 6 * across
+    tail_top, tail_bottom, _ = body_profile(tail_x).T
+    tail_base = np.column_stack((tail_x, tail_top + (.13 + .72 * across) * (tail_bottom - tail_top)))
+    tail_edge = trace(CAUDAL_PROFILE, across)
+    fan_x = tail_base[:, :1] * (1 - chord) + tail_edge[:, :1] * chord
+    exposed = np.clip((BODY_RANGE[0] - fan_x) / 60, 0, 1)
+    tail_bow = 4 * bow * exposed**2 * (3 - 2 * exposed)
+    x = np.linspace(*DORSAL_RANGE, len(across))
+    dorsal_root = np.column_stack((x, body_profile(x)[:, 0] + 13))
+    anal_front, anal_back = anal_fin_depths(anal_root, anal_edge)
+    return [
+        sheet("Caudal fin", tail_base, tail_edge, material, tail_bow, texture_edge=trace(CAUDAL, across)),
+        sheet("Dorsal fin", dorsal_root, trace(DORSAL, across), material, -2 * bow),
+        sheet(
+            "Anal fin", anal_root, anal_edge, materials["anal_fin"], anal_front,
+            projected=False, back_depths=anal_back,
+        ),
+    ]
 
 
 def make_paired_fins(material):
@@ -194,13 +270,14 @@ def make_paired_fins(material):
         a = trace(front, length)
         b = trace(rear, length)
         hinge = (a[0] + b[0]) / 2
+        contact = max(depth_at(*hinge) - 5, 8)
+        root_depths = np.array([depth_at(*point) - 7 for point in np.linspace(a[0], b[0], len(chord))])
+        taper = np.clip(length / .22, 0, 1)
+        base = contact + (1 - taper**2 * (3 - 2 * taper))[:, None] * (root_depths - contact)
+        camber = 12 * np.sin(np.pi * chord)[None, :] * np.sin(np.pi * length)[:, None]
         for suffix, side in (("L", -1), ("R", 1)):
             bone_name = f"{name}_{suffix}"
-            contact = max(depth_at(*hinge) - 5, 8)
-            depth = side * (
-                contact + extension * length[:, None] ** 0.83
-                + 9 * np.sin(np.pi * chord)[None, :] * np.sin(np.pi * length)[:, None]
-            )
+            depth = side * (base + extension * length[:, None] ** .83 + camber)
             part = sheet(f"{name} fin {suffix}", a, b, material, depth)
             joint_root = Vector(position(*hinge, side * contact))
             joint_tip = Vector(position(*(0.5 * (a[-7] + b[-7])), side * (contact + extension * .85)))
@@ -399,10 +476,12 @@ def main():
     form_study = bpy.data.images.load(str(HERE / "form-study.png"))
     form_study.pack()
     form_study.use_fake_user = True
-    materials = create_materials(concept, photo, body_profile, BODY_RANGE, DORSAL_RANGE)
+    across = np.linspace(0, 1, 59)
+    anal_loft = anal_fin_loft(across)
+    materials = create_materials(concept, photo, body_profile, BODY_RANGE, DORSAL_RANGE, anal_loft)
     paired, fin_joints = make_paired_fins(materials["paired_fins"])
     rig = armature(fin_joints)
-    objects = [make_body(materials["body"]), *make_median_fins(materials["tail_fins"])]
+    objects = [make_body(materials["body"]), *make_median_fins(materials, across, *anal_loft[:2])]
     for obj in objects:
         bind(obj, rig)
     for name, obj in paired.items():

@@ -105,7 +105,7 @@ def _scale_photo(photo):
     return np.clip(smooth * (1 + detail / (luminance + 0.019))[..., None], 0, 1)
 
 
-def _body_albedo(photo, body_profile, x_range):
+def _body_albedo(photo, body_profile, x_range, fin_albedo):
     width, height = BODY_MAP_SIZE
     x = _mix(*x_range, (np.arange(width, dtype=np.float32) + 0.5) / width)
     theta = tau * (1 - (np.arange(height, dtype=np.float32) + 0.5) / height)
@@ -137,15 +137,34 @@ def _body_albedo(photo, body_profile, x_range):
     hidden = _smoothstep(0.89 - 0.06 * pectoral, 0.99, side_height)
     albedo = _mix(albedo, belly, hidden[..., None])
 
-    # Recover midtone color in the shaded scales while protecting the bright gill and belly.
     lightness = _blur(albedo @ LUMA, 18)
+    dorsal = (1 - _smoothstep(0.13, 0.47, side_height)) * _smoothstep(470, 650, x)
+    dorsal *= 1 - _smoothstep(1640, 1760, x)
     midtones = _smoothstep(0.012, 0.095, lightness) * (1 - _smoothstep(0.27, 0.57, lightness))
     flank = _smoothstep(0.53, 0.84, side_height) * _smoothstep(680, 1080, x)
     flank *= 1 - _smoothstep(1780, 1910, x)
-    gain = 1.05 + 0.27 * midtones + 0.18 * flank
+    gain = 1.05 + (0.27 - 0.22 * dorsal) * midtones + 0.18 * flank
     albedo = np.clip(albedo * gain[..., None], 0, 1)
+
+    # The dorsal plates have dark centers and warmer copper on the thin rims.
+    detail = albedo @ LUMA - lightness * gain
+    lip = _smoothstep(0.017, 0.094, detail)
+    shade = _smoothstep(0.012, 0.092, -detail)
+    red, green, blue = np.moveaxis(albedo, -1, 0)
+    violet = _smoothstep(0.014, 0.092, np.minimum(red, blue) - green)
+    copper = dorsal * _smoothstep(0.026, 0.14, red - green) * (0.28 + 0.72 * lip)
+    blue *= 1 - 0.21 * dorsal * violet - 0.038 * copper
+    green *= 1 - 0.085 * copper
+    red += 0.056 * copper * (1 - red)
+    albedo *= (1 - dorsal * (0.09 * (1 - 0.65 * lip) + 0.15 * shade))[..., None]
+
     seam = (0.75 * np.exp(-((np.sin(theta) / 0.25) ** 2)))[:, None, None]
-    return _mix(albedo, _blur(albedo, 7.4), seam)
+    albedo = _mix(albedo, _blur(albedo, 7.4), seam)
+    # The thin end of the peduncle shares pigment with the membrane
+    # before the first full scales take over.
+    tail = 1 - _smoothstep(x_range[0] + 3, x_range[0] + 49, x)
+    surface_y = center - depth * np.cos(theta[:, None])
+    return _mix(albedo, _sample(fin_albedo, x, surface_y), tail[None, :, None])
 
 
 def _fin_albedo(color, photo):
@@ -183,6 +202,60 @@ def _dorsal_root(fin_color, alpha, body_color, body_profile, body_range, dorsal_
     fin_color = _mix(fin_color, transition, contact[..., None])
     alpha = _mix(alpha, 0.99, contact * _smoothstep(-12, -1, offset))
     return fin_color, alpha, contact
+
+
+def _anal_finish(fin_color, alpha, body_color, body_profile, body_range, loft):
+    """Bake the belly-to-fin transition in the same coordinates as the fin mesh."""
+    width, height = 1024, 384
+    u = (np.arange(width) + 0.5) / width
+    t = (np.arange(height)[:, None, None] + 0.5) / height
+    rows = np.linspace(0, 1, len(loft[0]))
+    root, edge, atlas_root, atlas_edge = [
+        np.stack([np.interp(u, rows, coord) for coord in points.T], axis=-1)
+        for points in loft
+    ]
+    x, y = np.moveaxis(_mix(root, edge, t), -1, 0)
+    source_x, source_y = np.moveaxis(_mix(atlas_root, atlas_edge, t), -1, 0)
+    albedo = _sample(fin_color, source_x, source_y)
+    opacity = _sample(alpha[..., None], source_x, source_y)[..., 0]
+    top, bottom, _ = np.moveaxis(body_profile(x), -1, 0)
+    below_belly = y - bottom
+
+    body_u = (x - body_range[0]) / (body_range[1] - body_range[0])
+    body_v = np.arccos(np.clip(1 - 2 * (y - top) / (bottom - top), -1, 1)) / tau
+    skin = _sample(body_color, body_u * body_color.shape[1] - 0.5, body_v * body_color.shape[0] - 0.5)
+    attachment = _smoothstep(436, 489, x) * (1 - _smoothstep(0.86, 1, t[..., 0]))
+
+    # Brighter ray crests take on the fin pigment earlier than the membrane.
+    luminance = albedo @ LUMA
+    grain = _blur(luminance, 0.9) - _blur(luminance, 5)
+    ray_crests = _smoothstep(-0.015, 0.03, grain)
+    contact = attachment * (1 - _smoothstep(-8, 30, below_belly + 7 * ray_crests))
+    root_grain = grain * 0.50 * _smoothstep(-12, 10, below_belly)
+    root_color = np.clip(skin + root_grain[..., None], 0, 1)
+    albedo = _mix(albedo, root_color, contact[..., None])
+    opacity = _mix(opacity, 1, attachment * (1 - _smoothstep(15, 31, below_belly)))
+    # Feather the overlap while the solid body still lies beneath the fin base.
+    opacity *= _smoothstep(-16, -3, below_belly)
+    normal = _normal_map(albedo @ LUMA, 5.8)
+    detail = _smoothstep(0.24, 0.82, opacity) * (1 - 0.68 * contact)
+    normal = _mix(np.array((0.5, 0.5, 1), dtype=np.float32), normal, detail[..., None])
+    return _image("Vermilion anal fin color and opacity", np.dstack((albedo, opacity))), _image(
+        "Vermilion anal fin normal", normal, data=True
+    )
+
+
+def _paired_finish(color, luminance, x, y):
+    # Let the finer ridges hold light while the membranes between them pass it.
+    band = _blur(luminance, 0.8) - _blur(luminance, 4.7)
+    rays = _smoothstep(-0.016, 0.037, band)
+    pectoral = ((x - 1621) / 62) ** 2 + ((y - 414) / 43) ** 2
+    pelvic = ((x - 1197) / 58) ** 2 + ((y - 524) / 38) ** 2
+    root = 1 - _smoothstep(0.2, 1.4, np.minimum(pectoral, pelvic))
+    tint = np.array((0.99, 0.91, 0.97), dtype=np.float32)
+    albedo = color * tint * _mix(0.90, 1.025, rays)[..., None]
+    opacity = _mix(0.60, 0.71, root) + _mix(0.24, 0.20, root) * rays
+    return albedo, opacity
 
 
 def _normal_map(luminance, amplitude, *, filter_scale=1):
@@ -243,34 +316,63 @@ def _add_normal(material, surface, image, strength):
     material.node_tree.links.new(normal.outputs["Normal"], surface.inputs["Normal"])
 
 
-def _fin_material(name, color_image, normal_image, roughness, *, specular):
+def _fin_material(name, color_image, normal_image, roughness, *, specular, normal_strength=0.55):
     fin, surface = _material(name, (0.5, 0.08, 0.04), roughness, specular=specular, coat=0.04)
     fin.surface_render_method = "BLENDED"
     fin.use_backface_culling = False
     color = _texture_node(fin, color_image)
     fin.node_tree.links.new(color.outputs["Color"], surface.inputs["Base Color"])
     fin.node_tree.links.new(color.outputs["Alpha"], surface.inputs["Alpha"])
-    _add_normal(fin, surface, normal_image, 0.55)
+    _add_normal(fin, surface, normal_image, normal_strength)
     return fin
 
 
-def create_materials(concept_image, reference_photo, body_profile, x_range, dorsal_range):
+def create_materials(concept_image, reference_photo, body_profile, x_range, dorsal_range, anal_loft):
     """Return rig-ready materials and pack their textures into the Blender file."""
     rgba = _read_pixels(concept_image)
     photo = _read_pixels(reference_photo)[..., :3]
     color = _clean_color(rgba)
-    albedo = _body_albedo(_scale_photo(photo), body_profile, x_range)
+    y, x = np.ogrid[: rgba.shape[0], : rgba.shape[1]]
+    paired = _smoothstep(970, 1050, x) * _smoothstep(383, 445, y)
+    paired_region = _smoothstep(951, 985, x) * _smoothstep(379, 409, y)
+    fin_luminance = color @ LUMA
+    # Finer membranes let more of the background through between the rays.
+    ray_contrast = _blur(fin_luminance, 1.4) - _blur(fin_luminance, 5)
+    rays = _smoothstep(-0.026, 0.035, ray_contrast)
+    opacity = _mix(0.88, 0.69, paired) + _mix(0.10, 0.15, paired) * rays
+    coverage = _smoothstep(0.01, 0.98, rgba[..., 3])
+    alpha = coverage * opacity
+    tail_start = x_range[0]
+    tail_top, tail_bottom, _ = body_profile(tail_start)
+    tail_contact = _smoothstep(tail_start - 26, tail_start, x) * (1 - _smoothstep(tail_start + 21, tail_start + 51, x))
+    tail_contact = tail_contact * _smoothstep(tail_top - 11, tail_top + 3, y)
+    tail_contact *= 1 - _smoothstep(tail_bottom - 3, tail_bottom + 11, y)
+    tail_contact *= _smoothstep(0.35, 0.90, rgba[..., 3])
+    alpha = _mix(alpha, 0.99, tail_contact)
+    # Preserve the photo's red-orange median fins under the cool bounce light.
+    fin_photo = _mix(_blur(photo, 1.65), photo, 0.10)
+    fin_albedo = _fin_albedo(color, fin_photo)
+    median_tint = np.array((1, 0.94, 0.84), dtype=np.float32)
+    fin_albedo *= _mix(median_tint, 1, paired[..., None])
+    albedo = _body_albedo(_scale_photo(photo), body_profile, x_range, fin_albedo)
     luminance = albedo @ LUMA
     width, height = BODY_MAP_SIZE
     roughness_luminance = luminance.reshape(height // 2, 2, width // 2, 2).mean(axis=(1, 3))
-    roughness = np.clip(0.47 - 0.12 * _blur(roughness_luminance, 3.1), 0.37, 0.47)
+    fine = _blur(roughness_luminance, 2.2)
+    local = _blur(fine, 15)
+    # The photo supplies the narrow reflective rims and variation between plates.
+    lip = _smoothstep(0.009, 0.073, fine - local)
+    plate = 0.64 - 0.14 * _smoothstep(0.10, 0.48, local)
+    scales_x = _mix(*x_range, (np.arange(width // 2, dtype=np.float32) + 0.5) / (width // 2))
+    scales = _smoothstep(437, 555, scales_x) * (1 - _smoothstep(1605, 1740, scales_x))
+    roughness = _mix(0.47 - 0.12 * fine, plate - 0.19 * lip, scales[None, :])
 
     body, surface = _material(
         "Vermilion · satin scales",
         (0.16, 0.13, 0.16),
         0.47,
-        coat=0.18,
-        coat_roughness=0.29,
+        coat=0.07,
+        coat_roughness=0.42,
         metallic=0.05,
     )
     body_color = _texture_node(body, _image("Vermilion body color", albedo))
@@ -283,27 +385,25 @@ def create_materials(concept_image, reference_photo, body_profile, x_range, dors
     body_normal = _normal_map(luminance, 8.6, filter_scale=1.65)
     _add_normal(body, surface, _image("Vermilion body normal", body_normal, data=True), 0.66)
 
-    y, x = np.ogrid[: rgba.shape[0], : rgba.shape[1]]
-    paired = _smoothstep(970, 1050, x) * _smoothstep(383, 445, y)
-    fin_luminance = color @ LUMA
-    # Finer membranes let more of the background through between the rays.
-    ray_contrast = _blur(fin_luminance, 1.4) - _blur(fin_luminance, 5)
-    rays = _smoothstep(-0.026, 0.035, ray_contrast)
-    opacity = _mix(0.88, 0.69, paired) + _mix(0.10, 0.15, paired) * rays
-    alpha = _smoothstep(0.01, 0.98, rgba[..., 3]) * opacity
-    # Preserve the photo's red-orange median fins under the cool bounce light.
-    fin_photo = _mix(_blur(photo, 1.65), photo, 0.10)
-    fin_albedo = _fin_albedo(color, fin_photo)
-    median_tint = np.array((1, 0.94, 0.84), dtype=np.float32)
-    fin_albedo *= _mix(median_tint, 1, paired[..., None])
     fin_albedo, alpha, contact = _dorsal_root(fin_albedo, alpha, albedo, body_profile, x_range, dorsal_range)
+    anal_color, anal_normal = _anal_finish(fin_albedo, alpha, albedo, body_profile, x_range, anal_loft)
+    anal_fin = _fin_material("Vermilion · anal fin and supporting skin", anal_color, anal_normal, 0.43, specular=0.25)
+    anal_fin.use_backface_culling = True
+
+    paired_color, paired_opacity = _paired_finish(fin_albedo, fin_luminance, x, y)
+    fin_albedo = _mix(fin_albedo, paired_color, paired_region[..., None])
+    alpha = _mix(alpha, paired_opacity * coverage, paired_region)
     fin_color = _image("Vermilion fin ray color and opacity", np.dstack((fin_albedo, alpha)))
     fin_normal = _normal_map(fin_luminance, 4.6)
+    paired_normal = _normal_map(fin_luminance, 8.5, filter_scale=0.73)
+    fin_normal = _mix(fin_normal, paired_normal, paired_region[..., None])
     surface_detail = _smoothstep(0.22, 0.85, alpha) * (1 - 0.80 * contact)
     fin_normal = _mix(np.array((0.5, 0.5, 1), dtype=np.float32), fin_normal, surface_detail[..., None])
     fin_normal = _image("Vermilion fin ray normal", fin_normal, data=True)
     tail_fins = _fin_material("Vermilion · red median fins", fin_color, fin_normal, 0.43, specular=0.25)
-    paired_fins = _fin_material("Vermilion · translucent paired fins", fin_color, fin_normal, 0.47, specular=0.34)
+    paired_fins = _fin_material(
+        "Vermilion · translucent paired fins", fin_color, fin_normal, 0.46, specular=0.28, normal_strength=0.70
+    )
 
     eye, eyewall = _material(
         "Vermilion · wet iris",
@@ -318,4 +418,11 @@ def create_materials(concept_image, reference_photo, body_profile, x_range, dors
     eye.node_tree.links.new(iris.outputs["Color"], eyewall.inputs["Base Color"])
 
     barbel, _ = _material("Vermilion · coral barbels", (0.41, 0.095, 0.083), 0.43, coat=0.09)
-    return {"body": body, "tail_fins": tail_fins, "paired_fins": paired_fins, "eye": eye, "barbel": barbel}
+    return {
+        "body": body,
+        "tail_fins": tail_fins,
+        "anal_fin": anal_fin,
+        "paired_fins": paired_fins,
+        "eye": eye,
+        "barbel": barbel,
+    }
