@@ -10,17 +10,40 @@ const crumbOffsets = [
   [.11, -.27, .21], [-.49, -.23, -.21], [.53, .06, .04],
 ];
 
+function finishFoodGeometry(geometry, base, toasted) {
+  const positions = geometry.getAttribute('position');
+  const colors = new Float32Array(positions.count * 3);
+  const surface = new THREE.Color(base);
+  const speckle = new THREE.Color(toasted);
+  const color = new THREE.Color();
+  for (let i = 0; i < positions.count; i++) {
+    const x = positions.getX(i);
+    const y = positions.getY(i);
+    const z = positions.getZ(i);
+    const grainTone = .5 + .5 * Math.sin(11 * x + 7 * y - 9 * z);
+    const pores = Math.sin(23 * x - 29 * y + 13 * z) * Math.cos(17 * x + 19 * y + 22 * z);
+    color.copy(surface).lerp(speckle, .17 * grainTone + .45 * smoothstep(pores, .18, .84))
+      .toArray(colors, 3 * i);
+    const unevenness = .97 + .025 * grainTone + .019 * pores;
+    positions.setXYZ(i, x * unevenness, y * unevenness, z * unevenness);
+  }
+  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  return geometry;
+}
+
 export function createFeeding(scene, onActiveChange) {
   const group = new THREE.Group();
-  const geometry = new THREE.IcosahedronGeometry(1, 0);
-  const pelletMaterial = new THREE.MeshStandardMaterial({
-    color: 0xcb8f4f, emissive: 0xab6934, emissiveIntensity: .27, roughness: .92,
-  });
-  const crumbMaterial = new THREE.MeshStandardMaterial({
-    color: 0xd7a472, emissive: 0xbd814e, emissiveIntensity: .29, roughness: .94,
-  });
+  const profile = [
+    [0, -.88], [.30, -.88], [.46, -.75], [.53, -.51], [.51, -.2], [.55, .09],
+    [.53, .38], [.48, .69], [.34, .86], [0, .86],
+  ].map(([radius, height]) => new THREE.Vector2(radius, height));
+  const pelletGeometry = finishFoodGeometry(
+    new THREE.LatheGeometry(profile, 20).rotateZ(-Math.PI / 2), 0x9b623c, 0x52301d,
+  );
+  const crumbGeometry = finishFoodGeometry(new THREE.IcosahedronGeometry(1, 0), 0xb68a64, 0x664332);
+  const foodMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .85 });
   const grains = Array.from({ length: 9 }, () => {
-    const grain = new THREE.Mesh(geometry, crumbMaterial);
+    const grain = new THREE.Mesh(crumbGeometry, foodMaterial);
     group.add(grain);
     return grain;
   });
@@ -62,7 +85,7 @@ export function createFeeding(scene, onActiveChange) {
     function scatter(target, coarse, index) {
       const grain = grains[servings.length];
       grain.visible = true;
-      grain.material = coarse ? pelletMaterial : crumbMaterial;
+      grain.geometry = coarse ? pelletGeometry : crumbGeometry;
       const size = coarse ? .052 : .024 + .004 * (index % 3);
       grain.scale.set(size, size * .78, size * .86);
       const source = origin.clone().lerp(target, .10);
@@ -153,6 +176,7 @@ export function createFeeding(scene, onActiveChange) {
     ripple.visible = age < .63;
     ripple.material.opacity = .54 * (1 - smoothstep(age, .06, .63));
     ripple.scale.setScalar(.035 + .35 * smoothstep(age, 0, .63));
+    const tumble = .71 * age + 1 - Math.exp(-2.6 * age);
 
     for (const serving of round.servings) {
       const { grain, source, target, index, size, expires, fish, path, previous } = serving;
@@ -160,7 +184,8 @@ export function createFeeding(scene, onActiveChange) {
       grain.visible = time < expires;
       grain.position.copy(source).lerp(target, smoothstep(age, 0, .88));
       grain.position.y += .016 * Math.sin(age * 4.3 + index) * smoothstep(age, 0, .4);
-      grain.rotation.set(age * (1.4 + .2 * index), index + age * .83, .39 * index);
+      grain.rotation.set(.48 + .34 * Math.sin(.87 * age + index), tumble + .93 * index,
+        .28 * Math.cos(.68 * age + 1.3 * index));
       const scale = size * (1 - smoothstep(time, expires - .35, expires));
       grain.scale.set(scale, scale * .78, scale * .86);
       if (fish && grain.visible) {

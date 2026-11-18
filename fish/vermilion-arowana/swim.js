@@ -96,7 +96,8 @@ export function createSwimmer(object, route, { duration: requestedDuration } = {
 
   const reach = object.scale.x * TURN_REACH;
   const mouth = bindSwimMouth(object, joints[0].bone, 1.55, .245);
-  mouth.mouthOffset.applyAxisAngle(new Vector3(0, 0, 1), BODY_TRIM);
+  mouth.mouthOffset.applyAxisAngle(PITCH_AXIS, BODY_TRIM);
+  const mouthReach = mouth.mouthOffset.x;
   const cruise = {};
 
   function sampleCruise(timeSeconds, out) {
@@ -133,7 +134,18 @@ export function createSwimmer(object, route, { duration: requestedDuration } = {
     const transition = swim?.spineFlex ?? 0;
     // Follow shallow inclines and ease into the limit during steep dives.
     const pitchGain = MathUtils.lerp(1.55, .93, transition);
-    const pitch = BODY_TRIM + PITCH_LIMIT * Math.tanh(pitchGain * slope / PITCH_LIMIT) + .019 * brake;
+    let rise = PITCH_LIMIT * Math.tanh(pitchGain * slope / PITCH_LIMIT) + .019 * brake;
+    const beforeBite = (swim?.biteDistance ?? Infinity) - distance;
+    const foodAlignment = MathUtils.smoothstep(distance, 0, .55 * reach)
+      * (1 - MathUtils.smoothstep(beforeBite, 1.35 * mouthReach, 2.25 * mouthReach))
+      * (1 - MathUtils.smoothstep(-beforeBite, .06, .60 * mouthReach));
+    if (foodAlignment > 0) {
+      // Use the rise over the reach of the mouth so the head levels before the torso.
+      sample(Math.min(distance + mouthReach, swim.biteDistance), routePoint, localHeading);
+      const mouthSlope = Math.atan2(routePoint.y - motion.center.y, mouthReach);
+      rise = MathUtils.lerp(rise, PITCH_LIMIT * Math.tanh(mouthSlope / PITCH_LIMIT), foodAlignment);
+    }
+    const pitch = BODY_TRIM + rise;
     forward.set(heading.x, 0, heading.z).normalize()
       .multiplyScalar(Math.cos(pitch)).addScaledVector(UP, Math.sin(pitch));
     side.crossVectors(forward, UP).normalize();
@@ -147,7 +159,8 @@ export function createSwimmer(object, route, { duration: requestedDuration } = {
       const yaw = Math.atan2(heading.z * localHeading.x - heading.x * localHeading.z,
         heading.x * localHeading.x + heading.z * localHeading.z);
       routeTurns[i] = TURN_LIMIT * Math.tanh(yaw / TURN_LIMIT);
-      routePitches[i] = .095 * Math.tanh(5.5 * (incline(localHeading) - slope));
+      const neckAlignment = foodAlignment * MathUtils.smoothstep(joint.station, -.20, .25);
+      routePitches[i] = .095 * Math.tanh(5.5 * (incline(localHeading) - slope)) * (1 - neckAlignment);
     }
 
     // Follow the tangent of one lateral wave. Its displacement grows

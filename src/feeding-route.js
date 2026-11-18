@@ -253,7 +253,7 @@ export function planFeedingSwim(fish, food, launch, {
   const cruise = {};
   const historyCruise = {};
   const swim = {
-    distance: 0, speed: 0, effort: 0, spineFlex: 0, tail: undefined, pace: cruise, sample,
+    distance: 0, speed: 0, effort: 0, spineFlex: 0, tail: undefined, pace: cruise, sample, biteDistance,
     samplePace: (time, out) => move(time, out, historyCruise, false),
   };
   const cruisePoint = new Vector3();
