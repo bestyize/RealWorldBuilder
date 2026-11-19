@@ -31,6 +31,14 @@ import {
 export const floorLimits = { left: -4.85, right: 4.24, back: -3.29, front: 3.9 };
 const deskHeightScale = 0.72;
 export const stations = {
+  shelf: {
+    approach: [-4.85, -1.86],
+    yaw: -Math.PI / 2,
+    hit: [
+      [-6.12, 0.65, -3.62],
+      [-5.02, 3.45, 0.45],
+    ],
+  },
   seat: {
     approach: [0, -3.29],
     pose: [0, 0.308, -4.0],
@@ -251,6 +259,7 @@ function book(g, x, y, z, w, h, d, cover, m, angle = 0) {
   box(volume, 0, h / 2, 0, w, h, d, cover);
   for (const ry of [0.18, 0.78, 0.84]) box(volume, 0, h * ry, d / 2 + 0.002, w * 0.85, 0.01, 0.005, m.gilt);
   if (w > 0.12) box(volume, 0, h * 0.59, d / 2 + 0.003, w * 0.57, 0.039, 0.006, m.page);
+  return volume;
 }
 function flatBook(g, x, y, z, width, depth, height, yaw, cover, m) {
   const stack = group(g, x, y, z, yaw);
@@ -260,7 +269,7 @@ function flatBook(g, x, y, z, width, depth, height, yaw, cover, m) {
   for (const side of [-1, 1])
     box(stack, side * width * 0.33, 0, depth / 2 + 0.002, 0.01, height * 0.73, 0.004, m.gilt);
 }
-function bookcase(g, m, w, seed) {
+function bookcase(g, m, w, seed, markedBooks) {
   const rows = 5,
     base = 0.72,
     pitch = 0.53,
@@ -308,18 +317,25 @@ function bookcase(g, m, w, seed) {
         height = 0.285 + (k % 8) * 0.02;
       if (i === 3 && (seed + r) % 3 === 0) cursor += 0.13;
       if (cursor + width > end) break;
-      book(
+      const depth = 0.26 + (k % 4) * 0.02;
+      const marked = markedBooks && i === 1 && r >= 1 && r <= 3;
+      const cover = marked ? [m.ribbon, m.leaves[0], m.terra][r - 1] : m.books[k % m.books.length];
+      const volume = book(
         g,
         cursor + width / 2,
         y + 0.036,
         0.083 + (k % 3) * 0.012,
         width,
         height,
-        0.26 + (k % 4) * 0.02,
-        m.books[k % m.books.length],
+        depth,
+        cover,
         m,
         i === 2 && r % 2 === 1 ? -0.085 : 0
       );
+      if (marked) {
+        box(volume, 0, height - 0.052, depth / 2 + 0.005, 0.038, 0.14, 0.009, m.piping);
+        markedBooks.push(volume);
+      }
       cursor += width + 0.012;
       i++;
     }
@@ -620,11 +636,12 @@ export async function createRoom(scene) {
     [4.92, 8],
   ])
     bookcase(group(root, x, 0, -4.29), m, 2.12, seed);
+  const shelfBooks = [];
   for (const [z, seed] of [
     [-2.62, 5],
     [-0.54, 9],
   ])
-    bookcase(group(root, -5.84, 0, z, Math.PI / 2), m, 1.97, seed);
+    bookcase(group(root, -5.84, 0, z, Math.PI / 2), m, 1.97, seed, seed === 5 ? shelfBooks : null);
   ladder(group(root, -5.83, 0, -1.86, Math.PI / 2), m);
   modelYacht(group(root, 4.9, 3.57, -4.31, -0.05), m);
   plant(group(root, -4.8, 3.57, -4.3), m, 0.58);
@@ -688,9 +705,10 @@ export async function createRoom(scene) {
   }
   const light = floorPlane(root, 8.3, 5.9, floorLight(), -0.36, 0.02, -1.42);
   light.renderOrder = 1;
+  for (const book of shelfBooks) scene.attach(book);
   batchRoom(root);
   const chime = moonChime(scene, m);
   const shadow = floorPlane(scene, 1.04, 0.66, contactMat.clone(), 0, 0.025, 0);
   shadow.renderOrder = 2;
-  return { shadow, chime };
+  return { shadow, chime, shelfBooks };
 }
