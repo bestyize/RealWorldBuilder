@@ -39,11 +39,11 @@
 
 https://github.com/user-attachments/assets/458e246b-0db0-42d4-ad5e-4866ff1ede2e
 
-实时 3D 展厅。可以观赏一条龙鱼和六条不同花色的孔雀鱼共游，也可以单独看鱼或打开碎花垂耳兔的 3D 预览。
+实时 3D 展厅。可以观赏一条龙鱼和六条宝莲灯共游，也可以单独看鱼或打开碎花垂耳兔的 3D 预览。
 
 [打开 GitHub Pages](https://bestyize.github.io/RealWorldBuilder/)
 
-可以在线浏览[展厅](https://bestyize.github.io/RealWorldBuilder/index.html)或打开[主水族箱](https://bestyize.github.io/RealWorldBuilder/aquarium.html)。也可以下载仓库中的 `aquarium.html` 离线观赏。首次打开水族箱或从展厅进入时，默认在「山水客厅」中单独展示朱红龙鱼，并开启砂石水草。直接打开水族箱会恢复这个浏览器已保存的选择。点击右上角「设置」可切换单条龙鱼、单条孔雀鱼、孔雀鱼群或同缸，也可以独立开关砂石水草造景。在「同缸」或「单条龙鱼」模式下，可以通过「龙鱼品种」切换蓝色龙鱼和朱红龙鱼。
+可以在线浏览[展厅](https://bestyize.github.io/RealWorldBuilder/index.html)或打开[主水族箱](https://bestyize.github.io/RealWorldBuilder/aquarium.html)。也可以下载仓库中的 `aquarium.html` 离线观赏。首次打开水族箱或从展厅进入时，默认在「山水客厅」中单独展示朱红龙鱼，并开启砂石水草。直接打开水族箱会恢复这个浏览器已保存的选择。点击右上角「设置」可切换单条龙鱼、单条宝莲灯、宝莲灯鱼群或同缸，也可以独立开关砂石水草造景。在「同缸」或「单条龙鱼」模式下，可以通过「龙鱼品种」切换蓝色龙鱼和朱红龙鱼。
 
 经典鱼类预览打开即铺满视窗。用鼠标或手指拖动画面可旋转视角，点击「重置视角」可回到正面。手机竖持时，画面和控件会一起旋转到横向。点击「全屏」可在浏览器支持时收起地址栏并锁定横屏。水族箱在触屏设备上也可点击「全屏」切到横向布局。
 

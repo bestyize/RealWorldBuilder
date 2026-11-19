@@ -1,12 +1,11 @@
 import * as THREE from 'three';
 import { arowana } from '../fish/arowana/index.js';
-import { blueGuppy } from '../fish/blue-guppy/index.js';
-import { createGuppySchool } from '../fish/blue-guppy/school.js';
-import { soloGuppyRoute } from '../fish/blue-guppy/solo-route.js';
+import { cardinalTetra } from '../fish/cardinal-tetra/index.js';
+import { route as tetraRoute } from '../fish/cardinal-tetra/route.js';
 import { loadFish } from '../fish/load-fish.js';
 import { vermilionArowana } from '../fish/vermilion-arowana/index.js';
 import { installBackgrounds, loadBackground } from './backgrounds.js';
-import { cruiseRoute } from './cruise-route.js';
+import { cruiseRoute, vermilionCruiseDuration } from './cruise-route.js';
 import { installDisplay } from './display.js';
 import { takeEmbeddedData, takeSpeciesModel } from './embedded-data.js';
 import { createTankEnvironment } from './environment.js';
@@ -32,6 +31,7 @@ const entryScene = scenePresets.get(new URLSearchParams(location.search).get('sc
 const cameraDistance = 11;
 const viewHeight = 4.5;
 const cameraFov = THREE.MathUtils.radToDeg(2 * Math.atan(viewHeight / (2 * cameraDistance)));
+const TETRA_SCHOOL_COUNT = 6;
 const motionTime = { value: 0 };
 const floorLight = { value: new THREE.Vector2(0.5, 0.5) };
 
@@ -117,10 +117,10 @@ async function start() {
   const backgrounds = JSON.parse(takeEmbeddedData('#background-presets'));
   const backgroundId = overlay ? 'transparent' : (entryScene?.background ?? backgrounds[0].id);
   const initialBackground = backgrounds.find(background => background.id === backgroundId);
-  const [createArowana, createVermilion, createGuppy, backdrop] = await Promise.all([
+  const [createArowana, createVermilion, createTetra, backdrop] = await Promise.all([
     loadFish(arowana, takeSpeciesModel(arowana.id)),
     overlay ? null : loadFish(vermilionArowana, takeSpeciesModel(vermilionArowana.id)),
-    overlay ? null : loadFish(blueGuppy, takeSpeciesModel(blueGuppy.id)),
+    overlay ? null : loadFish(cardinalTetra, takeSpeciesModel(cardinalTetra.id)),
     loadBackground(initialBackground),
   ]);
   const textureAnisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
@@ -134,16 +134,11 @@ async function start() {
 
   const dragons = new Map([[arowana.id, createArowana(cruiseRoute)]]);
   if (createVermilion) {
-    dragons.set(vermilionArowana.id, createVermilion(cruiseRoute, { scale: .9, duration: 32 }));
+    dragons.set(vermilionArowana.id, createVermilion(cruiseRoute, { scale: .9, duration: vermilionCruiseDuration }));
   }
   const residents = [...dragons.values()];
-  let solo;
-  let school;
-  if (createGuppy) {
-    solo = createGuppy(soloGuppyRoute);
-    school = createGuppySchool(createGuppy, new THREE.Group());
-    residents.push(solo, school);
-  }
+  const tetras = createTetra?.(tetraRoute, { count: TETRA_SCHOOL_COUNT, duration: 36, feedable: true });
+  if (tetras) residents.push(tetras);
   for (const { object } of residents) {
     object.traverse(mesh => {
       if (!mesh.isMesh) return;
@@ -168,24 +163,21 @@ async function start() {
     const mixed = fish === 'mixed';
     const showDragon = mixed || fish === 'arowana';
     for (const [id, dragon] of dragons) dragon.object.visible = showDragon && id === arowanaSpecies;
-    if (solo) solo.object.visible = fish === 'guppy';
-    if (school) {
-      school.object.visible = mixed || fish === 'school';
-      // Scale both the shoal and its route to suit the other residents.
-      const scale = mixed ? 0.49 : 0.69;
-      school.object.scale.setScalar(scale);
-      school.object.position.set(0, mixed ? -1.22 : -0.18, mixed ? -0.34 : -0.35);
-      // With the foreground enabled, raise the shoal above the sand. In a
-      // mixed tank the rock and plants can still briefly hide a passing fish.
-      if (aquascape) school.object.position.y += mixed ? 0.28 : 0.36;
+    if (tetras) {
+      const single = fish === cardinalTetra.id;
+      tetras.object.visible = single || mixed || fish === 'school';
+      tetras.setCount(single ? 1 : TETRA_SCHOOL_COUNT);
+      tetras.object.scale.setScalar(mixed ? .47 : .64);
+      tetras.object.position.set(0, mixed ? -1.16 : -.15, mixed ? -.25 : -.29);
+      // Give the shoal room below the dragon and above the foreground rocks.
+      if (aquascape) tetras.object.position.y += mixed ? .28 : .32;
     }
     const cameraHeight = mixed ? -0.31 : 0.05;
-    const distance = fish === 'guppy' ? 12.0 : cameraDistance;
-    camera.position.set(0, cameraHeight, distance);
+    camera.position.set(0, cameraHeight, cameraDistance);
     camera.lookAt(0, cameraHeight, 0);
     aquascapeLayer.hidden = !aquascape;
     aquarium.residents = residents.filter(fish => fish.object.visible);
-    aquarium.swimmers = aquarium.residents.flatMap(fish => fish.members ?? fish);
+    aquarium.swimmers = aquarium.residents.flatMap(fish => fish.getFeedingMembers?.() ?? fish);
     redraw();
   }
 
@@ -259,9 +251,12 @@ function resize() {
 
 function draw(time) {
   if (!aquarium) return;
-  const { renderer, scene, camera, residents, swimmers, feeding } = aquarium;
+  const { renderer, scene, camera, residents, feeding } = aquarium;
   motionTime.value = time;
-  for (const fish of swimmers) fish.update(time, feeding?.swimFor(fish, time));
+  for (const fish of residents) {
+    if (fish.getFeedingMembers) fish.update(time, feeding?.swimFor);
+    else fish.update(time, feeding?.swimFor(fish, time));
+  }
   feeding?.update(time);
   const fishPosition = residents[0]?.getMotion?.()?.center;
   if (fishPosition) floorLight.value.set(0.5 + fishPosition.x / 8, 0.5 + fishPosition.z / 6);
@@ -398,7 +393,12 @@ function addMovingWaterLight(material, anisotropy) {
     shader.vertexShader = 'varying vec3 waterPosition;\n' + shader.vertexShader;
     shader.vertexShader = shader.vertexShader.replace(
       '#include <project_vertex>',
-      '#include <project_vertex>\nwaterPosition = (modelMatrix * vec4(transformed, 1.0)).xyz;'
+      `#include <project_vertex>
+      vec4 waterVertex = vec4(transformed, 1.0);
+      #ifdef USE_INSTANCING
+        waterVertex = instanceMatrix * waterVertex;
+      #endif
+      waterPosition = (modelMatrix * waterVertex).xyz;`
     );
     shader.fragmentShader = 'uniform float waterTime; varying vec3 waterPosition;\n' + shader.fragmentShader;
     shader.fragmentShader = shader.fragmentShader.replace('#include <opaque_fragment>', /* glsl */ `

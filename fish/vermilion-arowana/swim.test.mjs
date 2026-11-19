@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { Scene, Vector3 } from 'three';
 import { createFeeding } from '../../src/feeding.js';
-import { cruiseRoute } from '../../src/cruise-route.js';
+import { cruiseRoute, vermilionCruiseDuration } from '../../src/cruise-route.js';
 import { loadFish } from '../load-fish.js';
 import { vermilionArowana } from './index.js';
 
@@ -12,7 +12,7 @@ test('the mouth levels at the food before biting on a climb or dive', async () =
   globalThis.createImageBitmap = async () => ({ width: 1, height: 1 });
   const bytes = await readFile(new URL('./vermilion-arowana.glb', import.meta.url));
   const makeFish = await loadFish(vermilionArowana, Uint8Array.from(bytes).buffer);
-  const fish = makeFish(cruiseRoute, { scale: .9, duration: 32 });
+  const fish = makeFish(cruiseRoute, { scale: .9, duration: vermilionCruiseDuration });
   const scene = new Scene();
   scene.add(fish.object);
   const feeding = createFeeding(scene, () => {});

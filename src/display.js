@@ -12,7 +12,8 @@ export function installDisplay(applyDisplay, initialDisplay) {
   } catch {
     // Use the default selection when browser storage is unavailable.
   }
-  const choice = choices.find(input => input.value === restored?.fish);
+  const savedFish = restored?.fish === 'guppy' ? 'cardinal-tetra' : restored?.fish;
+  const choice = choices.find(input => input.value === savedFish);
   const dragon = species.find(input => input.value === restored?.arowanaSpecies);
   if (choice) choice.checked = true;
   if (dragon) dragon.checked = true;

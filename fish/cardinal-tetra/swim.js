@@ -1,4 +1,6 @@
-import { DynamicDrawUsage, InstancedBufferAttribute, InstancedMesh, MathUtils, Matrix4, Quaternion, Vector3 } from 'three';
+import { DynamicDrawUsage, InstancedBufferAttribute, InstancedMesh, MathUtils, Matrix4, Object3D, Quaternion, Vector3 } from 'three';
+import { createSwimRoute } from '../swim-route.js';
+
 const TAU = Math.PI * 2;
 export const SCHOOL_LIMIT = 10;
 // Deliberately irregular along/side/height offsets, not a marching grid.
@@ -21,7 +23,7 @@ float tetraBend(float x) {
 }
 `;
 /** One geometry and one material per primitive, ten GPU instances, no vertex uploads per frame. */
-export function createSwimmer(scene, route, { duration=42, count=1, phaseOffset=0 }={}) {
+export function createSwimmer(scene, route, { duration=42, count=1, phaseOffset=0, feedable=false }={}) {
  if(!(duration>0)||!Number.isFinite(duration)) throw new Error('Tetra duration must be positive');
  if(!Number.isInteger(count)||count<1||count>SCHOOL_LIMIT) throw new Error('Tetra count must be 1–10');
  const schoolCount=count, uniform={value:0}, parts=[], materials=new Map();
@@ -56,27 +58,87 @@ export function createSwimmer(scene, route, { duration=42, count=1, phaseOffset=
  const start=route.samples[route.startIndex]?.distance??0;
  let activeCount=count;
  const states=MEMBERS.map(()=>({position:new Vector3(),heading:new Vector3(),scale:1}));
- function update(seconds) {
+
+ function followGuide(index, progress, loose) {
+  const [along, lane, height, , phase] = MEMBERS[index];
+  const angle = TAU * progress;
+  const variation = progress + .012 * Math.sin(2 * angle + phase * TAU);
+  route.sample(start + route.length * variation + (loose ? along : 0), pos, heading);
+  if (loose) {
+   side.set(-heading.z, 0, heading.x).normalize();
+   pos.addScaledVector(side, lane + .12 * Math.sin(2 * angle + phase * TAU));
+   pos.y += height + .10 * Math.sin(3 * angle - phase * TAU);
+  }
+ }
+
+ function feedingMember(index, loose) {
+  // Give the planner the full loop of this individual, including the school's drift.
+  const waypoints = Array.from({ length: 96 }, (_, step) => {
+   followGuide(index, step / 96, loose);
+   return pos.toArray();
+  });
+  const track = createSwimRoute(waypoints, 0, { samplesPerWaypoint: 6 });
+  const steps = track.samples.length - 1;
+  const size = loose ? MEMBERS[index][3] : 1;
+  const object = new Object3D();
+  const snout = new Vector3(1.28, .045, 0);
+  scene.add(object);
+  return {
+   object, route: track, duration, mouthOffset: snout.clone().multiplyScalar(size), trail: 1.82 * size,
+   getMouth: target => object.localToWorld(target.copy(snout)),
+   sampleCruise(seconds, out) {
+    const frame = MathUtils.euclideanModulo(seconds / duration + phaseOffset, 1) * steps;
+    const index = Math.min(steps - 1, Math.floor(frame));
+    const a = track.samples[index].distance;
+    const b = track.samples[index + 1].distance;
+    out.distance = MathUtils.lerp(a, b, frame - index);
+    out.speed = (b - a) * steps / duration;
+   },
+  };
+ }
+
+ const solo = feedable ? [feedingMember(0, false)] : undefined;
+ const school = feedable && count > 1 ? Array.from({ length: count }, (_, i) => feedingMember(i, true)) : undefined;
+ const getFeedingMembers = () => activeCount === 1 ? solo : school;
+ const pace = {};
+
+ function update(seconds, swimFor) {
   if(!Number.isFinite(seconds))throw new Error('Tetra time must be finite');
-  const p=MathUtils.euclideanModulo(seconds/duration+phaseOffset,1), a=TAU*p;
+  const p=MathUtils.euclideanModulo(seconds/duration+phaseOffset,1);
   uniform.value=TAU*Math.round(duration*1.65)*p;
   motion.center.set(0,0,0);
+  motion.speed = 0;
+  const members = getFeedingMembers();
+  const loose = activeCount > 1;
   for(let i=0;i<activeCount;i++) {
-   const [along,lane,height,size,phase]=MEMBERS[i];
-   const loose=activeCount>1;
-   const progress=p+.012*Math.sin(2*a+phase*TAU);
-   route.sample(start+route.length*progress+(loose?along:0),pos,heading);
+   const member = members?.[i];
+   if (member) {
+    member.sampleCruise(seconds, pace);
+    const swim = swimFor?.(member, seconds);
+    const sample = swim?.sample ?? member.route.sample;
+    sample(swim?.distance ?? pace.distance, pos, heading);
+    motion.speed += swim?.speed ?? pace.speed;
+   } else {
+    followGuide(i, p, loose);
+    motion.speed += route.length / duration;
+   }
    side.set(-heading.z,0,heading.x).normalize();
-   if(loose){pos.addScaledVector(side,lane+.12*Math.sin(2*a+phase*TAU));pos.y+=height+.10*Math.sin(3*a-phase*TAU);}
    up.crossVectors(side,heading).normalize();
    rotation.setFromRotationMatrix(matrix.makeBasis(heading,up,side));
-   const s=loose?size:1;scale.setScalar(s);matrix.compose(pos,rotation,scale);
+   const s=loose?MEMBERS[i][3]:1;scale.setScalar(s);matrix.compose(pos,rotation,scale);
+   if (member) {
+    member.object.position.copy(pos);
+    member.object.quaternion.copy(rotation);
+    member.object.scale.copy(scale);
+   }
    for(const mesh of parts)mesh.setMatrixAt(i,matrix);
    states[i].position.copy(pos);states[i].heading.copy(heading);states[i].scale=s;
    motion.center.add(pos);
   }
   motion.center.divideScalar(activeCount);motion.heading.copy(states[0].heading);
-  motion.speed=route.length/duration;motion.phase=uniform.value;
+  if (members) scene.localToWorld(motion.center);
+  motion.speed /= activeCount;
+  motion.phase=uniform.value;
   for(const mesh of parts)mesh.instanceMatrix.needsUpdate=true;
   return motion;
  }
@@ -85,7 +147,7 @@ export function createSwimmer(scene, route, { duration=42, count=1, phaseOffset=
   activeCount=next;for(const part of parts)part.count=next;
  }
  update(0);
- return {update,getMotion:()=>motion,duration,setCount,getCount:()=>activeCount,
+ return {update,getMotion:()=>motion,duration,setCount,getCount:()=>activeCount,getFeedingMembers,
   getSchoolState:()=>states.slice(0,activeCount),
   budget:{maxInstances:SCHOOL_LIMIT,meshPrimitives:parts.length,geometryCopies:parts.length,materialCopies:materials.size},
  };

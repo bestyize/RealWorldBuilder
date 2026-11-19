@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { BoxGeometry, Group, Mesh, MeshStandardMaterial } from 'three';
+import { BoxGeometry, Group, Mesh, MeshStandardMaterial, Vector3 } from 'three';
+import { createFeeding } from '../../src/feeding.js';
 import { createSwimmer, bendAngle, SCHOOL_LIMIT } from './swim.js';
 import { route } from './route.js';
 function fixture(){const scene=new Group(),geometry=new BoxGeometry(2.6,.6,.34),material=new MeshStandardMaterial();for(const name of ['CardinalBody','CardinalTail']){const mesh=new Mesh(geometry,material);mesh.name=name;scene.add(mesh);}return{scene,geometry,material};}
@@ -32,3 +33,39 @@ test('GPU shader injection and CPU bending reference keep head stable',()=>{
  assert.equal(bendAngle(.8,1),0);assert.ok(Math.abs(bendAngle(-1.8,2))<=.14);assert.notEqual(bendAngle(-1.8,1),bendAngle(-1.8,2));
 });
 test('reject invalid counts and times',()=>{assert.throws(()=>createSwimmer(fixture().scene,route,{count:11}),/1–10/);assert.throws(()=>createSwimmer(fixture().scene,route,{duration:0}),/positive/);const f=createSwimmer(fixture().scene,route);assert.throws(()=>f.update(NaN),/finite/);});
+
+test('six instanced tetras eat separate crumbs and rejoin their routes', () => {
+ const { scene: group } = fixture();
+ const tank = new Group();
+ tank.add(group);
+ group.scale.setScalar(.64);
+ group.position.set(0, .17, -.29);
+ const fish = createSwimmer(group, route, { count: 6, duration: 36, feedable: true });
+ const feeding = createFeeding(tank, () => {});
+ const members = fish.getFeedingMembers();
+ const crumbs = tank.children.at(-1).children.slice(0, members.length);
+ const launch = 7.5;
+ fish.update(launch);
+ assert.equal(members.length, 6);
+ assert.equal(feeding.drop(new Vector3(1.9, -.52, .65), launch, members), true);
+ const eaten = new Set();
+ let time = launch;
+ for (let frame = 0; frame < 1800 && feeding.active; frame++) {
+  time = launch + frame / 60;
+  fish.update(time, feeding.swimFor);
+  feeding.update(time);
+  for (const crumb of crumbs) {
+   if (!crumb.visible && crumb.scale.x > .005) eaten.add(crumb);
+  }
+ }
+ assert.equal(eaten.size, 6);
+ assert.equal(feeding.active, false);
+ const settled = snapshot(fish);
+ fish.update(time);
+ assert.deepEqual(snapshot(fish), settled);
+ fish.setCount(1);
+ assert.equal(fish.getFeedingMembers().length, 1);
+ assert.notEqual(fish.getFeedingMembers()[0], members[0]);
+ fish.setCount(6);
+ assert.equal(fish.getFeedingMembers(), members);
+});

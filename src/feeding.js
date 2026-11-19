@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import { blueGuppy } from '../fish/blue-guppy/index.js';
+import { arowana } from '../fish/arowana/index.js';
+import { vermilionArowana } from '../fish/vermilion-arowana/index.js';
 import { planFeedingSwim } from './feeding-route.js';
 
 const { smoothstep } = THREE.MathUtils;
@@ -9,6 +10,10 @@ const crumbOffsets = [
   [-.36, -.04, .02], [.35, -.13, -.11], [-.11, .13, -.32],
   [.11, -.27, .21], [-.49, -.23, -.21], [.53, .06, .04],
 ];
+
+function eatsPellets({ object }) {
+  return object.name === arowana.id || object.name === vermilionArowana.id;
+}
 
 function finishFoodGeometry(geometry, base, toasted) {
   const positions = geometry.getAttribute('position');
@@ -77,7 +82,7 @@ export function createFeeding(scene, onActiveChange) {
   function drop(origin, time, fish) {
     if (round || !fish.length) return false;
     const center = origin.clone().clamp(safeMin, safeMax);
-    const hasDragon = fish.some(swimmer => swimmer.object.name !== blueGuppy.id);
+    const hasDragon = fish.some(eatsPellets);
     const schooling = fish.length > 1;
     const servings = [];
     const crumbs = crumbOffsets.map(position => new THREE.Vector3(...position));
@@ -96,7 +101,7 @@ export function createFeeding(scene, onActiveChange) {
     }
 
     for (const [index, swimmer] of fish.entries()) {
-      const coarse = swimmer.object.name !== blueGuppy.id;
+      const coarse = eatsPellets(swimmer);
       const target = center.clone();
       if (coarse) target.y += .04;
       else {

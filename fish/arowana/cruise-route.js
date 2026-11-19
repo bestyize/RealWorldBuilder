@@ -1,10 +1,10 @@
 import { createSwimRoute } from '../swim-route.js';
 
-export function createArowanaCruiseRoute({ halfWidth, halfDepth, centerY, centerZ = 0 }) {
+export function createArowanaCruiseWaypoints({ halfWidth, halfDepth, centerY, centerZ = 0 }) {
   const count = 32;
   // The two lobes turn in opposite directions. Their crossing passes stay
   // at different heights, so the fish can swim cleanly through the middle.
-  const waypoints = Array.from({ length: count }, (_, i) => {
+  return Array.from({ length: count }, (_, i) => {
     const angle = 2 * Math.PI * i / count;
     const across = Math.sin(angle);
     return [
@@ -13,7 +13,11 @@ export function createArowanaCruiseRoute({ halfWidth, halfDepth, centerY, center
       centerZ - halfDepth * Math.sin(2 * angle),
     ];
   });
-  return createSwimRoute(waypoints, .09 * count);
+}
+
+export function createArowanaCruiseRoute(options) {
+  const waypoints = createArowanaCruiseWaypoints(options);
+  return createSwimRoute(waypoints, .09 * waypoints.length);
 }
 
 export function createArowanaPreviewRoute() {
