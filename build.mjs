@@ -19,6 +19,7 @@ function bundleScript(entry) {
     bundle: true,
     format: 'iife',
     minify: true,
+    loader: { '.jpg': 'dataurl' },
     legalComments: 'inline',
     write: false,
   }).then(bundle => bundle.outputFiles[0].text.replace(/<\/script/gi, '<\\/script'));
@@ -56,12 +57,11 @@ async function writePreview(species, name, model, entry = 'preview') {
   await writeFile(file(`${directory}/${entry}.html`), embedPlayer(template, script, { 'model-data': model }));
 }
 
-async function writeRabbitPreview() {
-  const directory = './objects/plush-rabbit';
+async function writeStandalonePreview(directory, modelName) {
   const [template, script, model] = await Promise.all([
     readFile(file(`${directory}/preview-template.html`), 'utf8'),
     bundleScript(`${directory}/preview.js`),
-    readFile(file(`${directory}/plush-rabbit.glb`)),
+    readFile(file(`${directory}/${modelName}`)),
   ]);
   await writeFile(file(`${directory}/preview.html`), embedPlayer(template, script, { 'model-data': model }));
 }
@@ -75,6 +75,7 @@ await Promise.all([
   writePreview(arowana, '龙鱼', arowanaModel),
   writePreview(blueGuppy, '蓝扇尾孔雀鱼', guppyModel),
   writePreview(blueGuppy, '孔雀鱼群', guppyModel, 'school-preview'),
-  writeRabbitPreview(),
+  writeStandalonePreview('./objects/plush-rabbit', 'plush-rabbit.glb'),
+  writeStandalonePreview('./games/whale-girl', 'dafeiyu-maid.glb'),
 ]);
 
