@@ -84,7 +84,8 @@ export function createSwimmer(scene, route, { duration=42, count=1, phaseOffset=
   const snout = new Vector3(1.28, .045, 0);
   scene.add(object);
   return {
-   object, route: track, duration, mouthOffset: snout.clone().multiplyScalar(size), trail: 1.82 * size,
+   object, route: track, duration, mouthOffset: snout.clone().multiplyScalar(size),
+   trail: 1.82 * size, clearanceRadius: .66 * size,
    getMouth: target => object.localToWorld(target.copy(snout)),
    sampleCruise(seconds, out) {
     const frame = MathUtils.euclideanModulo(seconds / duration + phaseOffset, 1) * steps;

@@ -155,13 +155,14 @@ function travel(elapsed, duration, length, entrySpeed, exitSpeed, out) {
 }
 
 export function planFeedingSwim(fish, food, launch, {
-  delay = 0, speed, turnRadius, tailDrive = false, cruiseOffset = 0,
+  delay = 0, speed, turnRadius, tailDrive = false, cruiseOffset = 0, clearance,
 }) {
-  const { object, route, sampleCruise, mouthOffset, trail } = fish;
+  const { object, route, sampleCruise, mouthOffset } = fish;
   const { parent } = object;
   parent.updateWorldMatrix(true, false);
   const scale = parent.matrixWorld.getMaxScaleOnAxis();
-  const space = { matrix: parent.matrixWorld, scale, verticalRampScale: fish.verticalRampScale ?? 1 };
+  const verticalRampScale = clearance ? 2 : fish.verticalRampScale ?? 1;
+  const space = { matrix: parent.matrixWorld, scale, verticalRampScale };
   const radius = turnRadius / scale;
   const runIn = Math.min(.36, .25 / scale);
   const runOut = Math.max(.30 / scale, (fish.lead ?? 0) + .10);
@@ -169,7 +170,9 @@ export function planFeedingSwim(fish, food, launch, {
   const target = parent.worldToLocal(food.clone());
   const point = new Vector3();
   const candidates = [];
-  for (const wait of [0, .75, 1.7]) {
+  const waits = clearance ? [0, .75, 1.7, 2.9, 4.3, 6] : [0, .75, 1.7];
+  for (const wait of waits) {
+    const approaches = [];
     const start = launch + delay + wait;
     const startPace = {};
     sampleCruise(start + cruiseOffset, startPace);
@@ -185,21 +188,23 @@ export function planFeedingSwim(fish, food, launch, {
       bite.y -= mouthOffset.y;
       const approachEnd = bite.clone().addScaledVector(aim, -runIn);
       const exitStart = bite.clone().addScaledVector(aim, runOut);
-      const clearance = 15 * outOfBounds(point.copy(exitStart).applyMatrix4(space.matrix));
+      const edgePenalty = 15 * outOfBounds(point.copy(exitStart).applyMatrix4(space.matrix));
       const curve = bestLeg(from, heading, approachEnd, aim, radius, Infinity, space);
       if (!curve) continue;
       const biteDistance = curve.length + runIn;
       const approachTime = Math.max(.85, .12 + scale * biteDistance / speed);
       const biteTime = start + approachTime;
-      const score = curve.score + clearance + 1.25 * wait;
-      candidates.push({ curve, aim, approachEnd, exitStart, startPace, start, heading,
+      const score = curve.score + edgePenalty + 1.25 * wait;
+      approaches.push({ curve, aim, approachEnd, exitStart, startPace, start, heading,
         biteDistance, approachTime, biteTime, score });
     }
+    candidates.push(...(clearance
+      ? approaches.sort((a, b) => a.score - b.score).slice(0, 6)
+      : approaches));
   }
 
-  candidates.sort((a, b) => a.score - b.score);
-  let attack;
-  let exit;
+  const attacks = clearance ? candidates : candidates.sort((a, b) => a.score - b.score).slice(0, 8);
+  const choices = [];
   function joinAt(time) {
     const pace = {};
     sampleCruise(time, pace);
@@ -214,7 +219,7 @@ export function planFeedingSwim(fish, food, launch, {
   const nearbyJoins = tailDrive && Array.from({ length: 32 }, (_, index) =>
     joinAt(launch + cruiseOffset + index * fish.duration / 32));
   const returnTimes = [1.6, 2.1, 2.7, 3.4, 4.2, 5.1, 6.2, 7.6, 9];
-  for (const candidate of candidates.slice(0, 8)) {
+  for (const candidate of attacks) {
     const joins = nearbyJoins || returnTimes.map(seconds =>
       ({ ...joinAt(candidate.biteTime + seconds + cruiseOffset), seconds }));
     for (const join of joins) {
@@ -224,18 +229,30 @@ export function planFeedingSwim(fish, food, launch, {
       if (!curve) continue;
       const seconds = join.seconds ?? Math.max(1.48, (curve.length + runOut) * scale / (.73 * speed) + .17);
       const score = candidate.score + .55 * curve.score + .59 * seconds;
-      if (!exit || score < exit.score) {
-        attack = candidate;
-        exit = { curve, join, seconds, score };
-      }
+      choices.push({ attack: candidate, curve, join, seconds, score });
     }
   }
-  if (!attack) return;
+  choices.sort((a, b) => a.score - b.score);
+  const alternatives = new Map();
+  for (const exit of choices) {
+    const path = feedingPath(fish, exit.attack, exit, { launch, scale, runOut, speed, tailDrive, cruiseOffset });
+    if (!clearance || clearance.keepsClear(path)) return path;
+    if (alternatives.size < 4 && !alternatives.has(exit.attack)) alternatives.set(exit.attack, path);
+  }
+  for (const path of alternatives.values()) {
+    const detour = clearance.bypass(path);
+    if (detour) return detour;
+  }
+}
+
+function feedingPath({ route, sampleCruise, trail, duration }, attack, exit, {
+  launch, scale, runOut, speed, tailDrive, cruiseOffset,
+}) {
   const { biteDistance, approachTime, biteTime, start, startPace } = attack;
 
   const exitTime = biteTime + exit.seconds;
-  const resumeOffset = nearbyJoins
-    ? wrap(exit.join.time - exitTime + fish.duration / 2, fish.duration) - fish.duration / 2
+  const resumeOffset = tailDrive
+    ? wrap(exit.join.time - exitTime + duration / 2, duration) - duration / 2
     : cruiseOffset;
   const straightEnd = biteDistance + runOut;
   const length = straightEnd + exit.curve.length;

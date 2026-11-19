@@ -1,9 +1,10 @@
 import * as THREE from 'three';
 import { arowana } from '../fish/arowana/index.js';
 import { vermilionArowana } from '../fish/vermilion-arowana/index.js';
+import { createFeedingClearance } from './feeding-clearance.js';
 import { planFeedingSwim } from './feeding-route.js';
 
-const { smoothstep } = THREE.MathUtils;
+const { clamp, smoothstep } = THREE.MathUtils;
 const safeMin = new THREE.Vector3(-2.83, -.69, -.50);
 const safeMax = new THREE.Vector3(2.83, 1.53, .80);
 const crumbOffsets = [
@@ -13,6 +14,14 @@ const crumbOffsets = [
 
 function eatsPellets({ object }) {
   return object.name === arowana.id || object.name === vermilionArowana.id;
+}
+
+function offsetCruise(fish, time, offset, swim) {
+  swim.cruiseTime = time + offset;
+  fish.sampleCruise(swim.cruiseTime, swim.pace);
+  swim.distance = swim.pace.distance;
+  swim.speed = swim.pace.speed;
+  return swim;
 }
 
 function finishFoodGeometry(geometry, base, toasted) {
@@ -82,10 +91,12 @@ export function createFeeding(scene, onActiveChange) {
   function drop(origin, time, fish) {
     if (round || !fish.length) return false;
     const center = origin.clone().clamp(safeMin, safeMax);
-    const hasDragon = fish.some(eatsPellets);
+    const mixedDragon = fish.length > 1 && fish.find(eatsPellets);
+    const swimmers = mixedDragon ? [mixedDragon, ...fish.filter(swimmer => swimmer !== mixedDragon)] : fish;
     const schooling = fish.length > 1;
     const servings = [];
     const crumbs = crumbOffsets.map(position => new THREE.Vector3(...position));
+    let clearanceFor;
 
     function scatter(target, coarse, index) {
       const grain = grains[servings.length];
@@ -100,28 +111,41 @@ export function createFeeding(scene, onActiveChange) {
       return serving;
     }
 
-    for (const [index, swimmer] of fish.entries()) {
+    for (const [index, swimmer] of swimmers.entries()) {
       const coarse = eatsPellets(swimmer);
       const target = center.clone();
       if (coarse) target.y += .04;
       else {
-        if (hasDragon) {
-          target.y -= .30;
-          target.z -= .52;
+        if (mixedDragon) {
+          target.y -= .43;
+          target.z -= .84;
         }
         // Closest available crumb first, so neighbours spread out as they approach.
         swimmer.getMouth(offset).sub(target);
         const order = crumbs.reduce((best, crumb, i) =>
           offset.distanceToSquared(crumb) < offset.distanceToSquared(crumbs[best]) ? i : best, 0);
         target.add(crumbs.splice(order, 1)[0]);
+        if (mixedDragon) target.y = clamp(target.y, -1.25, .65);
       }
-      const serving = scatter(target, coarse, index);
-      const path = planFeedingSwim(swimmer, target, time, coarse
+      const clearance = swimmer.clearanceRadius ? clearanceFor?.(swimmer) : undefined;
+      const options = coarse
         ? { delay: .42, speed: 1.0, turnRadius: .98, tailDrive: true,
             cruiseOffset: cruises.get(swimmer)?.offset ?? 0 }
-        : { delay: .18 + .15 * index, speed: 1.08, turnRadius: schooling ? .37 : .54 });
+        : { delay: clearance ? .06 + .075 * index : .18 + .15 * index,
+            speed: 1.08, turnRadius: schooling ? .37 : .54, clearance };
+      let path = planFeedingSwim(swimmer, target, time, options);
+      if (!path && clearance) {
+        // A crumb can sink farther behind the dragon if the first approach is blocked.
+        const alternate = target.clone().set(target.x * .84, Math.max(-1.25, target.y - .16), target.z - .44);
+        path = planFeedingSwim(swimmer, alternate, time, { ...options, delay: .02 });
+        if (path) target.copy(alternate);
+      }
+      if (path?.bitePoint) target.copy(path.bitePoint);
+      const serving = scatter(target, coarse, index);
       if (!path) {
         serving.expires = time + 2.7;
+        const detour = clearance?.bypass();
+        if (detour) paths.set(swimmer, { path: detour });
         continue;
       }
       if (coarse) {
@@ -136,9 +160,22 @@ export function createFeeding(scene, onActiveChange) {
       serving.path = path;
       serving.expires = path.biteTime + .90;
       serving.biteRadius = coarse ? serving.size : .09;
-      if (coarse) serving.meal = { biteTime: path.biteTime };
+      if (coarse) {
+        const meal = serving.meal = { biteTime: path.biteTime };
+        if (swimmer === mixedDragon) {
+          const cruise = { pace: {} };
+          clearanceFor = createFeedingClearance(swimmer, seconds => {
+            const swim = path.at(seconds);
+            if (swim) swim.meal = meal;
+            swimmer.update(seconds, swim ?? (path.resumeOffset
+              ? offsetCruise(swimmer, seconds, path.resumeOffset, cruise)
+              : undefined));
+          }, time, path.exitTime + swimmer.trail / .4);
+        }
+      }
       paths.set(swimmer, serving);
     }
+    if (clearanceFor) mixedDragon.update(time, swimFor(mixedDragon, time));
     for (let index = 0; index < 2; index++) {
       const target = center.clone().add(new THREE.Vector3(index ? .18 : -.23, -.14 - index * .09, .04));
       const fleck = scatter(target, false, fish.length + index);
@@ -167,12 +204,7 @@ export function createFeeding(scene, onActiveChange) {
     }
     const cruise = cruises.get(fish);
     if (!cruise) return;
-    const { swim } = cruise;
-    swim.cruiseTime = time + cruise.offset;
-    fish.sampleCruise(swim.cruiseTime, swim.pace);
-    swim.distance = swim.pace.distance;
-    swim.speed = swim.pace.speed;
-    return swim;
+    return offsetCruise(fish, time, cruise.offset, cruise.swim);
   }
 
   function update(time) {
