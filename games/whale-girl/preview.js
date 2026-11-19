@@ -4,11 +4,13 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { takeEmbeddedModel } from '../../src/embedded-data.js';
 import { createRoom, floorLimits, stations } from './room.js';
 import { installEyelids } from './eyelids.js';
+import { keepsakeReader } from './keepsakes.js';
 
 const canvas = document.querySelector('#world');
 const status = document.querySelector('#status');
 const readingButton = document.querySelector('#reading');
 const writingButton = document.querySelector('#writing');
+const shelfButton = document.querySelector('#shelf');
 const viewButtons = document.querySelectorAll('[data-camera]');
 const about = document.querySelector('#about');
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -135,6 +137,11 @@ const messages = {
   reading: '正在窗边读书',
   writing: '正在书桌前写信',
   rise: '合上书，起身',
+  shelfApproach: '正走向书架旁的梯子',
+  climb: '正踩着木梯找书',
+  drawBook: '正在抽出夹着书签的书',
+  found: '书页里夹着一样东西',
+  descend: '正从梯子上下来',
 };
 
 async function enterRoom() {
@@ -165,13 +172,13 @@ async function enterRoom() {
     renderer.render(scene, view.camera);
     return room;
   });
-  const [gltf, { shadow, chime }] = await Promise.all([character, environment]);
+  const [gltf, { shadow, chime, shelfBooks }] = await Promise.all([character, environment]);
   shadow.visible = true;
   actor.add(gltf.scene);
   const mixer = new THREE.AnimationMixer(gltf.scene);
   const parts = [];
   gltf.scene.traverse((part) => parts.push(part));
-  const clips = ['idle', 'walk', stations.seat.clip, stations.desk.clip].map((name) => {
+  const clips = ['idle', 'walk', 'read', stations.seat.clip, stations.desk.clip].map((name) => {
     const clip = THREE.AnimationClip.findByName(gltf.animations, name);
     if (!clip) throw new Error('模型缺少动作 ' + name);
     return clip;
@@ -204,6 +211,22 @@ async function enterRoom() {
   const held = new Set(),
     delta = new THREE.Vector2(),
     direction = new THREE.Vector2();
+  let chosenBook = 0,
+    activeBook = 0,
+    nextBook = 0,
+    pulled = 0,
+    revealed = false;
+  const shelfOrigins = shelfBooks.map((book) => book.position.clone());
+  const reader = keepsakeReader(() => {
+    moveTo(-4.36, -1.48);
+    shelfButton.focus({ preventScroll: true });
+  });
+  function chooseBook(index) {
+    chosenBook = index;
+    visit('shelf');
+  }
+  shelfButton.disabled = false;
+  shelfButton.addEventListener('click', () => chooseBook(nextBook));
   function state(name) {
     if (status.dataset.state === name) return;
     status.dataset.state = name;
@@ -265,16 +288,47 @@ async function enterRoom() {
     if (held.size) keyboardStep();
     delta.subVectors(target, ground);
     const d = delta.length();
-    if (occupied && occupied !== destination) {
-      settled = Math.max(0, settled - dt / 0.36);
-      play('idle');
-      state(occupied === 'seat' ? 'rise' : 'idle');
-      if (!settled) occupied = null;
+    if (occupied && (occupied !== destination || (occupied === 'shelf' && activeBook !== chosenBook))) {
+      const onLadder = occupied === 'shelf';
+      if (onLadder && pulled > 0) pulled = Math.max(0, pulled - dt / 0.42);
+      else settled = Math.max(0, settled - dt / (onLadder ? 1.05 : 0.36));
+      play(onLadder && pulled === 0 ? 'walk' : 'idle');
+      state(onLadder ? 'descend' : occupied === 'seat' ? 'rise' : 'idle');
+      if (!settled) {
+        occupied = null;
+        revealed = false;
+      }
     } else if (d > 0.006) {
       play('walk');
-      state(destination === 'seat' ? 'approach' : destination === 'desk' ? 'deskApproach' : 'walking');
+      state(
+        destination === 'shelf'
+          ? 'shelfApproach'
+          : destination === 'seat'
+            ? 'approach'
+            : destination === 'desk'
+              ? 'deskApproach'
+              : 'walking'
+      );
       turn(Math.atan2(delta.x, delta.y), dt);
       ground.addScaledVector(delta, Math.min(d, 1.65 * dt) / d);
+    } else if (destination === 'shelf') {
+      occupied = 'shelf';
+      activeBook = chosenBook;
+      turn(stations.shelf.yaw, dt);
+      settled = Math.min(1, settled + dt / (1.05 + activeBook * 0.28));
+      if (settled < 1) {
+        play('walk');
+        state('climb');
+      } else {
+        play('read');
+        state(pulled < 1 ? 'drawBook' : 'found');
+        pulled = Math.min(1, pulled + dt / 0.85);
+        if (pulled === 1 && !revealed && !about.open) {
+          revealed = true;
+          nextBook = (activeBook + 1) % reader.count;
+          reader.show(activeBook);
+        }
+      }
     } else if (destination) {
       ground.copy(target);
       occupied = destination;
@@ -288,7 +342,12 @@ async function enterRoom() {
       state('idle');
     }
     actor.position.set(ground.x, 0.008, ground.y);
-    if (occupied) {
+    if (occupied === 'shelf') {
+      const t = THREE.MathUtils.smoothstep(settled, 0, 1);
+      const height = shelfOrigins[activeBook].y - 0.62;
+      actor.position.x -= t * (0.2 + height * 0.18);
+      actor.position.y += t * height;
+    } else if (occupied) {
       const t = THREE.MathUtils.smoothstep(settled, 0, 1),
         p = stations[occupied].pose;
       actor.position.set(
@@ -296,6 +355,11 @@ async function enterRoom() {
         THREE.MathUtils.lerp(0.008, p[1], t),
         THREE.MathUtils.lerp(ground.y, p[2], t)
       );
+    }
+    for (let i = 0; i < shelfBooks.length; i++) {
+      const reach = i === activeBook ? THREE.MathUtils.smoothstep(pulled, 0, 1) : 0;
+      shelfBooks[i].position.x = shelfOrigins[i].x + 0.35 * reach;
+      shelfBooks[i].rotation.z = -0.18 * reach;
     }
     shadow.position.set(actor.position.x, 0.025, actor.position.z + 0.01);
     shadow.material.opacity = occupied === 'seat' ? 0.52 * (1 - settled * 0.84) : 0.52;
@@ -321,6 +385,7 @@ async function enterRoom() {
     pointer = new THREE.Vector2(),
     hit = new THREE.Vector3();
   const floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+  const shelfFace = new THREE.Plane(new THREE.Vector3(1, 0, 0), 5.55);
   const boxes = Object.entries(stations).map(([name, s]) => [
     name,
     new THREE.Box3(new THREE.Vector3(...s.hit[0]), new THREE.Vector3(...s.hit[1])),
@@ -365,7 +430,14 @@ async function enterRoom() {
     const ray = rayAt(event),
       station = stationAt(ray);
     if (station) {
-      visit(station);
+      if (station === 'shelf' && ray.intersectPlane(shelfFace, hit)) {
+        let nearest = 0;
+        for (let i = 1; i < shelfOrigins.length; i++) {
+          if (Math.abs(hit.y - shelfOrigins[i].y - 0.18) < Math.abs(hit.y - shelfOrigins[nearest].y - 0.18))
+            nearest = i;
+        }
+        chooseBook(nearest);
+      } else visit(station);
       return;
     }
     if (!ray.intersectPlane(floorPlane, hit)) return;
@@ -380,7 +452,8 @@ async function enterRoom() {
     moveTo(hit.x, hit.z);
   });
   window.addEventListener('keydown', (event) => {
-    if (about.open || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    if (about.open || reader.open || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)
+      return;
     if (directions[event.key]) {
       event.preventDefault();
       held.add(event.key);
@@ -388,6 +461,7 @@ async function enterRoom() {
     } else if (!event.repeat) {
       if (event.code === 'KeyR') toggleStation('seat');
       if (event.code === 'KeyE') toggleStation('desk');
+      if (event.code === 'KeyB') chooseBook(nextBook);
       if (event.code === 'KeyV') view.toggle();
     }
   });
