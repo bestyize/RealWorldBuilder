@@ -6,6 +6,10 @@ const books = [
     line: '两页航线图之间，露出半截蓝边的硬纸。左下角已经被检票钳咬掉了一口。',
     note: '第一次自己坐船。船摇得好厉害，我还是把给你的那颗糖带到了对岸。',
     signature: '溟月，靠窗的六号座',
+    conversation: [
+      ['那颗糖是给谁的？', '给在码头等我的你呀。我在船上练了一路怎么打招呼，见到你就只记得把糖塞给你，连你好都忘了说。'],
+      ['你还想再去雾岛吗？', '想呀。回程时我才发现，从六号座能看见灯塔的红屋顶。下次你坐靠窗，我来指给你看。'],
+    ],
   },
   {
     title: '浅滩植物志',
@@ -14,6 +18,10 @@ const books = [
     line: '翻到浅滩那一章，她放慢了动作。一枝海草被两条细纸带固定在薄薄的衬纸上。',
     note: '退潮以后，在左脚雨靴里找到的。原来那天跟我回家的，还有一小片海。',
     signature: '溟月，晾在窗边的第三天',
+    conversation: [
+      ['它怎么钻进雨靴的？', '那天我追着一串小螃蟹的脚印走，一脚踩进了潮沟。回家倒雨靴，啪嗒，掉出这么一位乘客。'],
+      ['你怎么把它压得这么平？', '我把它摊在旧信纸上，每天换一张干的。最尖的那片叶子总要翘起来，你看，纸带就是补在那里的。'],
+    ],
   },
   {
     title: '鲸的图画书',
@@ -22,6 +30,10 @@ const books = [
     line: '一张折过两次的小纸片滑到书脊边。她伸手按住它，等你把画展开。',
     note: '这是我。旁边留给你画。',
     signature: '小溟月',
+    conversation: [
+      ['这只鲸就是你吗？', '嗯，看喷水的那两笔！小时候我认定，鲸只要一高兴，就会从头顶冒出一对小辫子。'],
+      ['旁边想让我画什么？', '画你自己呀。会游泳就画在水里，喜欢坐船就画在船上。我把右边那一角留给你了。'],
+    ],
   },
 ];
 
@@ -233,10 +245,14 @@ export function keepsakeReader(onReturn) {
   const card = dialog.querySelector('.slip');
   const caption = dialog.querySelector('.flip-caption');
   const note = dialog.querySelector('.handwritten');
+  const conversation = dialog.querySelector('.conversation');
+  const questions = conversation.querySelector('.questions');
+  const reply = conversation.querySelector('.reply');
   function turn(back) {
     card.dataset.back = String(back);
     card.setAttribute('aria-pressed', String(back));
     note.hidden = !back;
+    if (back) conversation.hidden = false;
     caption.textContent = back ? '翻回正面' : '翻到背面';
   }
   card.onclick = () => turn(card.dataset.back !== 'true');
@@ -248,6 +264,21 @@ export function keepsakeReader(onReturn) {
     },
     show(index) {
       const current = books[index];
+      conversation.hidden = true;
+      reply.textContent = '';
+      questions.replaceChildren(...current.conversation.map(([question, answer]) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = question;
+        button.setAttribute('aria-pressed', 'false');
+        button.onclick = () => {
+          for (const choice of questions.children) {
+            choice.setAttribute('aria-pressed', String(choice === button));
+          }
+          reply.textContent = '溟月说：“' + answer + '”';
+        };
+        return button;
+      }));
       dialog.querySelector('h2').textContent = current.title;
       dialog.querySelector('.leaf').textContent = '第' + current.leaf + '页';
       dialog.querySelector('.find-line').textContent = current.line;

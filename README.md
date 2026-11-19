@@ -2,7 +2,7 @@
 
 ## 目录导航
 
-[主水族箱](https://bestyize.github.io/RealWorldBuilder/aquarium.html) · [疏花草甸](https://bestyize.github.io/RealWorldBuilder/meadow.html) · [在线展厅](https://bestyize.github.io/RealWorldBuilder/index.html) · [图文资产总览](https://bestyize.github.io/RealWorldBuilder/asset-packs.html) · [资产包格式与重建](docs/asset-packs.md) · [地表材质](materials/garden-ground/README.md) · [背景素材](#背景素材)
+[主水族箱](https://bestyize.github.io/RealWorldBuilder/aquarium.html) · [疏花草甸](https://bestyize.github.io/RealWorldBuilder/meadow.html) · [潮汐书房](https://bestyize.github.io/RealWorldBuilder/games/whale-girl/preview.html) · [在线展厅](https://bestyize.github.io/RealWorldBuilder/index.html) · [图文资产总览](https://bestyize.github.io/RealWorldBuilder/asset-packs.html) · [资产包格式与重建](docs/asset-packs.md) · [地表材质](materials/garden-ground/README.md) · [背景素材](#背景素材)
 
 | 分类 | 资产包说明 | Pages 在线预览 |
 |---|---|---|

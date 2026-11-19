@@ -5,6 +5,7 @@ import { takeEmbeddedModel } from '../../src/embedded-data.js';
 import { createRoom, floorLimits, stations } from './room.js';
 import { installEyelids } from './eyelids.js';
 import { keepsakeReader } from './keepsakes.js';
+import { storyOpening } from './opening.js';
 
 const canvas = document.querySelector('#world');
 const status = document.querySelector('#status');
@@ -14,6 +15,9 @@ const shelfButton = document.querySelector('#shelf');
 const viewButtons = document.querySelectorAll('[data-camera]');
 const about = document.querySelector('#about');
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const actor = new THREE.Group();
+actor.rotation.y = 0.17;
+const opening = storyOpening(canvas, actor);
 document.querySelector('#credits').addEventListener('click', () => about.showModal());
 
 function lightRoom(scene) {
@@ -129,6 +133,7 @@ function roomCamera(canvas, renderer, actor) {
 
 const directions = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
 const messages = {
+  opening: '正在播放书房序幕',
   idle: '鲸鱼娘在书房里歇脚',
   walking: '正在散步',
   approach: '正走向窗边的长椅',
@@ -158,9 +163,7 @@ async function enterRoom() {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color('#a2aec7');
   lightRoom(scene);
-  const actor = new THREE.Group();
   actor.scale.setScalar(0.84);
-  actor.rotation.y = 0.17;
   const ground = new THREE.Vector2(-0.65, 1.5),
     target = ground.clone();
   actor.position.set(ground.x, 0.008, ground.y);
@@ -228,6 +231,7 @@ async function enterRoom() {
   shelfButton.disabled = false;
   shelfButton.addEventListener('click', () => chooseBook(nextBook));
   function state(name) {
+    if (opening.active) name = 'opening';
     if (status.dataset.state === name) return;
     status.dataset.state = name;
     status.textContent = messages[name];
@@ -452,7 +456,7 @@ async function enterRoom() {
     moveTo(hit.x, hit.z);
   });
   window.addEventListener('keydown', (event) => {
-    if (about.open || reader.open || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)
+    if (opening.active || about.open || reader.open || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)
       return;
     if (directions[event.key]) {
       event.preventDefault();
@@ -476,7 +480,8 @@ async function enterRoom() {
     held.clear();
   });
   renderer.setAnimationLoop((time) => {
-    const dt = Math.min((time - (previous ?? time)) / 1000, 0.28);
+    const elapsed = document.hidden ? 0 : (time - (previous ?? time)) / 1000;
+    const dt = Math.min(elapsed, 0.28);
     previous = time;
     update(dt);
     if (!reducedMotion) {
@@ -485,11 +490,12 @@ async function enterRoom() {
       chime.rotation.y = -0.12 + 0.11 * Math.sin(chimeTime * 0.53);
     }
     view.steer(dt);
-    renderer.render(scene, view.camera);
+    renderer.render(scene, opening.frame(elapsed, view.camera, view.controls.target));
   });
 }
 
 enterRoom().catch((error) => {
+  opening.finish();
   console.error(error);
   status.textContent = '书房加载失败，请使用支持 WebGL 2 的浏览器重新打开。';
   readingButton.disabled = false;
