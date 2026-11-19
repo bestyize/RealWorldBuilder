@@ -11,6 +11,40 @@
     html, body { width: 100%; height: 100%; margin: 0; background: #75849d; }
     #world { position: fixed; inset: 0; display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
     #world:active { cursor: grabbing; }
+    #opening { position: fixed; inset: 0; z-index: 3; overflow: hidden; isolation: isolate; color: #fff9e9; --cover: 1; --type: 1; --bars: 1; }
+    body:not([data-opening="film"]):not([data-opening="waiting"]) #opening, body[data-opening] :is(.mast,.tools,.dock), body[data-opening="waiting"] #skip-opening { visibility: hidden; pointer-events: none; }
+    .opening-cover { position: absolute; inset: 0; opacity: var(--cover); background: #23334f; }
+    .opening-cover img { width: 100%; height: 100%; object-fit: cover; object-position: 28% 50%; }
+    .opening-cover::after { content: ""; position: absolute; inset: 0; background: linear-gradient(0deg,#15233ce8,transparent 66%); }
+    .opening-title { position: absolute; inset: auto 8% 14%; opacity: var(--type); text-shadow: 0 2px 16px #101e37; }
+    .opening-title h2 { margin: 0 0 10px; font-size: clamp(40px,6.4vw,92px); letter-spacing: .13em; line-height: 1.15; font-weight: 600; }
+    .opening-title p { margin: 0; font: 500 clamp(15px,1.45vw,22px)/1.8 "Songti SC","STSong",serif; }
+    #opening::before, #opening::after { content: ""; position: absolute; z-index: 1; left: 0; right: 0; height: 5%; pointer-events: none; background: #152235; }
+    #opening::before { top: 0; transform: scaleY(var(--bars)); transform-origin: top; }
+    #opening::after { bottom: 0; transform: scaleY(var(--bars)); transform-origin: bottom; }
+    #skip-opening { position: absolute; z-index: 2; right: max(18px,env(safe-area-inset-right)); top: max(16px,env(safe-area-inset-top)); min-height: 42px; padding: 0 15px; border: 1px solid #e4ddc789; border-radius: 5px; background: #1d2f49d9; color: #fff8e9; }
+    @media (max-aspect-ratio: 3/4) {
+      .opening-cover img { position: absolute; top: 8%; height: 54%; object-position: 22% center; }
+      .opening-cover::after { background: linear-gradient(180deg,#23334f 5%,transparent 17% 44%,#23334f 63%); }
+      .opening-title { bottom: 18%; }
+    }
+    @media (scripting: none) { #opening { display: none; } }
+    #greeting { position: fixed; inset: 0; z-index: 3; color: #fff9ec; pointer-events: none; }
+    #greeting[hidden] { display: none; }
+    .greeting-band { position: absolute; inset: auto 0 0; padding: clamp(45px,8vh,96px) max(6vw,env(safe-area-inset-right)) max(22px,env(safe-area-inset-bottom)); text-align: center; background: linear-gradient(to bottom,transparent,#142138b0 33%,#101c34ee 100%); text-shadow: 0 1px 5px #0f182e; }
+    .greeting-band h2 { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 0; color: #ffe3a5; font-size: clamp(22px,2.4vw,32px); letter-spacing: .12em; }
+    .greeting-band h2::before,.greeting-band h2::after { content: ""; width: min(14vw,150px); height: 1px; background: linear-gradient(to right,transparent,#dac18c); }
+    .greeting-band h2::after { transform: scaleX(-1); }
+    .greeting-next { display: block; width: min(850px,100%); margin: 0 auto; padding: 11px 4px 0; background: none; border: 0; color: inherit; text-shadow: inherit; pointer-events: auto; }
+    .greeting-line { display: block; min-height: 3.35em; font-size: clamp(16px,1.65vw,22px); line-height: 1.65; letter-spacing: .025em; }
+    .greeting-cue { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; color: #ffe4ad; font-size: 13px; }
+    .greeting-cue::before { content: ""; width: 7px; height: 7px; transform: rotate(45deg); background: #f6d795; }
+    .greeting-next:focus-visible { outline: none; }
+    .greeting-next:focus-visible .greeting-cue { outline: 1px solid #ddc79a; outline-offset: 2px; border-radius: 3px; }
+    .greeting-skip { position: absolute; top: max(16px,env(safe-area-inset-top)); right: max(18px,env(safe-area-inset-right)); min-height: 42px; padding: 0 14px; border: 1px solid #ebd8b466; border-radius: 5px; background: #15233ad9; color: #fff4d8; pointer-events: auto; }
+    .greeting-announcement { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    @media (max-width: 540px) { .greeting-line { min-height: 5em; } }
+    @media (max-height: 480px) { .greeting-band { padding-top: 22px; padding-bottom: 6px; } .greeting-line { min-height: 2.8em; font-size: 15px; } }
     :focus-visible { outline: 3px solid #bd7d62; outline-offset: 3px; }
     #world:focus-visible { outline-offset: -4px; }
     button { appearance: none; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
@@ -83,6 +117,15 @@
     .slip-label { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; margin: 16px 0 0; }
     .item-name { font-family: "Songti SC",serif; font-weight: 650; }
     .flip-caption { color: #50627a; font-size: 12px; text-decoration: underline; text-underline-offset: 3px; }
+    .conversation { grid-column: 1 / -1; margin: 0 22px; padding: 16px 0 0; border-top: 1px solid #cdbf9f; }
+    .conversation h3 { margin: 0 0 9px; font: 600 16px "Songti SC",serif; color: #435675; }
+    .questions { display: flex; flex-wrap: wrap; gap: 6px 10px; }
+    .questions button { min-height: 40px; padding: 7px 12px; color: #405670; background: #faf5e9; border: 1px solid #bbb6a8; border-radius: 5px; }
+    .questions button:hover, .questions button[aria-pressed="true"] { background: #e3e8e8; border-color: #7a8d9c; }
+    .reply:not(:empty) { margin: 14px 0 2px; padding-left: 12px; border-left: 2px solid #8296a5; line-height: 1.8; }
+    .reply:empty { margin: 0; }
+    #keepsake form { grid-column: 1 / -1; margin: 0; padding: 0 21px 16px; }
+    .conversation:not([hidden]) + form { padding-top: 14px; }
     @media (max-width: 540px) {
       .dock { flex-wrap: wrap; justify-content: center; }
       .dock-text { flex-basis: 100%; text-align: center; }
@@ -94,7 +137,20 @@
     }
   </style>
 </head>
-<body>
+<body data-opening="film">
+  <section id="opening" aria-labelledby="opening-title">
+    <div class="opening-cover"><img alt=""></div>
+    <div class="opening-title"><h2 id="opening-title">潮汐书房</h2><p>末班船靠岸时，溟月把窗边的灯点亮了。</p></div>
+    <button id="skip-opening" type="button">跳过开场</button>
+  </section>
+  <section id="greeting" aria-labelledby="greeting-name" hidden>
+    <div class="greeting-band">
+      <h2 id="greeting-name">溟月</h2>
+      <p class="greeting-announcement" role="status" aria-live="polite" aria-atomic="true"></p>
+      <button type="button" class="greeting-next"><span class="greeting-line" aria-hidden="true"></span><span class="greeting-cue" aria-hidden="true"></span></button>
+    </div>
+    <button type="button" class="greeting-skip">跳过对话</button>
+  </section>
   <canvas id="world" tabindex="0" aria-label="鲸鱼娘的海边书房。点地板或用方向键散步，R 在窗边读书，E 去书桌写信，B 去书架抽书，V 切换镜头。"></canvas>
   <header class="mast"><h1>潮汐书房</h1><p>鲸鱼娘的海湾夜读</p></header>
   <div class="tools">
@@ -113,8 +169,13 @@
           <span class="slip-paper"><canvas aria-hidden="true"></canvas><span class="handwritten" hidden><span></span><cite></cite></span></span>
           <span class="slip-label"><span class="item-name"></span><span class="flip-caption"></span></span>
         </button>
-        <form method="dialog"><button class="action">把书放回去</button></form>
       </section>
+      <section class="conversation" aria-labelledby="ask-title" hidden>
+        <h3 id="ask-title">问问溟月</h3>
+        <div class="questions"></div>
+        <p class="reply" role="status" aria-live="polite" aria-atomic="true"></p>
+      </section>
+      <form method="dialog"><button class="action">把书放回去</button></form>
     </div>
   </dialog>
   <dialog id="about" aria-labelledby="credit-title">
